@@ -9,87 +9,114 @@
             --bg: #0f172a;
             --card: #1e293b;
             --text: #f1f5f9;
-            --accent: #ec4899; /* Pink Style */
+            --accent: #ec4899;
             --accent-hover: #db2777;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         
-        .main-container { width: 100%; max-width: 650px; display: flex; flex-direction: column; gap: 20px; }
+        .main-container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; }
         
-        header { text-align: center; margin-bottom: 10px; }
-        h1 { font-size: 2.2rem; background: linear-gradient(to right, #f472b6, #a78bfa); -webkit-background-clip: text; color: transparent; font-weight: 800; }
+        header { text-align: center; margin-bottom: 5px; }
+        h1 { font-size: 2rem; background: linear-gradient(to right, #f472b6, #a78bfa); -webkit-background-clip: text; color: transparent; font-weight: 800; margin-bottom: 5px; }
         p { color: #94a3b8; font-size: 0.9rem; }
 
-        .input-area { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); }
+        .input-area { background: var(--card); padding: 20px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
-        textarea { width: 100%; height: 100px; background: #0f172a; border: 1px solid #334155; color: #fff; padding: 15px; border-radius: 12px; resize: none; font-size: 16px; outline: none; transition: 0.3s; }
+        textarea { width: 100%; height: 90px; background: #0f172a; border: 1px solid #334155; color: #fff; padding: 12px; border-radius: 10px; resize: none; font-size: 16px; outline: none; margin-bottom: 15px; }
         textarea:focus { border-color: var(--accent); }
 
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn { flex: 1; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3); }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(236, 72, 153, 0.4); }
-        .btn:disabled { background: #475569; transform: none; box-shadow: none; }
+        /* --- Voice Settings Design --- */
+        .voice-settings { background: #0f172a; padding: 15px; border-radius: 10px; border: 1px solid #334155; display: flex; flex-direction: column; gap: 12px; }
         
+        .setting-row { display: flex; flex-direction: column; gap: 5px; }
+        .setting-row label { font-size: 0.85rem; color: #cbd5e1; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+        
+        /* Dropdown & Test Button Wrapper */
+        .voice-controls { display: flex; gap: 10px; align-items: center; }
+        
+        select { flex: 1; padding: 10px; border-radius: 8px; background: #1e293b; color: white; border: 1px solid #475569; font-size: 14px; outline: none; -webkit-appearance: none; }
+        
+        /* New Test Button Style */
+        .test-btn {
+            width: 42px; height: 42px;
+            background: #334155; border: 1px solid #475569;
+            border-radius: 8px; color: #fff; font-size: 1.2rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .test-btn:hover { background: var(--accent); border-color: var(--accent); }
+        .test-btn:active { transform: scale(0.95); }
+
+        /* Slider */
+        .slider-container { display: flex; align-items: center; gap: 10px; }
+        input[type="range"] { flex: 1; accent-color: var(--accent); height: 5px; cursor: pointer; }
+        .speed-label { font-size: 0.8rem; color: var(--accent); width: 40px; text-align: right; }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { flex: 1; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn:hover { background: var(--accent-hover); }
+        .btn:disabled { background: #475569; cursor: not-allowed; opacity: 0.7; }
         #continueBtn { background: #10b981; display: none; }
 
-        /* Voice Settings */
-        .voice-settings { margin-top: 15px; padding: 15px; background: #0f172a; border-radius: 12px; border: 1px solid #334155; }
-        .setting-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-        .setting-row label { flex: 1; font-size: 0.9rem; color: #cbd5e1; }
-        select { flex: 2; padding: 8px; border-radius: 8px; background: #1e293b; color: white; border: 1px solid #475569; outline: none; }
-        input[type="range"] { flex: 2; accent-color: var(--accent); }
+        .output-area { display: none; background: var(--card); padding: 20px; border-radius: 16px; border: 1px solid #334155; margin-top: 15px; position: relative; }
+        .story-content { white-space: pre-wrap; line-height: 1.7; color: #e2e8f0; font-size: 1.05rem; margin-bottom: 70px; }
 
-        .output-area { display: none; background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #334155; position: relative; animation: fadeIn 0.5s ease; }
-        .story-content { white-space: pre-wrap; line-height: 1.8; color: #e2e8f0; font-size: 1.1rem; margin-bottom: 80px; }
-
-        .action-buttons { position: absolute; bottom: 20px; right: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .small-btn { padding: 8px 16px; background: #334155; color: white; border: 1px solid #475569; border-radius: 8px; cursor: pointer; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
-        .small-btn:hover { background: #475569; border-color: #94a3b8; }
+        .action-buttons { position: absolute; bottom: 15px; right: 15px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .small-btn { padding: 8px 14px; background: #334155; color: white; border: 1px solid #475569; border-radius: 8px; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
         .stop-btn { background: #ef4444; border-color: #ef4444; display: none; }
-        
-        .loader { display: none; text-align: center; color: var(--accent); margin-top: 10px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .loader { display: none; text-align: center; color: var(--accent); margin-top: 10px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <div class="main-container">
         <header>
-            <h1>KahaniBox AI 🎙️</h1>
-            <p>स्टाइलिश कहानी लिखें और सुनें</p>
+            <h1>KahaniBox AI 🎧</h1>
+            <p>टेस्ट करें, लिखें और सुनें</p>
         </header>
 
         <div class="input-area">
-            <textarea id="prompt" placeholder="कहानी का टॉपिक लिखें..."></textarea>
+            <textarea id="prompt" placeholder="कहानी का विषय यहाँ लिखें..."></textarea>
             
             <div class="voice-settings">
                 <div class="setting-row">
-                    <label>🗣️ आवाज चुनें:</label>
-                    <select id="voiceSelect"><option>Loading voices...</option></select>
+                    <label>🗣️ आवाज चुनें (Select Voice):</label>
+                    <div class="voice-controls">
+                        <select id="voiceSelect">
+                            <option value="">Loading...</option>
+                        </select>
+                        <button class="test-btn" onclick="testVoice()" title="आवाज टेस्ट करें">🔊</button>
+                    </div>
                 </div>
+
                 <div class="setting-row">
-                    <label>🐢 स्पीड:</label>
-                    <input type="range" id="rate" min="0.5" max="1.5" value="0.9" step="0.1">
+                    <label>⚡ स्पीड (Speed):</label>
+                    <div class="slider-container">
+                        <span style="font-size:12px">Slow</span>
+                        <input type="range" id="rate" min="0.7" max="1.3" value="0.9" step="0.1" oninput="updateSpeedLabel(this.value)">
+                        <span style="font-size:12px">Fast</span>
+                        <span class="speed-label" id="speedVal">0.9x</span>
+                    </div>
                 </div>
             </div>
 
             <div class="btn-group">
-                <button class="btn" id="generateBtn" onclick="generateStory(false)">✨ New Story</button>
-                <button class="btn" id="continueBtn" onclick="generateStory(true)">⏩ Continue</button>
+                <button class="btn" id="generateBtn" onclick="generateStory(false)">✨ नई कहानी</button>
+                <button class="btn" id="continueBtn" onclick="generateStory(true)">⏩ आगे बढ़ाएं</button>
             </div>
             
-            <div class="loader" id="loader">कहानी बन रही है... ✍️</div>
+            <div class="loader" id="loader">कहानी लिख रहा हूँ... ✍️</div>
         </div>
 
         <div class="output-area" id="outputArea">
             <div class="story-content" id="storyText"></div>
             
             <div class="action-buttons">
-                <button class="small-btn" onclick="speakStory()" id="playBtn">▶️ Play</button>
-                <button class="small-btn stop-btn" onclick="stopSpeaking()" id="stopBtn">⏹️ Stop</button>
-                <button class="small-btn" onclick="copyStory()" id="copyBtn">📋 Copy</button>
-                <button class="small-btn" onclick="downloadStory()">⬇️ Save</button>
+                <button class="small-btn" onclick="speakStory()" id="playBtn">▶️ सुनें</button>
+                <button class="small-btn stop-btn" onclick="stopSpeaking()" id="stopBtn">⏹️ रोकें</button>
+                <button class="small-btn" onclick="copyStory()">📋 कॉपी</button>
             </div>
         </div>
     </div>
@@ -99,34 +126,58 @@
         let synth = window.speechSynthesis;
         let voices = [];
 
-        // --- Voice Loading Logic ---
+        function updateSpeedLabel(val) { document.getElementById('speedVal').innerText = val + "x"; }
+
+        // --- Voice Loading & Auto Select Hindi ---
         function loadVoices() {
             voices = synth.getVoices();
             const voiceSelect = document.getElementById('voiceSelect');
-            voiceSelect.innerHTML = '';
+            voiceSelect.innerHTML = ''; 
 
-            // Filter for Hindi and English voices mainly
-            // लेकिन हम सारी दिखाएंगे ताकि यूज़र "Google Hindi" ढूंढ सके
+            let bestHindiIndex = -1;
+
             voices.forEach((voice, index) => {
                 const option = document.createElement('option');
-                option.textContent = `${voice.name} (${voice.lang})`;
+                option.textContent = voice.name;
                 option.value = index;
-                
-                // Auto-select Google Hindi if available
-                if(voice.name.includes('Google Hindi') || voice.lang === 'hi-IN') {
-                    option.selected = true;
-                }
-                
                 voiceSelect.appendChild(option);
+
+                if (voice.lang.includes('hi') || voice.lang.includes('IN')) {
+                    if (voice.name.includes("Google") && voice.name.includes("Hindi")) bestHindiIndex = index;
+                    else if (bestHindiIndex === -1) bestHindiIndex = index;
+                }
             });
+
+            if (bestHindiIndex !== -1) {
+                voiceSelect.selectedIndex = bestHindiIndex;
+                voiceSelect.options[bestHindiIndex].text = "✅ " + voiceSelect.options[bestHindiIndex].text;
+            } else {
+                const option = document.createElement('option');
+                option.textContent = "हिंदी आवाज नहीं मिली";
+                voiceSelect.prepend(option);
+            }
         }
 
-        // आवाज़ें लोड होने में कभी-कभी टाइम लगता है
-        if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = loadVoices;
-        }
-        loadVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
+        setTimeout(loadVoices, 500);
 
+        // --- NEW: Test Voice Function ---
+        function testVoice() {
+            synth.cancel(); // पुराने को रोकें
+            const voiceIndex = document.getElementById('voiceSelect').value;
+            
+            if (!voices[voiceIndex]) return alert("आवाज लोड हो रही है, रुकें...");
+
+            // छोटा सा डेमो वाक्य
+            const demoText = new SpeechSynthesisUtterance("नमस्ते, यह मेरी आवाज है।");
+            demoText.voice = voices[voiceIndex];
+            demoText.rate = parseFloat(document.getElementById('rate').value);
+            demoText.pitch = 1;
+
+            synth.speak(demoText);
+        }
+
+        // --- Story Generation ---
         async function generateStory(isContinue) {
             const promptInput = document.getElementById('prompt');
             const genBtn = document.getElementById('generateBtn');
@@ -140,6 +191,7 @@
             loader.style.display = 'block';
             genBtn.disabled = true;
             contBtn.disabled = true;
+            synth.cancel();
 
             try {
                 const payload = isContinue 
@@ -162,10 +214,10 @@
                     outputArea.style.display = 'block';
                     contBtn.style.display = 'block';
                 } else {
-                    alert("Error: " + (data.error || "Unknown"));
+                    alert("Error: " + (data.error || "Server Error"));
                 }
             } catch (error) {
-                alert("Error: " + error.message);
+                alert("Network Error: " + error.message);
             } finally {
                 loader.style.display = 'none';
                 genBtn.disabled = false;
@@ -173,37 +225,26 @@
             }
         }
 
-        // --- Stylish Speaking Logic ---
+        // --- Read Full Story ---
         function speakStory() {
-            if (synth.speaking) {
-                console.error('speechSynthesis.speaking');
-                return;
-            }
+            synth.cancel();
+            if (fullStory === '') return;
 
-            if (fullStory !== '') {
-                const speakText = new SpeechSynthesisUtterance(fullStory);
-                
-                // Select Voice from Dropdown
-                const selectedOption = document.getElementById('voiceSelect').selectedOptions[0].getAttribute('data-name');
-                const voiceIndex = document.getElementById('voiceSelect').value;
-                
-                speakText.voice = voices[voiceIndex];
-                
-                // Set Speed & Pitch (Stylish effect: thoda slow = more emotional)
-                speakText.rate = document.getElementById('rate').value; 
-                speakText.pitch = 1;
+            const speakText = new SpeechSynthesisUtterance(fullStory);
+            const voiceIndex = document.getElementById('voiceSelect').value;
+            if (voices[voiceIndex]) speakText.voice = voices[voiceIndex];
+            
+            speakText.rate = parseFloat(document.getElementById('rate').value);
+            
+            document.getElementById('playBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'flex';
 
-                speakText.onend = e => {
-                    document.getElementById('playBtn').style.display = 'flex';
-                    document.getElementById('stopBtn').style.display = 'none';
-                };
+            speakText.onend = function() {
+                document.getElementById('playBtn').style.display = 'flex';
+                document.getElementById('stopBtn').style.display = 'none';
+            };
 
-                // UI Changes
-                document.getElementById('playBtn').style.display = 'none';
-                document.getElementById('stopBtn').style.display = 'flex';
-
-                synth.speak(speakText);
-            }
+            synth.speak(speakText);
         }
 
         function stopSpeaking() {
@@ -214,15 +255,7 @@
 
         function copyStory() {
             navigator.clipboard.writeText(fullStory);
-            alert("Copied!");
-        }
-
-        function downloadStory() {
-            const blob = new Blob([fullStory], { type: "text/plain" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "Story.txt";
-            link.click();
+            alert("कॉपी हो गया!");
         }
     </script>
 </body>
