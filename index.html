@@ -5,118 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KahaniBox AI</title>
     <style>
-        :root {
-            --bg: #0f172a;
-            --card: #1e293b;
-            --text: #f1f5f9;
-            --accent: #ec4899;
-            --accent-hover: #db2777;
-        }
+        :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #ec4899; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        
         .main-container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; }
-        
-        header { text-align: center; margin-bottom: 5px; }
+        header { text-align: center; }
         h1 { font-size: 2rem; background: linear-gradient(to right, #f472b6, #a78bfa); -webkit-background-clip: text; color: transparent; font-weight: 800; margin-bottom: 5px; }
-        p { color: #94a3b8; font-size: 0.9rem; }
-
-        .input-area { background: var(--card); padding: 20px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
+        .input-area { background: var(--card); padding: 20px; border-radius: 16px; border: 1px solid #334155; }
         textarea { width: 100%; height: 90px; background: #0f172a; border: 1px solid #334155; color: #fff; padding: 12px; border-radius: 10px; resize: none; font-size: 16px; outline: none; margin-bottom: 15px; }
         textarea:focus { border-color: var(--accent); }
 
-        /* --- Voice Settings Design --- */
-        .voice-settings { background: #0f172a; padding: 15px; border-radius: 10px; border: 1px solid #334155; display: flex; flex-direction: column; gap: 12px; }
-        
-        .setting-row { display: flex; flex-direction: column; gap: 5px; }
-        .setting-row label { font-size: 0.85rem; color: #cbd5e1; font-weight: 600; display: flex; align-items: center; gap: 5px; }
-        
-        /* Dropdown & Test Button Wrapper */
-        .voice-controls { display: flex; gap: 10px; align-items: center; }
-        
-        select { flex: 1; padding: 10px; border-radius: 8px; background: #1e293b; color: white; border: 1px solid #475569; font-size: 14px; outline: none; -webkit-appearance: none; }
-        
-        /* New Test Button Style */
-        .test-btn {
-            width: 42px; height: 42px;
-            background: #334155; border: 1px solid #475569;
-            border-radius: 8px; color: #fff; font-size: 1.2rem;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: 0.2s;
-        }
-        .test-btn:hover { background: var(--accent); border-color: var(--accent); }
-        .test-btn:active { transform: scale(0.95); }
+        /* Voice Settings */
+        .voice-controls { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; }
+        select { flex: 1; padding: 10px; border-radius: 8px; background: #1e293b; color: white; border: 1px solid #475569; outline: none; }
+        .test-btn { width: 40px; background: #334155; color: white; border: 1px solid #475569; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-        /* Slider */
-        .slider-container { display: flex; align-items: center; gap: 10px; }
-        input[type="range"] { flex: 1; accent-color: var(--accent); height: 5px; cursor: pointer; }
-        .speed-label { font-size: 0.8rem; color: var(--accent); width: 40px; text-align: right; }
-
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn { flex: 1; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-        .btn:hover { background: var(--accent-hover); }
-        .btn:disabled { background: #475569; cursor: not-allowed; opacity: 0.7; }
+        .btn-group { display: flex; gap: 10px; }
+        .btn { flex: 1; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; }
+        .btn:disabled { background: #475569; }
         #continueBtn { background: #10b981; display: none; }
 
         .output-area { display: none; background: var(--card); padding: 20px; border-radius: 16px; border: 1px solid #334155; margin-top: 15px; position: relative; }
-        .story-content { white-space: pre-wrap; line-height: 1.7; color: #e2e8f0; font-size: 1.05rem; margin-bottom: 70px; }
+        .story-content { white-space: pre-wrap; line-height: 1.7; color: #e2e8f0; font-size: 1.05rem; margin-bottom: 60px; }
 
-        .action-buttons { position: absolute; bottom: 15px; right: 15px; display: flex; gap: 8px; flex-wrap: wrap; }
-        .small-btn { padding: 8px 14px; background: #334155; color: white; border: 1px solid #475569; border-radius: 8px; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
-        .stop-btn { background: #ef4444; border-color: #ef4444; display: none; }
-
-        .loader { display: none; text-align: center; color: var(--accent); margin-top: 10px; font-size: 0.9rem; }
+        .audio-bar { position: absolute; bottom: 15px; right: 15px; display: flex; gap: 10px; align-items: center; background: #334155; padding: 5px 15px; border-radius: 50px; border: 1px solid #475569; }
+        .icon-btn { background: none; border: none; color: white; font-size: 1.1rem; cursor: pointer; }
+        .stop-btn { color: #ef4444; display: none; }
+        
+        .loader { display: none; text-align: center; color: var(--accent); margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="main-container">
         <header>
-            <h1>KahaniBox AI 🎧</h1>
-            <p>टेस्ट करें, लिखें और सुनें</p>
+            <h1>KahaniBox AI 🎙️</h1>
+            <p>News • Stories • Audio</p>
         </header>
 
         <div class="input-area">
-            <textarea id="prompt" placeholder="कहानी का विषय यहाँ लिखें..."></textarea>
+            <textarea id="prompt" placeholder="जैसे: Top 15 News India, या भूतों की कहानी..."></textarea>
             
-            <div class="voice-settings">
-                <div class="setting-row">
-                    <label>🗣️ आवाज चुनें (Select Voice):</label>
-                    <div class="voice-controls">
-                        <select id="voiceSelect">
-                            <option value="">Loading...</option>
-                        </select>
-                        <button class="test-btn" onclick="testVoice()" title="आवाज टेस्ट करें">🔊</button>
-                    </div>
-                </div>
-
-                <div class="setting-row">
-                    <label>⚡ स्पीड (Speed):</label>
-                    <div class="slider-container">
-                        <span style="font-size:12px">Slow</span>
-                        <input type="range" id="rate" min="0.7" max="1.3" value="0.9" step="0.1" oninput="updateSpeedLabel(this.value)">
-                        <span style="font-size:12px">Fast</span>
-                        <span class="speed-label" id="speedVal">0.9x</span>
-                    </div>
-                </div>
+            <div class="voice-controls">
+                <select id="voiceSelect"><option>Loading...</option></select>
+                <button class="test-btn" onclick="testVoice()">🔊</button>
             </div>
 
             <div class="btn-group">
-                <button class="btn" id="generateBtn" onclick="generateStory(false)">✨ नई कहानी</button>
-                <button class="btn" id="continueBtn" onclick="generateStory(true)">⏩ आगे बढ़ाएं</button>
+                <button class="btn" id="generateBtn" onclick="generateStory(false)">✨ Generate</button>
+                <button class="btn" id="continueBtn" onclick="generateStory(true)">⏩ Continue</button>
             </div>
-            
-            <div class="loader" id="loader">कहानी लिख रहा हूँ... ✍️</div>
+            <div class="loader" id="loader">लिख रहा हूँ... ✍️</div>
         </div>
 
         <div class="output-area" id="outputArea">
             <div class="story-content" id="storyText"></div>
             
-            <div class="action-buttons">
-                <button class="small-btn" onclick="speakStory()" id="playBtn">▶️ सुनें</button>
-                <button class="small-btn stop-btn" onclick="stopSpeaking()" id="stopBtn">⏹️ रोकें</button>
-                <button class="small-btn" onclick="copyStory()">📋 कॉपी</button>
+            <div class="audio-bar">
+                <button class="icon-btn" onclick="copyStory()">📋</button>
+                <div style="width: 1px; height: 20px; background: #94a3b8; margin: 0 5px;"></div>
+                <button class="icon-btn" id="playBtn" onclick="speakLongText()">▶️ Play Full</button>
+                <button class="icon-btn stop-btn" id="stopBtn" onclick="stopSpeaking()">⏹️ Stop</button>
             </div>
         </div>
     </div>
@@ -125,59 +75,37 @@
         let fullStory = "";
         let synth = window.speechSynthesis;
         let voices = [];
+        let isSpeaking = false;
+        let sentences = []; // ऑडियो के टुकड़े यहाँ जमा होंगे
+        let currentSentenceIndex = 0;
 
-        function updateSpeedLabel(val) { document.getElementById('speedVal').innerText = val + "x"; }
-
-        // --- Voice Loading & Auto Select Hindi ---
+        // --- Voice Loading ---
         function loadVoices() {
             voices = synth.getVoices();
             const voiceSelect = document.getElementById('voiceSelect');
             voiceSelect.innerHTML = ''; 
 
-            let bestHindiIndex = -1;
-
-            voices.forEach((voice, index) => {
-                const option = document.createElement('option');
-                option.textContent = voice.name;
-                option.value = index;
-                voiceSelect.appendChild(option);
-
-                if (voice.lang.includes('hi') || voice.lang.includes('IN')) {
-                    if (voice.name.includes("Google") && voice.name.includes("Hindi")) bestHindiIndex = index;
-                    else if (bestHindiIndex === -1) bestHindiIndex = index;
-                }
+            let bestHindi = -1;
+            voices.forEach((v, i) => {
+                const opt = document.createElement('option');
+                opt.textContent = v.name;
+                opt.value = i;
+                voiceSelect.appendChild(opt);
+                if ((v.lang.includes('hi') || v.lang.includes('IN')) && bestHindi === -1) bestHindi = i;
             });
-
-            if (bestHindiIndex !== -1) {
-                voiceSelect.selectedIndex = bestHindiIndex;
-                voiceSelect.options[bestHindiIndex].text = "✅ " + voiceSelect.options[bestHindiIndex].text;
-            } else {
-                const option = document.createElement('option');
-                option.textContent = "हिंदी आवाज नहीं मिली";
-                voiceSelect.prepend(option);
-            }
+            if (bestHindi !== -1) voiceSelect.selectedIndex = bestHindi;
         }
-
         if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
-        setTimeout(loadVoices, 500);
+        setTimeout(loadVoices, 1000);
 
-        // --- NEW: Test Voice Function ---
         function testVoice() {
-            synth.cancel(); // पुराने को रोकें
-            const voiceIndex = document.getElementById('voiceSelect').value;
-            
-            if (!voices[voiceIndex]) return alert("आवाज लोड हो रही है, रुकें...");
-
-            // छोटा सा डेमो वाक्य
-            const demoText = new SpeechSynthesisUtterance("नमस्ते, यह मेरी आवाज है।");
-            demoText.voice = voices[voiceIndex];
-            demoText.rate = parseFloat(document.getElementById('rate').value);
-            demoText.pitch = 1;
-
-            synth.speak(demoText);
+            synth.cancel();
+            const u = new SpeechSynthesisUtterance("नमस्ते, चेक कर रहा हूँ।");
+            u.voice = voices[document.getElementById('voiceSelect').value];
+            synth.speak(u);
         }
 
-        // --- Story Generation ---
+        // --- Generate API ---
         async function generateStory(isContinue) {
             const promptInput = document.getElementById('prompt');
             const genBtn = document.getElementById('generateBtn');
@@ -191,7 +119,7 @@
             loader.style.display = 'block';
             genBtn.disabled = true;
             contBtn.disabled = true;
-            synth.cancel();
+            stopSpeaking(); 
 
             try {
                 const payload = isContinue 
@@ -225,29 +153,55 @@
             }
         }
 
-        // --- Read Full Story ---
-        function speakStory() {
-            synth.cancel();
-            if (fullStory === '') return;
+        // --- ADVANCED AUDIO CHUNKING (Main Fix) ---
+        function speakLongText() {
+            stopSpeaking();
+            if (!fullStory) return;
 
-            const speakText = new SpeechSynthesisUtterance(fullStory);
-            const voiceIndex = document.getElementById('voiceSelect').value;
-            if (voices[voiceIndex]) speakText.voice = voices[voiceIndex];
-            
-            speakText.rate = parseFloat(document.getElementById('rate').value);
-            
+            // 1. टेक्स्ट को वाक्यों में तोड़ें (Split by . ? ! or newline)
+            // इससे ब्राउज़र को छोटे-छोटे टुकड़े मिलेंगे और वो अटकेगा नहीं।
+            sentences = fullStory.match(/[^.!?\n]+[.!?\n]+/g) || [fullStory];
+            currentSentenceIndex = 0;
+            isSpeaking = true;
+
             document.getElementById('playBtn').style.display = 'none';
             document.getElementById('stopBtn').style.display = 'flex';
 
-            speakText.onend = function() {
-                document.getElementById('playBtn').style.display = 'flex';
-                document.getElementById('stopBtn').style.display = 'none';
+            speakNextSentence();
+        }
+
+        function speakNextSentence() {
+            if (currentSentenceIndex >= sentences.length || !isSpeaking) {
+                stopSpeaking();
+                return;
+            }
+
+            const sentenceText = sentences[currentSentenceIndex];
+            const utterance = new SpeechSynthesisUtterance(sentenceText);
+            
+            // Voice Setting
+            const voiceIdx = document.getElementById('voiceSelect').value;
+            if (voices[voiceIdx]) utterance.voice = voices[voiceIdx];
+
+            utterance.rate = 1.0; 
+            utterance.pitch = 1.0;
+
+            // जब एक लाइन खत्म हो, तो अगली बोलें
+            utterance.onend = () => {
+                currentSentenceIndex++;
+                speakNextSentence();
             };
 
-            synth.speak(speakText);
+            utterance.onerror = (e) => {
+                console.error("Audio Error", e);
+                stopSpeaking();
+            };
+
+            synth.speak(utterance);
         }
 
         function stopSpeaking() {
+            isSpeaking = false;
             synth.cancel();
             document.getElementById('playBtn').style.display = 'flex';
             document.getElementById('stopBtn').style.display = 'none';
@@ -255,7 +209,7 @@
 
         function copyStory() {
             navigator.clipboard.writeText(fullStory);
-            alert("कॉपी हो गया!");
+            alert("Copied!");
         }
     </script>
 </body>
