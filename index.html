@@ -3,105 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KahaniBox AI - Long Story Mode</title>
+    <title>KahaniBox AI</title>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #8b5cf6; --btn-hover: #7c3aed; }
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f1f5f9;
+            --accent: #ec4899; /* Pink Style */
+            --accent-hover: #db2777;
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--bg); color: var(--text); padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         
-        .container { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 20px; }
+        .main-container { width: 100%; max-width: 650px; display: flex; flex-direction: column; gap: 20px; }
         
-        h1 { text-align: center; background: linear-gradient(to right, #a78bfa, #2dd4bf); -webkit-background-clip: text; color: transparent; font-size: 2.2rem; margin-bottom: 5px; }
-        p.subtitle { text-align: center; color: #94a3b8; font-size: 0.9rem; margin-bottom: 15px; }
+        header { text-align: center; margin-bottom: 10px; }
+        h1 { font-size: 2.2rem; background: linear-gradient(to right, #f472b6, #a78bfa); -webkit-background-clip: text; color: transparent; font-weight: 800; }
+        p { color: #94a3b8; font-size: 0.9rem; }
 
-        .input-box { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #334155; }
-        textarea { width: 100%; height: 80px; background: #0f172a; border: 1px solid #334155; color: white; padding: 15px; border-radius: 10px; resize: none; font-size: 16px; outline: none; }
+        .input-area { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); }
+        
+        textarea { width: 100%; height: 100px; background: #0f172a; border: 1px solid #334155; color: #fff; padding: 15px; border-radius: 12px; resize: none; font-size: 16px; outline: none; transition: 0.3s; }
         textarea:focus { border-color: var(--accent); }
 
         .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; font-size: 16px; }
+        .btn { flex: 1; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3); }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(236, 72, 153, 0.4); }
+        .btn:disabled { background: #475569; transform: none; box-shadow: none; }
         
-        #generateBtn { background-color: var(--accent); }
-        #generateBtn:hover { background-color: var(--btn-hover); }
-        
-        #continueBtn { background-color: #10b981; display: none; } /* Initially Hidden */
-        #continueBtn:hover { background-color: #059669; }
-        
-        button:disabled { background-color: #475569; cursor: not-allowed; }
+        #continueBtn { background: #10b981; display: none; }
 
-        .output-box { display: none; background: var(--card); padding: 25px; border-radius: 15px; border: 1px solid #334155; position: relative; }
-        .story-text { white-space: pre-wrap; line-height: 1.8; color: #cbd5e1; font-size: 1.1rem; margin-bottom: 50px; }
-        
-        .tools { position: absolute; bottom: 15px; right: 15px; display: flex; gap: 10px; }
-        .tool-btn { background: #334155; color: white; padding: 5px 12px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; border: 1px solid #475569; }
+        /* Voice Settings */
+        .voice-settings { margin-top: 15px; padding: 15px; background: #0f172a; border-radius: 12px; border: 1px solid #334155; }
+        .setting-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+        .setting-row label { flex: 1; font-size: 0.9rem; color: #cbd5e1; }
+        select { flex: 2; padding: 8px; border-radius: 8px; background: #1e293b; color: white; border: 1px solid #475569; outline: none; }
+        input[type="range"] { flex: 2; accent-color: var(--accent); }
 
-        .loader { display: none; text-align: center; margin-top: 10px; color: #a78bfa; font-weight: bold; }
+        .output-area { display: none; background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #334155; position: relative; animation: fadeIn 0.5s ease; }
+        .story-content { white-space: pre-wrap; line-height: 1.8; color: #e2e8f0; font-size: 1.1rem; margin-bottom: 80px; }
+
+        .action-buttons { position: absolute; bottom: 20px; right: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .small-btn { padding: 8px 16px; background: #334155; color: white; border: 1px solid #475569; border-radius: 8px; cursor: pointer; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+        .small-btn:hover { background: #475569; border-color: #94a3b8; }
+        .stop-btn { background: #ef4444; border-color: #ef4444; display: none; }
+        
+        .loader { display: none; text-align: center; color: var(--accent); margin-top: 10px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div class="main-container">
         <header>
-            <h1>KahaniBox AI 🚀</h1>
-            <p class="subtitle">लंबी कहानियां (2000+ शब्द) आसानी से लिखें</p>
+            <h1>KahaniBox AI 🎙️</h1>
+            <p>स्टाइलिश कहानी लिखें और सुनें</p>
         </header>
 
-        <div class="input-box">
-            <textarea id="prompt" placeholder="कहानी का आईडिया यहाँ लिखें..."></textarea>
-            <div class="btn-group">
-                <button id="generateBtn" onclick="startNewStory()">✨ New Story</button>
-                <button id="continueBtn" onclick="continueStory()">⏩ Continue Story (Next Part)</button>
+        <div class="input-area">
+            <textarea id="prompt" placeholder="कहानी का टॉपिक लिखें..."></textarea>
+            
+            <div class="voice-settings">
+                <div class="setting-row">
+                    <label>🗣️ आवाज चुनें:</label>
+                    <select id="voiceSelect"><option>Loading voices...</option></select>
+                </div>
+                <div class="setting-row">
+                    <label>🐢 स्पीड:</label>
+                    <input type="range" id="rate" min="0.5" max="1.5" value="0.9" step="0.1">
+                </div>
             </div>
-            <div class="loader" id="loader">लिख रहा हूँ... ✍️</div>
+
+            <div class="btn-group">
+                <button class="btn" id="generateBtn" onclick="generateStory(false)">✨ New Story</button>
+                <button class="btn" id="continueBtn" onclick="generateStory(true)">⏩ Continue</button>
+            </div>
+            
+            <div class="loader" id="loader">कहानी बन रही है... ✍️</div>
         </div>
 
-        <div class="output-box" id="outputArea">
-            <div class="story-text" id="storyText"></div>
-            <div class="tools">
-                <button class="tool-btn" onclick="copyText()" id="copyBtn">📋 Copy All</button>
-                <button class="tool-btn" onclick="downloadText()">⬇️ Save PDF/Txt</button>
+        <div class="output-area" id="outputArea">
+            <div class="story-content" id="storyText"></div>
+            
+            <div class="action-buttons">
+                <button class="small-btn" onclick="speakStory()" id="playBtn">▶️ Play</button>
+                <button class="small-btn stop-btn" onclick="stopSpeaking()" id="stopBtn">⏹️ Stop</button>
+                <button class="small-btn" onclick="copyStory()" id="copyBtn">📋 Copy</button>
+                <button class="small-btn" onclick="downloadStory()">⬇️ Save</button>
             </div>
         </div>
     </div>
 
     <script>
-        let fullStory = ""; // पूरी कहानी यहाँ जमा होगी
+        let fullStory = "";
+        let synth = window.speechSynthesis;
+        let voices = [];
 
-        async function callApi(payload, isContinue) {
-            const loader = document.getElementById('loader');
+        // --- Voice Loading Logic ---
+        function loadVoices() {
+            voices = synth.getVoices();
+            const voiceSelect = document.getElementById('voiceSelect');
+            voiceSelect.innerHTML = '';
+
+            // Filter for Hindi and English voices mainly
+            // लेकिन हम सारी दिखाएंगे ताकि यूज़र "Google Hindi" ढूंढ सके
+            voices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.textContent = `${voice.name} (${voice.lang})`;
+                option.value = index;
+                
+                // Auto-select Google Hindi if available
+                if(voice.name.includes('Google Hindi') || voice.lang === 'hi-IN') {
+                    option.selected = true;
+                }
+                
+                voiceSelect.appendChild(option);
+            });
+        }
+
+        // आवाज़ें लोड होने में कभी-कभी टाइम लगता है
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+        loadVoices();
+
+        async function generateStory(isContinue) {
+            const promptInput = document.getElementById('prompt');
             const genBtn = document.getElementById('generateBtn');
             const contBtn = document.getElementById('continueBtn');
+            const loader = document.getElementById('loader');
             const outputArea = document.getElementById('outputArea');
-            const storyDisplay = document.getElementById('storyText');
+            const storyText = document.getElementById('storyText');
+
+            if (!promptInput.value.trim() && !isContinue) return alert("टॉपिक लिखें!");
 
             loader.style.display = 'block';
             genBtn.disabled = true;
             contBtn.disabled = true;
 
             try {
-                const res = await fetch('/api/generate', {
+                const payload = isContinue 
+                    ? { history: fullStory.slice(-1000) } 
+                    : { prompt: promptInput.value.trim() };
+
+                const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                const data = await res.json();
+                const data = await response.json();
 
                 if (data.generated_text) {
-                    if (isContinue) {
-                        fullStory += "\n\n" + data.generated_text; // पुरानी कहानी में जोड़ें
-                    } else {
-                        fullStory = data.generated_text; // नई कहानी
-                    }
-
-                    storyDisplay.innerText = fullStory;
+                    if (isContinue) fullStory += "\n\n" + data.generated_text;
+                    else fullStory = data.generated_text;
+                    
+                    storyText.innerText = fullStory;
                     outputArea.style.display = 'block';
-                    contBtn.style.display = 'block'; // Continue बटन दिखाएं
+                    contBtn.style.display = 'block';
                 } else {
-                    alert("Error: " + (data.error || "Failed"));
+                    alert("Error: " + (data.error || "Unknown"));
                 }
-            } catch (err) {
-                alert("Network Error: " + err.message);
+            } catch (error) {
+                alert("Error: " + error.message);
             } finally {
                 loader.style.display = 'none';
                 genBtn.disabled = false;
@@ -109,35 +173,57 @@
             }
         }
 
-        function startNewStory() {
-            const prompt = document.getElementById('prompt').value.trim();
-            if (!prompt) return alert("टॉपिक लिखें!");
-            
-            fullStory = ""; // Reset old story
-            callApi({ prompt: prompt }, false);
+        // --- Stylish Speaking Logic ---
+        function speakStory() {
+            if (synth.speaking) {
+                console.error('speechSynthesis.speaking');
+                return;
+            }
+
+            if (fullStory !== '') {
+                const speakText = new SpeechSynthesisUtterance(fullStory);
+                
+                // Select Voice from Dropdown
+                const selectedOption = document.getElementById('voiceSelect').selectedOptions[0].getAttribute('data-name');
+                const voiceIndex = document.getElementById('voiceSelect').value;
+                
+                speakText.voice = voices[voiceIndex];
+                
+                // Set Speed & Pitch (Stylish effect: thoda slow = more emotional)
+                speakText.rate = document.getElementById('rate').value; 
+                speakText.pitch = 1;
+
+                speakText.onend = e => {
+                    document.getElementById('playBtn').style.display = 'flex';
+                    document.getElementById('stopBtn').style.display = 'none';
+                };
+
+                // UI Changes
+                document.getElementById('playBtn').style.display = 'none';
+                document.getElementById('stopBtn').style.display = 'flex';
+
+                synth.speak(speakText);
+            }
         }
 
-        function continueStory() {
-            // हम सर्वर को पूरी कहानी नहीं भेजेंगे (वरना टोकन लिमिट खत्म हो जाएगी)
-            // सिर्फ पिछले 1000 कैरक्टर भेजेंगे ताकि उसे संदर्भ याद रहे
-            const lastPart = fullStory.slice(-1000); 
-            callApi({ history: lastPart }, true);
+        function stopSpeaking() {
+            synth.cancel();
+            document.getElementById('playBtn').style.display = 'flex';
+            document.getElementById('stopBtn').style.display = 'none';
         }
 
-        function copyText() {
+        function copyStory() {
             navigator.clipboard.writeText(fullStory);
-            document.getElementById('copyBtn').innerText = "✅ Copied";
-            setTimeout(() => document.getElementById('copyBtn').innerText = "📋 Copy All", 2000);
+            alert("Copied!");
         }
 
-        function downloadText() {
+        function downloadStory() {
             const blob = new Blob([fullStory], { type: "text/plain" });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = "Full_Story.txt";
+            link.download = "Story.txt";
             link.click();
         }
     </script>
-
 </body>
 </html>
