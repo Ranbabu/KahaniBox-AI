@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KahaniBox AI - Long Story Mode</title>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #8b5cf6; --btn-hover: #7c3aed; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        
+        .container { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 20px; }
+        
+        h1 { text-align: center; background: linear-gradient(to right, #a78bfa, #2dd4bf); -webkit-background-clip: text; color: transparent; font-size: 2.2rem; margin-bottom: 5px; }
+        p.subtitle { text-align: center; color: #94a3b8; font-size: 0.9rem; margin-bottom: 15px; }
+
+        .input-box { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #334155; }
+        textarea { width: 100%; height: 80px; background: #0f172a; border: 1px solid #334155; color: white; padding: 15px; border-radius: 10px; resize: none; font-size: 16px; outline: none; }
+        textarea:focus { border-color: var(--accent); }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; font-size: 16px; }
+        
+        #generateBtn { background-color: var(--accent); }
+        #generateBtn:hover { background-color: var(--btn-hover); }
+        
+        #continueBtn { background-color: #10b981; display: none; } /* Initially Hidden */
+        #continueBtn:hover { background-color: #059669; }
+        
+        button:disabled { background-color: #475569; cursor: not-allowed; }
+
+        .output-box { display: none; background: var(--card); padding: 25px; border-radius: 15px; border: 1px solid #334155; position: relative; }
+        .story-text { white-space: pre-wrap; line-height: 1.8; color: #cbd5e1; font-size: 1.1rem; margin-bottom: 50px; }
+        
+        .tools { position: absolute; bottom: 15px; right: 15px; display: flex; gap: 10px; }
+        .tool-btn { background: #334155; color: white; padding: 5px 12px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; border: 1px solid #475569; }
+
+        .loader { display: none; text-align: center; margin-top: 10px; color: #a78bfa; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>KahaniBox AI 🚀</h1>
+            <p class="subtitle">लंबी कहानियां (2000+ शब्द) आसानी से लिखें</p>
+        </header>
+
+        <div class="input-box">
+            <textarea id="prompt" placeholder="कहानी का आईडिया यहाँ लिखें..."></textarea>
+            <div class="btn-group">
+                <button id="generateBtn" onclick="startNewStory()">✨ New Story</button>
+                <button id="continueBtn" onclick="continueStory()">⏩ Continue Story (Next Part)</button>
+            </div>
+            <div class="loader" id="loader">लिख रहा हूँ... ✍️</div>
+        </div>
+
+        <div class="output-box" id="outputArea">
+            <div class="story-text" id="storyText"></div>
+            <div class="tools">
+                <button class="tool-btn" onclick="copyText()" id="copyBtn">📋 Copy All</button>
+                <button class="tool-btn" onclick="downloadText()">⬇️ Save PDF/Txt</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let fullStory = ""; // पूरी कहानी यहाँ जमा होगी
+
+        async function callApi(payload, isContinue) {
+            const loader = document.getElementById('loader');
+            const genBtn = document.getElementById('generateBtn');
+            const contBtn = document.getElementById('continueBtn');
+            const outputArea = document.getElementById('outputArea');
+            const storyDisplay = document.getElementById('storyText');
+
+            loader.style.display = 'block';
+            genBtn.disabled = true;
+            contBtn.disabled = true;
+
+            try {
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (data.generated_text) {
+                    if (isContinue) {
+                        fullStory += "\n\n" + data.generated_text; // पुरानी कहानी में जोड़ें
+                    } else {
+                        fullStory = data.generated_text; // नई कहानी
+                    }
+
+                    storyDisplay.innerText = fullStory;
+                    outputArea.style.display = 'block';
+                    contBtn.style.display = 'block'; // Continue बटन दिखाएं
+                } else {
+                    alert("Error: " + (data.error || "Failed"));
+                }
+            } catch (err) {
+                alert("Network Error: " + err.message);
+            } finally {
+                loader.style.display = 'none';
+                genBtn.disabled = false;
+                contBtn.disabled = false;
+            }
+        }
+
+        function startNewStory() {
+            const prompt = document.getElementById('prompt').value.trim();
+            if (!prompt) return alert("टॉपिक लिखें!");
+            
+            fullStory = ""; // Reset old story
+            callApi({ prompt: prompt }, false);
+        }
+
+        function continueStory() {
+            // हम सर्वर को पूरी कहानी नहीं भेजेंगे (वरना टोकन लिमिट खत्म हो जाएगी)
+            // सिर्फ पिछले 1000 कैरक्टर भेजेंगे ताकि उसे संदर्भ याद रहे
+            const lastPart = fullStory.slice(-1000); 
+            callApi({ history: lastPart }, true);
+        }
+
+        function copyText() {
+            navigator.clipboard.writeText(fullStory);
+            document.getElementById('copyBtn').innerText = "✅ Copied";
+            setTimeout(() => document.getElementById('copyBtn').innerText = "📋 Copy All", 2000);
+        }
+
+        function downloadText() {
+            const blob = new Blob([fullStory], { type: "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "Full_Story.txt";
+            link.click();
+        }
+    </script>
+
+</body>
+</html>
