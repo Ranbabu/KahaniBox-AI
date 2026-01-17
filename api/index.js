@@ -4,16 +4,16 @@ import fetch from "node-fetch";
 const app = express();
 app.use(express.json());
 
-// Google Gemini API Setup
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+// Google Gemini API URL (Updated to Gemini 2.5 Flash - 2026 Version)
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
 app.get("/", (req, res) => {
-  res.send("KahaniBox AI is Ready for Long Stories! 🚀");
+  res.send("KahaniBox AI Server is Running! 🚀");
 });
 
 app.post("/api/generate", async (req, res) => {
   try {
-    const { prompt, history } = req.body; // history भी मांगेंगे
+    const { prompt, history } = req.body;
 
     if (!prompt && !history) {
       return res.status(400).json({ error: "Prompt required" });
@@ -21,7 +21,7 @@ app.post("/api/generate", async (req, res) => {
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ error: "API Key missing" });
+      return res.status(500).json({ error: "API Key is missing in Server Settings" });
     }
 
     let fullPrompt;
@@ -58,6 +58,7 @@ app.post("/api/generate", async (req, res) => {
 
     if (!response.ok) {
         const errorText = await response.text();
+        // अगर 2.5 भी न चले, तो एरर साफ़ दिखेगा
         throw new Error(`Gemini API Error: ${errorText}`);
     }
 
