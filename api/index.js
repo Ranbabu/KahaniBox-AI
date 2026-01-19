@@ -19,7 +19,7 @@ app.use(express.json());
 
 // --- 2. MODEL SELECTION ---
 // Dhyan de: 'gemini-2.5' exist nahi karta. 'gemini-2.0' ki limit khatam hai.
-// Isliye 'gemini-2.5-flash' use kar rahe hain jo sabse stable aur fast hai.
+// Isliye 'gemini-1.5-flash' use kar rahe hain jo sabse stable aur fast hai.
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
 app.get("/", (req, res) => {
