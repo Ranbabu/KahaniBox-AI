@@ -4,7 +4,7 @@ import fetch from "node-fetch";
 const app = express();
 app.use(express.json());
 
-// Google Gemini API URL (Latest Model as provided)
+// Google Gemini API URL (Latest Model)
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
 app.get("/", (req, res) => {
@@ -19,13 +19,12 @@ app.post("/api/generate", async (req, res) => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "API Key is missing" });
 
-    // 1. आज की तारीख और समय (ताकि खबर बासी न हो)
+    // 1. आज की तारीख (सिर्फ AI के संदर्भ के लिए, स्क्रिप्ट में बोलने के लिए नहीं)
     const today = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'full', timeStyle: 'short' });
 
     let fullPrompt;
     
-    // चेक करें कि क्या यूजर न्यूज़ या जानकारी मांग रहा है (जिसका वीडियो स्क्रिप्ट बनाना है)
-    // "news", "khabar", "samachar", "top", "list", "facts" जैसे शब्दों पर स्क्रिप्ट मोड ऑन होगा
+    // चेक करें कि क्या यूजर न्यूज़ या वीडियो स्क्रिप्ट मांग रहा है
     const isScriptRequest = prompt && (
         prompt.toLowerCase().includes("news") || 
         prompt.toLowerCase().includes("khabar") || 
@@ -42,27 +41,25 @@ app.post("/api/generate", async (req, res) => {
 निर्देश: प्रवाह (Flow) टूटने मत देना। अगले 300-400 शब्द लिखो।`;
     } 
     else if (isScriptRequest) {
-        // --- VIDEO SCRIPT MODE (UPDATED AS PER USER REQUEST) ---
+        // --- VIDEO SCRIPT MODE (CLEAN & NO NUMBERS) ---
         fullPrompt = `तुम एक प्रोफेशनल हिंदी वीडियो स्क्रिप्ट राइटर और न्यूज़ एंकर हो।
 तुम्हें दिए गए विषय पर एक वीडियो स्क्रिप्ट लिखनी है।
         
-आज की तारीख: ${today}
+संदर्भ के लिए आज की तारीख: ${today} (स्क्रिप्ट में तारीख या समय नहीं बोलना है)।
 विषय (Topic): ${prompt}
 
-तुम्हें ठीक इसी ढांचे (Structure) का पालन करना है:
+सख्त निर्देश (Strict Instructions):
+1. **Intro**: शुरुआत सीधे "नमस्कार दोस्तों! स्वागत है आपका..." से करो।
+2. **No Numbering**: किसी भी खबर या पॉइंट के आगे नंबर (1., 2., 3.) बिल्कुल मत लिखना।
+3. **Format**:
+   - (Intro)
+   - (Main Content - हर खबर की हेडलाइन लिखो और नीचे विस्तार। बिना नंबर के।)
+   - (Outro - लाइक, शेयर, सब्सक्राइब अपील)
+   - (Headlines - मुख्य हेडलाइन्स की लिस्ट, बिना नंबर के)
+4. **Tone**: बातचीत वाली (Conversational), ऊर्जावान और हिंदी (Devanagari) में।
+5. **Formatting**: ** (bold), ## (heading) या नंबरिंग (1, 2, 3) का उपयोग बिल्कुल मत करना। टेक्स्ट एकदम साफ़ (Clean) होना चाहिए।
 
-1. **Intro**: दर्शकों का स्वागत करो और बताओ कि आज हम किस बारे में बात करेंगे। (जैसे: "नमस्कार दोस्तों! स्वागत है आपका...")
-2. **Main Content**: विषय की पूरी जानकारी विस्तार से दो। 
-   - अगर "Top 5" या "List" मांगी गई है, तो हर पॉइंट का एक टाइटल (Headline) हो और उसके नीचे 3-4 लाइन की डिटेल हो।
-   - भाषा आसान और समझाने वाली (Explainer Style) होनी चाहिए।
-3. **Outro**: वीडियो का समापन करो। दर्शकों को Like, Share और Subscribe करने के लिए कहो। जन सेवा केंद्र या वेबसाइट पर जाने की सलाह दो।
-4. **Headlines (Summary)**: अंत में, ऊपर बताई गई मुख्य बातों की सिर्फ हेडलाइन्स (Headlines) एक साथ लिखो।
-
-महत्वपूर्ण निर्देश:
-- भाषा: हिंदी (Devanagari)।
-- टोन: ऊर्जावान (Energetic) और स्पष्ट।
-- फॉर्मेटिंग: ** (bold) या ## का उपयोग मत करना, सादा टेक्स्ट लिखो।
-- जानकारी "Verified" और आज की तारीख के हिसाब से सटीक होनी चाहिए।`;
+अब स्क्रिप्ट लिखो:`;
     } 
     else {
         // --- STORY MODE ---
@@ -85,8 +82,19 @@ app.post("/api/generate", async (req, res) => {
     const data = await response.json();
     let generated = data.candidates?.[0]?.content?.parts?.[0]?.text || "कंटेंट जनरेट नहीं हो पाया।";
     
-    // थोड़ी सफाई (Cleaning formatting symbols as per request)
-    generated = generated.replace(/\*\*/g, "").replace(/##/g, "").replace(/\*/g, "").trim();
+    // --- सफाई (Cleaning) ---
+    
+    // 1. बोल्ड और हेडिंग सिंबल हटाना
+    generated = generated.replace(/\*\*/g, "").replace(/##/g, "").replace(/\*/g, "");
+
+    // 2. लाइन की शुरुआत से नंबर हटाना (जैसे "1. ", "2. ", "1)", "2-")
+    generated = generated.replace(/^\d+[\.\)\-]\s+/gm, "");
+
+    // 3. एक्स्ट्रा स्पेस हटाना
+    generated = generated.trim();
+
+    // 4. अगर गलती से तारीख या एंकर इंट्रो आ गया हो, तो हटाना
+    generated = generated.replace(/आज तारीख है.*?\|/g, "").replace(/मैं हूँ आपका एंकर.*?\|/g, "");
 
     res.json({ generated_text: generated });
 
