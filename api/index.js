@@ -3,8 +3,7 @@ import fetch from "node-fetch";
 
 const app = express();
 
-// --- 1. MANUAL CORS SETUP (Bina install kiye chalega) ---
-// Isse "Network Error / Unexpected token" ki samasya khatam ho jayegi
+// --- 1. MANUAL CORS FIX (Connectivity ke liye) ---
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -18,12 +17,13 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// --- 2. MODEL: GEMINI 2.0 FLASH (Experimental) ---
-// Aapki demand par latest model lagaya hai.
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
+// --- 2. MODEL: GEMINI 1.5 PRO (High Quality) ---
+// Note: 2.0 ki limit khatam thi aur 2.5 exist nahi karta.
+// Isliye '1.5-pro' use kiya hai jo 'Flash' se better quality deta hai.
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
 
 app.get("/", (req, res) => {
-  res.send("KahaniBox AI Server is Running! 🚀 (Model: Gemini 2.0 Flash)");
+  res.send("KahaniBox AI Server is Running! 🚀 (Model: Gemini 1.5 PRO)");
 });
 
 app.post("/api/generate", async (req, res) => {
@@ -47,29 +47,29 @@ app.post("/api/generate", async (req, res) => {
 
     if (history) {
         // STORY CONTINUE
-        fullPrompt = `Role: Professional Writer.
-Task: Continue the story naturally based on context.
+        fullPrompt = `Role: Professional Creative Writer.
+Task: Continue the story with high quality vocabulary.
 Context: "${history.slice(-1000)}"
-Instruction: Write next 300-400 words in Hindi. Maintain flow.`;
+Instruction: Write next 300-400 words in Hindi. Maintain a strong narrative flow.`;
     } 
     else if (isNews) {
-        // NEWS MODE
+        // NEWS MODE (Pro Quality)
         fullPrompt = `Role: Senior News Anchor (India).
-Task: Give Top Verified News Headlines.
+Task: Give Top Verified News Headlines with professional analysis.
 Date: ${today} (News MUST be fresh).
 Topic: ${prompt}
 
 Rules:
 1. Source: Verified channels only.
-2. Format: "Headline" followed by details.
+2. Format: "Headline" followed by detailed summary.
 3. Language: Hindi.
 4. Formatting: Plain Text (No ** or ##).`;
     } 
     else {
-        // STORY MODE
+        // STORY MODE (Pro Quality)
         fullPrompt = `Role: Best Hindi Storyteller.
 Topic: ${prompt}
-Task: Write a viral-quality story/script (400 words).
+Task: Write a deep, engaging, and high-quality story/script (400-500 words).
 Language: Hindi.
 Formatting: Plain Text only (No markdown like **).`;
     }
@@ -83,8 +83,12 @@ Formatting: Plain Text only (No markdown like **).`;
 
     if (!response.ok) {
         const errorText = await response.text();
-        console.error("Gemini 2.0 Error:", errorText);
-        // User ko saaf error dikhayen
+        console.error("Gemini API Error:", errorText);
+        
+        // Agar 1.5 Pro ki bhi limit hit ho jaye, to error saaf dikhaye
+        if (response.status === 429) {
+             return res.status(429).json({ error: "Quota Exceeded: Please try again in 1 minute or switch to Flash model." });
+        }
         return res.status(response.status).json({ error: `Model Error: ${errorText}` });
     }
 
