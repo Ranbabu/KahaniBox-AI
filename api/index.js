@@ -4,7 +4,7 @@ import fetch from "node-fetch";
 const app = express();
 app.use(express.json());
 
-// Google Gemini API URL (Latest Model)
+// Google Gemini API URL (Latest Model as provided)
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
 app.get("/", (req, res) => {
@@ -24,37 +24,51 @@ app.post("/api/generate", async (req, res) => {
 
     let fullPrompt;
     
-    // चेक करें कि क्या यूजर न्यूज़ मांग रहा है
-    const isNews = prompt && (prompt.toLowerCase().includes("news") || prompt.toLowerCase().includes("khabar") || prompt.toLowerCase().includes("samachar"));
+    // चेक करें कि क्या यूजर न्यूज़ या जानकारी मांग रहा है (जिसका वीडियो स्क्रिप्ट बनाना है)
+    // "news", "khabar", "samachar", "top", "list", "facts" जैसे शब्दों पर स्क्रिप्ट मोड ऑन होगा
+    const isScriptRequest = prompt && (
+        prompt.toLowerCase().includes("news") || 
+        prompt.toLowerCase().includes("khabar") || 
+        prompt.toLowerCase().includes("samachar") ||
+        prompt.toLowerCase().includes("top") ||
+        prompt.toLowerCase().includes("yojana") ||
+        prompt.toLowerCase().includes("facts")
+    );
 
     if (history) {
+        // --- CHAT / CONTINUATION MODE ---
         fullPrompt = `तुम एक प्रोफेशनल राइटर हो। कहानी/न्यूज़ को आगे बढ़ाओ।
 संदर्भ: "${history.slice(-1000)}"
 निर्देश: प्रवाह (Flow) टूटने मत देना। अगले 300-400 शब्द लिखो।`;
     } 
-    else if (isNews) {
-        // --- VERIFIED NEWS MODE ---
-        fullPrompt = `तुम भारत के एक वरिष्ठ (Senior) न्यूज़ एंकर हो।
-तुम्हें सिर्फ भरोसेमंद चैनल्स (जैसे: Aaj Tak, NDTV, ETV Bharat, India TV, Zee News) के स्तर की "Verified" और "Authentic" खबरें देनी हैं।
+    else if (isScriptRequest) {
+        // --- VIDEO SCRIPT MODE (UPDATED AS PER USER REQUEST) ---
+        fullPrompt = `तुम एक प्रोफेशनल हिंदी वीडियो स्क्रिप्ट राइटर और न्यूज़ एंकर हो।
+तुम्हें दिए गए विषय पर एक वीडियो स्क्रिप्ट लिखनी है।
+        
+आज की तारीख: ${today}
+विषय (Topic): ${prompt}
 
-आज की तारीख और समय: ${today} (महत्वपूर्ण: खबरें इसी तारीख की होनी चाहिए)।
+तुम्हें ठीक इसी ढांचे (Structure) का पालन करना है:
 
-विषय: ${prompt}
+1. **Intro**: दर्शकों का स्वागत करो और बताओ कि आज हम किस बारे में बात करेंगे। (जैसे: "नमस्कार दोस्तों! स्वागत है आपका...")
+2. **Main Content**: विषय की पूरी जानकारी विस्तार से दो। 
+   - अगर "Top 5" या "List" मांगी गई है, तो हर पॉइंट का एक टाइटल (Headline) हो और उसके नीचे 3-4 लाइन की डिटेल हो।
+   - भाषा आसान और समझाने वाली (Explainer Style) होनी चाहिए।
+3. **Outro**: वीडियो का समापन करो। दर्शकों को Like, Share और Subscribe करने के लिए कहो। जन सेवा केंद्र या वेबसाइट पर जाने की सलाह दो।
+4. **Headlines (Summary)**: अंत में, ऊपर बताई गई मुख्य बातों की सिर्फ हेडलाइन्स (Headlines) एक साथ लिखो।
 
-सख्त निर्देश (Strict Instructions):
-1. **Source:** खबरें ऐसी हों जो सत्यापित (Verified) हों। अफवाहें बिल्कुल न लिखें।
-2. **Format:** हर खबर की शुरुआत "Headline" से हो, फिर 2-3 लाइन का विस्तार।
-3. **Count:** अगर यूजर ने Top 10, Top 25 कहा है, तो उतनी ही खबरें दो। अगर नहीं कहा, तो Top 5 सबसे बड़ी खबरें दो।
-4. **Tone:** भाषा गंभीर, तेज और ऊर्जावान (TV News Style) होनी चाहिए।
-5. **Structure:** - शुरुआत: "नमस्कार, आज ${today} की मुख्य हेडलाइन्स में आपका स्वागत है..."
-   - मध्य: एक के बाद एक खबरें (बिना ** सिंबल के)।
-   - अंत: "देखते रहिए verified खबरें, धन्यवाद।"`;
+महत्वपूर्ण निर्देश:
+- भाषा: हिंदी (Devanagari)।
+- टोन: ऊर्जावान (Energetic) और स्पष्ट।
+- फॉर्मेटिंग: ** (bold) या ## का उपयोग मत करना, सादा टेक्स्ट लिखो।
+- जानकारी "Verified" और आज की तारीख के हिसाब से सटीक होनी चाहिए।`;
     } 
     else {
-        // STORY MODE
+        // --- STORY MODE ---
         fullPrompt = `तुम एक बेहतरीन हिंदी कहानीकार हो। 
 विषय: ${prompt}
-निर्देश: 400-500 शब्दों की दिलचस्प कहानी लिखो। कोई ** फॉर्मेटिंग मत यूज़ करो।`;
+निर्देश: 400-500 शब्दों की दिलचस्प कहानी लिखो। कोई ** फॉर्मेटिंग मत यूज़ करो। सीधी और सरल हिंदी लिखो।`;
     }
 
     const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
@@ -71,7 +85,7 @@ app.post("/api/generate", async (req, res) => {
     const data = await response.json();
     let generated = data.candidates?.[0]?.content?.parts?.[0]?.text || "कंटेंट जनरेट नहीं हो पाया।";
     
-    // थोड़ी सफाई
+    // थोड़ी सफाई (Cleaning formatting symbols as per request)
     generated = generated.replace(/\*\*/g, "").replace(/##/g, "").replace(/\*/g, "").trim();
 
     res.json({ generated_text: generated });
