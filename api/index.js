@@ -1,10 +1,10 @@
-import express from "express";
+Import express from "express";
 import fetch from "node-fetch";
 
 const app = express();
 app.use(express.json());
 
-// REVERTED: Back to Gemini 2.5 Flash as requested by user.
+// Google Gemini API URL (Latest Model)
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
 app.get("/", (req, res) => {
@@ -19,53 +19,42 @@ app.post("/api/generate", async (req, res) => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "API Key is missing" });
 
-    // 1. आज की तारीख (सिर्फ AI के संदर्भ के लिए, स्क्रिप्ट में नहीं बोलेगा)
+    // 1. आज की तारीख और समय (ताकि खबर बासी न हो)
     const today = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'full', timeStyle: 'short' });
 
     let fullPrompt;
     
-    // चेक करें कि क्या यूजर न्यूज़ या वीडियो स्क्रिप्ट मांग रहा है
-    const isScriptRequest = prompt && (
-        prompt.toLowerCase().includes("news") || 
-        prompt.toLowerCase().includes("khabar") || 
-        prompt.toLowerCase().includes("samachar") ||
-        prompt.toLowerCase().includes("top") ||
-        prompt.toLowerCase().includes("yojana") ||
-        prompt.toLowerCase().includes("facts")
-    );
+    // चेक करें कि क्या यूजर न्यूज़ मांग रहा है
+    const isNews = prompt && (prompt.toLowerCase().includes("news") || prompt.toLowerCase().includes("khabar") || prompt.toLowerCase().includes("samachar"));
 
     if (history) {
-        // --- CHAT / CONTINUATION MODE ---
         fullPrompt = `तुम एक प्रोफेशनल राइटर हो। कहानी/न्यूज़ को आगे बढ़ाओ।
 संदर्भ: "${history.slice(-1000)}"
 निर्देश: प्रवाह (Flow) टूटने मत देना। अगले 300-400 शब्द लिखो।`;
     } 
-    else if (isScriptRequest) {
-        // --- VIDEO SCRIPT MODE (CLEAN & NO NUMBERS) ---
-        fullPrompt = `तुम एक प्रोफेशनल हिंदी वीडियो स्क्रिप्ट राइटर और न्यूज़ एंकर हो।
-तुम्हें दिए गए विषय पर एक वीडियो स्क्रिप्ट लिखनी है।
-        
-संदर्भ के लिए आज की तारीख: ${today} (स्क्रिप्ट में तारीख या समय नहीं बोलना है)।
-विषय (Topic): ${prompt}
+    else if (isNews) {
+        // --- VERIFIED NEWS MODE ---
+        fullPrompt = `तुम भारत के एक वरिष्ठ (Senior) न्यूज़ एंकर हो।
+तुम्हें सिर्फ भरोसेमंद चैनल्स (जैसे: Aaj Tak, NDTV, ETV Bharat, India TV, Zee News) के स्तर की "Verified" और "Authentic" खबरें देनी हैं।
+
+आज की तारीख और समय: ${today} (महत्वपूर्ण: खबरें इसी तारीख की होनी चाहिए)।
+
+विषय: ${prompt}
 
 सख्त निर्देश (Strict Instructions):
-1. **Intro**: शुरुआत सीधे "नमस्कार दोस्तों! स्वागत है आपका..." से करो।
-2. **No Numbering**: किसी भी खबर या पॉइंट के आगे नंबर (1., 2., 3.) बिल्कुल मत लिखना।
-3. **Format**:
-   - (Intro)
-   - (Main Content - हर खबर की हेडलाइन लिखो और नीचे विस्तार। बिना नंबर के।)
-   - (Outro - लाइक, शेयर, सब्सक्राइब अपील)
-   - (Headlines - मुख्य हेडलाइन्स की लिस्ट, बिना नंबर के)
-4. **Tone**: बातचीत वाली (Conversational), ऊर्जावान और हिंदी (Devanagari) में।
-5. **Formatting**: ** (bold), ## (heading) या नंबरिंग (1, 2, 3) का उपयोग बिल्कुल मत करना। टेक्स्ट एकदम साफ़ (Clean) होना चाहिए।
-
-अब स्क्रिप्ट लिखो:`;
+1. **Source:** खबरें ऐसी हों जो सत्यापित (Verified) हों। अफवाहें बिल्कुल न लिखें।
+2. **Format:** हर खबर की शुरुआत "Headline" से हो, फिर 2-3 लाइन का विस्तार।
+3. **Count:** अगर यूजर ने Top 10, Top 25 कहा है, तो उतनी ही खबरें दो। अगर नहीं कहा, तो Top 5 सबसे बड़ी खबरें दो।
+4. **Tone:** भाषा गंभीर, तेज और ऊर्जावान (TV News Style) होनी चाहिए।
+5. **Structure:** - शुरुआत: "नमस्कार, आज ${today} की मुख्य हेडलाइन्स में आपका स्वागत है..."
+   - मध्य: एक के बाद एक खबरें (बिना ** सिंबल के)।
+   - अंत: "देखते रहिए verified खबरें, धन्यवाद।"`;
     } 
     else {
-        // --- STORY MODE ---
+        // STORY MODE
         fullPrompt = `तुम एक बेहतरीन हिंदी कहानीकार हो। 
 विषय: ${prompt}
-निर्देश: 400-500 शब्दों की दिलचस्प कहानी लिखो। कोई ** फॉर्मेटिंग मत यूज़ करो। सीधी और सरल हिंदी लिखो।`;
+निर्देश: 400-500 शब्दों की दिलचस्प कहानी लिखो। कोई ** फॉर्मेटिंग मत यूज़ करो।`;
     }
 
     const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
@@ -76,23 +65,14 @@ app.post("/api/generate", async (req, res) => {
 
     if (!response.ok) {
         const errorText = await response.text();
-        console.error("Gemini API Error Detail:", errorText); 
-        // Error message user ko dikhana zaroori hai taki pata chale quota khatam hua ya kuch aur
         throw new Error(`Gemini API Error: ${errorText}`);
     }
 
     const data = await response.json();
     let generated = data.candidates?.[0]?.content?.parts?.[0]?.text || "कंटेंट जनरेट नहीं हो पाया।";
     
-    // --- सफाई (Cleaning Logic maintained) ---
-    // 1. बोल्ड और हेडिंग सिंबल हटाना
-    generated = generated.replace(/\*\*/g, "").replace(/##/g, "").replace(/\*/g, "");
-    // 2. लाइन की शुरुआत से नंबर हटाना (जैसे "1. ", "2. ", "1)", "2-")
-    generated = generated.replace(/^\d+[\.\)\-]\s+/gm, "");
-    // 3. एक्स्ट्रा स्पेस हटाना
-    generated = generated.trim();
-    // 4. अगर गलती से तारीख या एंकर इंट्रो आ गया हो, तो हटाना
-    generated = generated.replace(/आज तारीख है.*?\|/g, "").replace(/मैं हूँ आपका एंकर.*?\|/g, "");
+    // थोड़ी सफाई
+    generated = generated.replace(/\*\*/g, "").replace(/##/g, "").replace(/\*/g, "").trim();
 
     res.json({ generated_text: generated });
 
