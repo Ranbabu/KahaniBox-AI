@@ -4,9 +4,8 @@ import fetch from "node-fetch";
 const app = express();
 app.use(express.json());
 
-// FIXED: Using 'gemini-1.5-flash' which has a high free quota and is stable.
-// 'gemini-2.5' ki limit kam thi, isliye error aa raha tha.
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+// REVERTED: Back to Gemini 2.5 Flash as requested by user.
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
 app.get("/", (req, res) => {
   res.send("KahaniBox AI Server is Running! 🚀");
@@ -20,7 +19,7 @@ app.post("/api/generate", async (req, res) => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "API Key is missing" });
 
-    // 1. आज की तारीख (सिर्फ AI को बताने के लिए, स्क्रिप्ट में नहीं बोलेगा)
+    // 1. आज की तारीख (सिर्फ AI के संदर्भ के लिए, स्क्रिप्ट में नहीं बोलेगा)
     const today = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'full', timeStyle: 'short' });
 
     let fullPrompt;
@@ -77,15 +76,15 @@ app.post("/api/generate", async (req, res) => {
 
     if (!response.ok) {
         const errorText = await response.text();
-        // Error ko console mein print karein taki debugging ho sake
         console.error("Gemini API Error Detail:", errorText); 
-        throw new Error(`Gemini API Error: ${response.status} ${response.statusText} - ${errorText}`);
+        // Error message user ko dikhana zaroori hai taki pata chale quota khatam hua ya kuch aur
+        throw new Error(`Gemini API Error: ${errorText}`);
     }
 
     const data = await response.json();
     let generated = data.candidates?.[0]?.content?.parts?.[0]?.text || "कंटेंट जनरेट नहीं हो पाया।";
     
-    // --- सफाई (Cleaning) ---
+    // --- सफाई (Cleaning Logic maintained) ---
     // 1. बोल्ड और हेडिंग सिंबल हटाना
     generated = generated.replace(/\*\*/g, "").replace(/##/g, "").replace(/\*/g, "");
     // 2. लाइन की शुरुआत से नंबर हटाना (जैसे "1. ", "2. ", "1)", "2-")
