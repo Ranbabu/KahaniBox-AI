@@ -61,7 +61,7 @@ header {
     margin-left: auto;
     margin-right: auto;
     width: 100%;
-    padding-bottom: 80px; /* Space for FAB */
+    padding-bottom: 80px;
 }
 
 /* --- Section 1: News Controls --- */
@@ -98,9 +98,9 @@ label { font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 5px; 
 .btn-fetch:active { transform: scale(0.98); }
 .btn-fetch:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* --- Section 2: Info Boxes (Source/Headlines) --- */
+/* --- Section 2: Info Boxes --- */
 .info-container {
-    display: none; /* Hidden initially */
+    display: none;
     flex-direction: column;
     gap: 20px;
     margin-bottom: 30px;
@@ -112,7 +112,6 @@ label { font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 5px; 
 .box-title { font-weight: bold; color: #cbd5e1; font-size: 0.95rem; }
 .box-content { padding: 15px; max-height: 250px; overflow-y: auto; color: #e2e8f0; white-space: pre-wrap; line-height: 1.6; font-size: 0.9rem; }
 
-/* Meta & Headline Items */
 .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid #334155; padding: 8px 0; font-size: 0.85rem; }
 .meta-item:last-child { border-bottom: none; }
 .meta-source { color: #34d399; font-weight: bold; }
@@ -162,13 +161,11 @@ textarea {
 }
 textarea:focus { border-color: var(--primary); }
 
-/* Sliders */
 .controls-row { display: flex; gap: 12px; margin-bottom: 18px; }
 .control-group { flex: 1; background: rgba(0,0,0,0.25); padding: 10px; border-radius: 10px; border: 1px solid #334155; }
 .control-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; }
 input[type=range] { width: 100%; accent-color: var(--primary); height: 4px; cursor: pointer; }
 
-/* Audio Buttons */
 .btn-gen {
     background: #0ea5e9;
     color: white; border: none; padding: 14px; border-radius: 12px;
@@ -182,12 +179,10 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
     font-weight: 700; cursor: pointer; width: 100%; margin-top: 10px; display: flex; justify-content: center; gap:8px;
 }
 
-/* Loader */
 .loader-overlay { display: none; text-align: center; margin: 20px 0; color: #a78bfa; font-weight: bold;}
 .spin { animation: spin 1s linear infinite; display: inline-block; }
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
-/* Floating Add Button */
 .fab-add {
     position: fixed; bottom: 20px; right: 20px;
     background: var(--text); color: var(--bg);
@@ -321,12 +316,17 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
 
             if (data.error) throw new Error(data.error);
 
-            // A. Populate Info Boxes (Source & Headlines)
+            // A. Populate Info Boxes (WITH FIXED DATE LOGIC)
             infoSection.style.display = 'flex';
             
             data.metadata.forEach((item, idx) => {
-                // Time Formatting
-                const dateObj = new Date(item.pubDate);
+                // FIXED DATE LOGIC
+                let dateObj = new Date(item.pubDate);
+                // Check if date is Invalid
+                if (isNaN(dateObj.getTime())) {
+                    dateObj = new Date(); // Fallback to now
+                }
+
                 const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
                 const dateStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
@@ -362,7 +362,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
         } finally {
             btn.disabled = false;
             loader.style.display = 'none';
-            // Scroll to Info Section smoothly
             infoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
@@ -422,11 +421,10 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
         if(preSelectedVoice) document.getElementById(`voice-${id}`).value = preSelectedVoice;
         checkEmpty();
         
-        // Only scroll if manually added, otherwise Fetch function handles scroll
         if(!newsIndex) div.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    // --- STEP 3: GENERATE AUDIO (Calls Your Python API) ---
+    // --- STEP 3: GENERATE AUDIO ---
     const audioBlobs = {};
 
     async function generateAudio(id) {
