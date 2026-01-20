@@ -120,6 +120,7 @@
                 <div class="box-content script-text" id="scriptBox"></div>
                 
                 <div style="padding: 10px 15px;">
+                    <label style="font-size: 0.8rem; color: #94a3b8;">Select Anchor Voice (Use Edge Browser for Madhur/Swara):</label>
                     <select id="voiceSelect" style="margin-bottom: 5px; width:100%;"><option>Loading Voices...</option></select>
                     <div class="audio-bar">
                         <button class="icon-btn" id="playBtn" onclick="speakScript()">▶️ Read Aloud</button>
@@ -136,21 +137,48 @@
         let voices = [];
         let isSpeaking = false;
 
+        // --- NEW VOICE LOGIC (Prioritize Microsoft Madhur/Swara) ---
         function loadVoices() {
             voices = synth.getVoices();
             const voiceSelect = document.getElementById('voiceSelect');
             voiceSelect.innerHTML = ''; 
-            let bestHindi = -1;
+
+            let selectedIndex = 0;
+            let madhurIndex = -1;
+            let swaraIndex = -1;
+            let otherHindiIndex = -1;
+
             voices.forEach((v, i) => {
                 const opt = document.createElement('option');
                 opt.textContent = `${v.name} (${v.lang})`;
                 opt.value = i;
                 voiceSelect.appendChild(opt);
-                if (v.lang.includes('hi') || v.lang.includes('IN')) bestHindi = i;
+
+                // Priority Check
+                if (v.name.includes("Madhur")) {
+                    madhurIndex = i;
+                    opt.textContent = "🌟 " + opt.textContent; // Star for priority
+                } else if (v.name.includes("Swara") || v.name.includes("Sara")) {
+                    swaraIndex = i;
+                    opt.textContent = "🌟 " + opt.textContent;
+                } else if (v.lang.includes('hi') || v.lang.includes('IN')) {
+                    if (otherHindiIndex === -1) otherHindiIndex = i;
+                }
             });
-            if (bestHindi !== -1) voiceSelect.selectedIndex = bestHindi;
+
+            // Selection Priority: Madhur > Swara > Any Hindi > Default
+            if (madhurIndex !== -1) {
+                voiceSelect.selectedIndex = madhurIndex;
+            } else if (swaraIndex !== -1) {
+                voiceSelect.selectedIndex = swaraIndex;
+            } else if (otherHindiIndex !== -1) {
+                voiceSelect.selectedIndex = otherHindiIndex;
+            }
         }
+
+        // Ensure voices are loaded (sometimes browsers delay this)
         speechSynthesis.onvoiceschanged = loadVoices;
+        setTimeout(loadVoices, 500);
 
         async function fetchNews() {
             const count = document.getElementById('newsCount').value;
@@ -198,13 +226,11 @@
 
             outputSection.style.display = 'flex';
 
-            // 1. Fill Metadata & Headlines
             metadata.forEach((item) => {
                 const dateObj = new Date(item.pubDate);
                 const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
                 const dateStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
-                // Meta Box
                 const metaDiv = document.createElement('div');
                 metaDiv.className = 'meta-item';
                 metaDiv.innerHTML = `
@@ -213,14 +239,12 @@
                 `;
                 metaBox.appendChild(metaDiv);
 
-                // Headline Box (No Numbers)
                 const p = document.createElement('div');
                 p.className = 'headline-item';
                 p.textContent = item.title;
                 headlineBox.appendChild(p);
             });
 
-            // 2. Fill Script Box (Clean Text)
             scriptBox.innerText = script;
         }
 
@@ -236,9 +260,16 @@
 
             const utterance = new SpeechSynthesisUtterance(text);
             const voiceIdx = document.getElementById('voiceSelect').value;
-            if (voices[voiceIdx]) utterance.voice = voices[voiceIdx];
+            
+            // Set Selected Voice
+            if (voices[voiceIdx]) {
+                utterance.voice = voices[voiceIdx];
+                console.log("Speaking with:", voices[voiceIdx].name);
+            }
             
             utterance.rate = 1.0;
+            // Slightly lower pitch sounds more like news anchor
+            utterance.pitch = 1.0; 
 
             utterance.onstart = () => {
                 document.getElementById('playBtn').style.display = 'none';
