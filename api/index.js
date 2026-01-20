@@ -3,8 +3,15 @@ import fetch from "node-fetch";
 import cors from "cors";
 
 const app = express();
+
+// CORS Settings
+app.use(cors({
+    origin: "*", 
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"]
+}));
+
 app.use(express.json());
-app.use(cors());
 
 // Google Gemini API URL
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
@@ -13,10 +20,10 @@ const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/
 const GOOGLE_NEWS_RSS = "https://news.google.com/rss?hl=hi&gl=IN&ceid=IN:hi";
 
 app.get("/", (req, res) => {
-  res.send("KahaniBox AI News Server Running! 📡");
+  res.send("KahaniBox AI News Server is Running Successfully! 🟢");
 });
 
-// Helper: XML से डेटा निकालने के लिए (Simple parsing)
+// Helper: XML Parsing Logic
 function parseRSS(xmlText, limit) {
     const items = [];
     const itemRegex = /<item>([\s\S]*?)<\/item>/g;
@@ -34,11 +41,10 @@ function parseRSS(xmlText, limit) {
         const dateMatch = dateRegex.exec(itemContent);
         const sourceMatch = sourceRegex.exec(itemContent);
 
-        // Clean Title (Remove source name from title if present usually after ' - ')
         let cleanTitle = titleMatch ? titleMatch[1] : "No Title";
         const sourceName = sourceMatch ? sourceMatch[1] : "Google News";
         
-        // Remove " - Zee News" etc from title for cleaner display
+        // Remove Source Name from title
         cleanTitle = cleanTitle.split(" - ")[0];
 
         items.push({
@@ -62,6 +68,8 @@ app.post("/api/generate-news", async (req, res) => {
 
     // 1. Fetch Real-time RSS Feed
     const rssResponse = await fetch(GOOGLE_NEWS_RSS);
+    if (!rssResponse.ok) throw new Error("Failed to fetch Google News RSS");
+    
     const rssText = await rssResponse.text();
     
     // 2. Parse Data
@@ -71,7 +79,7 @@ app.post("/api/generate-news", async (req, res) => {
         return res.json({ error: "No news found currently." });
     }
 
-    // 3. Prepare Prompt for Gemini
+    // 3. Prepare Prompt
     const headlinesList = newsItems.map((n, i) => `${i+1}. ${n.title}`).join("\n");
     
     const prompt = `
@@ -100,15 +108,18 @@ app.post("/api/generate-news", async (req, res) => {
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
 
+    if (!geminiResponse.ok) {
+         const errText = await geminiResponse.text();
+         throw new Error(`Gemini Error: ${errText}`);
+    }
+
     const data = await geminiResponse.json();
     let generatedScript = data.candidates?.[0]?.content?.parts?.[0]?.text || "Script generation failed.";
 
-    // Formatting Cleanup
     generatedScript = generatedScript.replace(/\*\*/g, "").replace(/##/g, "").trim();
 
-    // Send back Metadata + Script
     res.json({
-        metadata: newsItems, // Array of source, time, title
+        metadata: newsItems,
         script: generatedScript
     });
 
@@ -116,13 +127,6 @@ app.post("/api/generate-news", async (req, res) => {
     console.error("Error:", err);
     res.status(500).json({ error: err.message });
   }
-});
-
-// Purana endpoint (Story wala) agar chahiye to rakh sakte hain
-app.post("/api/generate", async (req, res) => {
-    // ... Old logic for stories if needed ...
-    // Filhal News focus hai
-    res.json({ generated_text: "Use /api/generate-news for news features." });
 });
 
 export default app;
