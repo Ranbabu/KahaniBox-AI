@@ -19,11 +19,13 @@ app.get("/", (req, res) => {
   res.send("News Studio AI Backend Running! 🟢");
 });
 
-// RSS Parser
+// Improved RSS Parser
 function parseRSS(xmlText, limit) {
     const items = [];
+    // Regex to find items
     const itemRegex = /<item>([\s\S]*?)<\/item>/g;
     const titleRegex = /<title>([\s\S]*?)<\/title>/;
+    const dateRegex = /<pubDate>([\s\S]*?)<\/pubDate>/;
     const sourceRegex = /<source url=".*?">([\s\S]*?)<\/source>/;
 
     let match;
@@ -31,14 +33,25 @@ function parseRSS(xmlText, limit) {
     
     while ((match = itemRegex.exec(xmlText)) !== null && count < limit) {
         const itemContent = match[1];
+        
         const titleMatch = titleRegex.exec(itemContent);
+        const dateMatch = dateRegex.exec(itemContent);
         const sourceMatch = sourceRegex.exec(itemContent);
 
         let cleanTitle = titleMatch ? titleMatch[1] : "No Title";
         const sourceName = sourceMatch ? sourceMatch[1] : "Google News";
+        
+        // Date Fix: If date is missing or invalid, use Current Time
+        let pubDateStr = dateMatch ? dateMatch[1] : new Date().toUTCString();
+        
+        // Remove Source Name from Title
         cleanTitle = cleanTitle.split(" - ")[0];
 
-        items.push({ title: cleanTitle, source: sourceName });
+        items.push({
+            title: cleanTitle,
+            pubDate: pubDateStr,
+            source: sourceName
+        });
         count++;
     }
     return items;
@@ -63,7 +76,7 @@ app.post("/api/generate-news", async (req, res) => {
 
     if (newsItems.length === 0) return res.json({ error: "No news found." });
 
-    // 2. Prompt Construction (With Splitter |||)
+    // 2. Prompt Construction
     const headlinesList = newsItems.map((n, i) => `News ${i+1}: ${n.title}`).join("\n");
     
     const prompt = `
@@ -76,14 +89,14 @@ app.post("/api/generate-news", async (req, res) => {
     2. Length: ${lineInstruction} per news.
     3. Language: Pure Hindi.
     4. CRITICAL FORMATTING:
+       - **SEPARATE EACH NEWS SCRIPT WITH THIS EXACT SEPARATOR: "|||"**
        - Start the first news with a Greeting.
        - End the last news with a Closing/Thanks.
-       - **SEPARATE EACH NEWS SCRIPT WITH THIS EXACT SEPARATOR: "|||"**
        - Do NOT use "Headline 1:" or numbers inside the script. 
        - Just the text and the separator.
     
     Example Output:
-    Namaskar, aaj ki pehli khabar... text... ||| Agli khabar mein... text... ||| Teesari khabar... text...
+    Namaskar... text... ||| Agli khabar... text... ||| Teesari khabar... text...
     `;
 
     // 3. Call Gemini
@@ -101,7 +114,7 @@ app.post("/api/generate-news", async (req, res) => {
 
     res.json({
         metadata: newsItems,
-        script: generatedScript // Contains "|||" separators
+        script: generatedScript
     });
 
   } catch (err) {
