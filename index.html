@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>News Studio AI</title>
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #8b5cf6; --border: #334155; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
@@ -32,10 +38,9 @@
         .box-header { background: #2d3748; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
         .box-title { font-weight: bold; color: #cbd5e1; font-size: 1rem; }
         
-        /* Box Content Areas */
+        /* Content Areas */
         .box-content { padding: 15px; max-height: 350px; overflow-y: auto; color: #e2e8f0; white-space: pre-wrap; line-height: 1.8; font-size: 1rem; }
         
-        /* Styles for Source & Headline */
         .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid #334155; padding: 8px 0; font-size: 0.9rem; }
         .meta-item:last-child { border-bottom: none; }
         .meta-source { color: #34d399; font-weight: bold; }
@@ -44,17 +49,22 @@
         .headline-item { padding: 10px 0; border-bottom: 1px dashed #334155; font-size: 1.05rem; }
         .headline-item:last-child { border-bottom: none; }
 
-        /* Clean Script Text */
         .script-text { font-size: 1.15rem; color: #f8fafc; font-weight: 400; letter-spacing: 0.3px; }
 
         /* Buttons */
         .copy-btn { background: #475569; border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
         .copy-btn:hover { background: #64748b; }
+        
+        .refresh-btn { background: none; border: 1px solid #475569; color: #94a3b8; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-size: 0.8rem; margin-left: 5px; }
 
         /* Audio Controls */
-        .audio-bar { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
-        .icon-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 1.3rem; }
-        .stop-btn { color: #ef4444; display: none; }
+        .audio-wrapper { padding: 15px; background: #1e293b; border-top: 1px solid #334155; }
+        .voice-selection-row { display: flex; align-items: center; gap: 5px; margin-bottom: 10px; }
+        
+        .audio-bar { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .icon-btn { background: var(--accent); border: none; color: white; cursor: pointer; font-size: 1rem; padding: 10px 20px; border-radius: 50px; display: flex; align-items: center; gap: 8px; font-weight: bold; transition: 0.2s; }
+        .icon-btn:hover { opacity: 0.9; }
+        .stop-btn { background: #ef4444; display: none; }
 
         .loader { text-align: center; display: none; color: var(--accent); font-weight: bold; margin-top: 10px; }
 
@@ -119,12 +129,21 @@
                 </div>
                 <div class="box-content script-text" id="scriptBox"></div>
                 
-                <div style="padding: 10px 15px;">
-                    <label style="font-size: 0.8rem; color: #94a3b8;">Select Anchor Voice (Use Edge Browser for Madhur/Swara):</label>
-                    <select id="voiceSelect" style="margin-bottom: 5px; width:100%;"><option>Loading Voices...</option></select>
+                <div class="audio-wrapper">
+                    <label style="font-size: 0.8rem; color: #94a3b8; display:block; margin-bottom:5px;">
+                        Select Voice (Use Edge Browser for Madhur/Swara):
+                    </label>
+                    
+                    <div class="voice-selection-row">
+                        <select id="voiceSelect" style="width:100%;">
+                            <option>Wait, Loading Voices...</option>
+                        </select>
+                        <button class="refresh-btn" onclick="loadVoices(true)" title="Reload Voices">🔄</button>
+                    </div>
+
                     <div class="audio-bar">
                         <button class="icon-btn" id="playBtn" onclick="speakScript()">▶️ Read Aloud</button>
-                        <button class="icon-btn stop-btn" id="stopBtn" onclick="stopSpeaking()">⏹️ Stop</button>
+                        <button class="icon-btn stop-btn" id="stopBtn" onclick="stopSpeaking()">⏹️ Stop Reading</button>
                     </div>
                 </div>
             </div>
@@ -136,13 +155,29 @@
         let synth = window.speechSynthesis;
         let voices = [];
         let isSpeaking = false;
+        let voiceLoadAttempts = 0;
 
-        // --- NEW VOICE LOGIC (Prioritize Microsoft Madhur/Swara) ---
-        function loadVoices() {
+        // --- IMPROVED VOICE LOADING LOGIC ---
+        function loadVoices(isManual = false) {
             voices = synth.getVoices();
             const voiceSelect = document.getElementById('voiceSelect');
-            voiceSelect.innerHTML = ''; 
+            
+            // Debugging log for mobile
+            console.log("Voices loaded:", voices.length);
 
+            if (voices.length === 0) {
+                if (isManual) alert("No voices found yet. Try opening in Microsoft Edge.");
+                
+                // Retry automatically a few times
+                if (voiceLoadAttempts < 5 && !isManual) {
+                    voiceLoadAttempts++;
+                    setTimeout(loadVoices, 500); // Try again in 500ms
+                }
+                return;
+            }
+
+            // If voices found, populate list
+            voiceSelect.innerHTML = ''; 
             let selectedIndex = 0;
             let madhurIndex = -1;
             let swaraIndex = -1;
@@ -154,7 +189,7 @@
                 opt.value = i;
                 voiceSelect.appendChild(opt);
 
-                // Priority Check
+                // Priority Logic
                 if (v.name.includes("Madhur")) {
                     madhurIndex = i;
                     opt.textContent = "🌟 " + opt.textContent; // Star for priority
@@ -166,19 +201,25 @@
                 }
             });
 
-            // Selection Priority: Madhur > Swara > Any Hindi > Default
+            // Auto-Select Logic: Madhur > Swara > Hindi > First Available
             if (madhurIndex !== -1) {
                 voiceSelect.selectedIndex = madhurIndex;
             } else if (swaraIndex !== -1) {
                 voiceSelect.selectedIndex = swaraIndex;
             } else if (otherHindiIndex !== -1) {
                 voiceSelect.selectedIndex = otherHindiIndex;
+            } else {
+                voiceSelect.selectedIndex = 0; // Fallback to first voice
             }
         }
 
-        // Ensure voices are loaded (sometimes browsers delay this)
-        speechSynthesis.onvoiceschanged = loadVoices;
-        setTimeout(loadVoices, 500);
+        // Trigger Voice Load on multiple events to catch mobile quirks
+        loadVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+        // Force retry after 1 sec for slow mobile browsers
+        setTimeout(loadVoices, 1000);
 
         async function fetchNews() {
             const count = document.getElementById('newsCount').value;
@@ -187,6 +228,7 @@
             const loader = document.getElementById('loader');
             const outputSection = document.getElementById('outputSection');
 
+            // Reset Output
             document.getElementById('metaBox').innerHTML = '';
             document.getElementById('headlineBox').innerHTML = '';
             document.getElementById('scriptBox').innerText = '';
@@ -196,6 +238,7 @@
             outputSection.style.display = 'none';
 
             try {
+                // Fetch from your backend
                 const response = await fetch('/api/generate-news', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -211,7 +254,7 @@
                 }
 
             } catch (err) {
-                alert("Server Error: " + err.message);
+                alert("Connection Error. Please check internet.");
             } finally {
                 btn.disabled = false;
                 loader.style.display = 'none';
@@ -231,6 +274,7 @@
                 const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
                 const dateStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
+                // Source
                 const metaDiv = document.createElement('div');
                 metaDiv.className = 'meta-item';
                 metaDiv.innerHTML = `
@@ -239,6 +283,7 @@
                 `;
                 metaBox.appendChild(metaDiv);
 
+                // Headline
                 const p = document.createElement('div');
                 p.className = 'headline-item';
                 p.textContent = item.title;
@@ -246,11 +291,14 @@
             });
 
             scriptBox.innerText = script;
+            
+            // Try loading voices again now that user interaction happened
+            loadVoices(); 
         }
 
         function copyText(elementId) {
             const text = document.getElementById(elementId).innerText;
-            navigator.clipboard.writeText(text).then(() => alert("Text Copied!"));
+            navigator.clipboard.writeText(text).then(() => alert("Copied!"));
         }
 
         function speakScript() {
@@ -258,24 +306,36 @@
             const text = document.getElementById('scriptBox').innerText;
             if(!text) return;
 
+            // Voice Check
+            const voiceSelect = document.getElementById('voiceSelect');
+            if (voiceSelect.options.length === 0) {
+                loadVoices(true); // Try to force load
+                if (voiceSelect.options.length === 0) {
+                    alert("Voices not loaded yet. Please wait or refresh page.");
+                    return;
+                }
+            }
+
             const utterance = new SpeechSynthesisUtterance(text);
-            const voiceIdx = document.getElementById('voiceSelect').value;
+            const voiceIdx = voiceSelect.value;
             
-            // Set Selected Voice
             if (voices[voiceIdx]) {
                 utterance.voice = voices[voiceIdx];
-                console.log("Speaking with:", voices[voiceIdx].name);
             }
             
             utterance.rate = 1.0;
-            // Slightly lower pitch sounds more like news anchor
-            utterance.pitch = 1.0; 
+            utterance.pitch = 1.0;
 
             utterance.onstart = () => {
                 document.getElementById('playBtn').style.display = 'none';
                 document.getElementById('stopBtn').style.display = 'flex';
             };
             utterance.onend = stopSpeaking;
+            utterance.onerror = (e) => {
+                console.error("Speech Error:", e);
+                stopSpeaking();
+            };
+
             synth.speak(utterance);
         }
 
