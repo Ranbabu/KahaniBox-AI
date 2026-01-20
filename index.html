@@ -1,349 +1,438 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>News Studio AI</title>
-    
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0f172a">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>News Studio Pro</title>
 
-    <style>
-        :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #8b5cf6; --border: #334155; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        
-        .main-container { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 20px; }
-        
-        header { text-align: center; margin-bottom: 10px; }
-        h1 { font-size: 2.2rem; background: linear-gradient(to right, #a78bfa, #f472b6); -webkit-background-clip: text; color: transparent; font-weight: 800; }
-        p { color: #94a3b8; }
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f172a">
 
-        /* Controls */
-        .controls { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        
-        label { font-size: 0.9rem; color: #94a3b8; margin-bottom: 5px; display: block; }
-        select { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 8px; outline: none; }
-        .full-width { grid-column: span 2; }
-        
-        .btn { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
-        .btn:hover { opacity: 0.9; }
-        .btn:disabled { background: var(--border); cursor: not-allowed; }
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 
-        /* Boxes */
-        .box-container { display: none; flex-direction: column; gap: 20px; }
-        .box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-        .box-header { background: #2d3748; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-        .box-title { font-weight: bold; color: #cbd5e1; font-size: 1rem; }
-        
-        /* Content Areas */
-        .box-content { padding: 15px; max-height: 350px; overflow-y: auto; color: #e2e8f0; white-space: pre-wrap; line-height: 1.8; font-size: 1rem; }
-        
-        .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid #334155; padding: 8px 0; font-size: 0.9rem; }
-        .meta-item:last-child { border-bottom: none; }
-        .meta-source { color: #34d399; font-weight: bold; }
-        .meta-time { color: #94a3b8; }
+<style>
+:root { 
+    --primary: #0ea5e9; 
+    --primary-dark: #0284c7;
+    --accent: #f59e0b;
+    --bg: #0f172a; 
+    --card-bg: #1e293b; 
+    --text: #f1f5f9; 
+    --text-muted: #94a3b8;
+    --border: #334155; 
+    --header-h: 60px;
+}
 
-        .headline-item { padding: 10px 0; border-bottom: 1px dashed #334155; font-size: 1.05rem; }
-        .headline-item:last-child { border-bottom: none; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { 
+    margin: 0; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    background: var(--bg); 
+    color: var(--text); 
+    min-height: 100vh; 
+    display: flex; 
+    flex-direction: column;
+}
 
-        .script-text { font-size: 1.15rem; color: #f8fafc; font-weight: 400; letter-spacing: 0.3px; }
+/* --- Fixed Header --- */
+header {
+    height: var(--header-h);
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+}
 
-        /* Buttons */
-        .copy-btn { background: #475569; border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
-        .copy-btn:hover { background: #64748b; }
-        
-        .refresh-btn { background: none; border: 1px solid #475569; color: #94a3b8; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-size: 0.8rem; margin-left: 5px; }
+/* --- Main Layout --- */
+.main-content {
+    margin-top: var(--header-h);
+    padding: 20px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+}
 
-        /* Audio Controls */
-        .audio-wrapper { padding: 15px; background: #1e293b; border-top: 1px solid #334155; }
-        .voice-selection-row { display: flex; align-items: center; gap: 5px; margin-bottom: 10px; }
-        
-        .audio-bar { display: flex; gap: 10px; align-items: center; justify-content: center; }
-        .icon-btn { background: var(--accent); border: none; color: white; cursor: pointer; font-size: 1rem; padding: 10px 20px; border-radius: 50px; display: flex; align-items: center; gap: 8px; font-weight: bold; transition: 0.2s; }
-        .icon-btn:hover { opacity: 0.9; }
-        .stop-btn { background: #ef4444; display: none; }
+/* --- Section 1: News Controls (New) --- */
+.news-control-panel {
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
 
-        .loader { text-align: center; display: none; color: var(--accent); font-weight: bold; margin-top: 10px; }
+.panel-title {
+    font-size: 1rem; color: #a78bfa; margin-bottom: 15px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+}
 
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-    </style>
+.grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+
+/* Global Select Styles */
+select {
+    width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border);
+    background: #0f172a; color: #fff; font-size: 0.95rem; outline: none;
+}
+label { font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 5px; }
+
+/* The "Magic" Button */
+.btn-fetch {
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    color: white; border: none; padding: 16px; border-radius: 12px;
+    font-weight: 700; cursor: pointer; width: 100%;
+    font-size: 1.05rem; display: flex; align-items: center; justify-content: center; gap: 10px;
+    box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+    transition: transform 0.2s;
+}
+.btn-fetch:active { transform: scale(0.98); }
+.btn-fetch:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* --- Section 2: Audio Segments (Pro Studio) --- */
+.segment-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+}
+.card-title { font-weight: 600; color: var(--primary); font-size: 0.95rem; }
+.btn-delete {
+    background: rgba(239, 68, 68, 0.1); border: none; color: #ef4444; 
+    cursor: pointer; padding: 6px; border-radius: 8px;
+}
+
+textarea {
+    width: 100%; padding: 14px; border-radius: 12px;
+    border: 1px solid var(--border); background: #0f172a; color: #e2e8f0;
+    font-size: 1.05rem; outline: none; min-height: 120px; resize: vertical; line-height: 1.6;
+    margin-bottom: 15px; font-family: inherit;
+}
+textarea:focus { border-color: var(--primary); }
+
+/* Sliders */
+.controls-row { display: flex; gap: 12px; margin-bottom: 18px; }
+.control-group { flex: 1; background: rgba(0,0,0,0.25); padding: 10px; border-radius: 10px; border: 1px solid #334155; }
+.control-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; }
+input[type=range] { width: 100%; accent-color: var(--primary); height: 4px; cursor: pointer; }
+
+/* Action Buttons */
+.btn-gen {
+    background: #0ea5e9;
+    color: white; border: none; padding: 14px; border-radius: 12px;
+    font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-size: 1rem; width: 100%;
+}
+.audio-wrapper { display: none; margin-top: 15px; background: #020617; padding: 12px; border-radius: 12px; border: 1px solid var(--border); }
+audio { width: 100%; height: 40px; border-radius: 20px; }
+.btn-download {
+    background: #16a34a; color: white; border: none; padding: 12px; border-radius: 10px;
+    font-weight: 700; cursor: pointer; width: 100%; margin-top: 10px; display: flex; justify-content: center; gap:8px;
+}
+
+/* Loader */
+.loader-overlay { display: none; text-align: center; margin: 20px 0; color: #a78bfa; }
+.spin { animation: spin 1s linear infinite; display: inline-block; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* Floating Add Button */
+.fab-add {
+    position: fixed; bottom: 20px; right: 20px;
+    background: var(--text); color: var(--bg);
+    border: none; padding: 14px 20px; border-radius: 50px;
+    font-weight: 700; display: flex; align-items: center; gap: 8px;
+    cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 99;
+}
+</style>
 </head>
 <body>
 
-    <div class="main-container">
-        <header>
-            <h1>News Studio AI 🎙️</h1>
-            <p>Professional News Script Generator</p>
-        </header>
+<header>
+    <span class="material-icons-round" style="color:#fbbf24;">campaign</span> 
+    &nbsp;News Studio Pro
+</header>
 
-        <div class="controls">
+<div class="main-content">
+
+    <div class="news-control-panel">
+        <div class="panel-title">
+            <span class="material-icons-round">rss_feed</span> Generate News Script
+        </div>
+        
+        <div class="grid-row">
             <div>
                 <label>Headlines Count</label>
                 <select id="newsCount">
-                    <option value="5">Top 5 Headlines</option>
-                    <option value="10">Top 10 Headlines</option>
-                    <option value="15">Top 15 Headlines</option>
-                    <option value="25">Top 25 Headlines</option>
+                    <option value="5">Top 5 News</option>
+                    <option value="10">Top 10 News</option>
                 </select>
             </div>
             <div>
-                <label>Script Length (Per News)</label>
+                <label>Script Length</label>
                 <select id="lineCount">
-                    <option value="2 lines">2 Lines (Brief)</option>
-                    <option value="3 lines">3 Lines (Standard)</option>
-                    <option value="5 lines">5 Lines (Detailed)</option>
-                    <option value="10 lines">10 Lines (Deep Dive)</option>
+                    <option value="2 lines">Short (2 Lines)</option>
+                    <option value="5 lines">Detailed (5 Lines)</option>
                 </select>
-            </div>
-            <div class="full-width">
-                <button class="btn" id="fetchBtn" onclick="fetchNews()">🔴 Fetch Live News & Generate</button>
-                <div class="loader" id="loader">Fetching News & Writing Professional Script... ⏳</div>
             </div>
         </div>
 
-        <div class="box-container" id="outputSection">
-            
-            <div class="box">
-                <div class="box-header">
-                    <span class="box-title">ℹ️ Source & Time</span>
-                </div>
-                <div class="box-content" id="metaBox"></div>
-            </div>
+        <button class="btn-fetch" id="fetchBtn" onclick="fetchAndCreateSegments()">
+            <span class="material-icons-round">auto_awesome</span> Fetch News & Create Segments
+        </button>
 
-            <div class="box">
-                <div class="box-header">
-                    <span class="box-title">📰 Headlines</span>
-                    <button class="copy-btn" onclick="copyText('headlineBox')">Copy Headlines</button>
-                </div>
-                <div class="box-content" id="headlineBox"></div>
-            </div>
-
-            <div class="box">
-                <div class="box-header">
-                    <span class="box-title">🎙️ AI Anchor Script (Clean)</span>
-                    <button class="copy-btn" onclick="copyText('scriptBox')">Copy Script</button>
-                </div>
-                <div class="box-content script-text" id="scriptBox"></div>
-                
-                <div class="audio-wrapper">
-                    <label style="font-size: 0.8rem; color: #94a3b8; display:block; margin-bottom:5px;">
-                        Select Voice (Use Edge Browser for Madhur/Swara):
-                    </label>
-                    
-                    <div class="voice-selection-row">
-                        <select id="voiceSelect" style="width:100%;">
-                            <option>Wait, Loading Voices...</option>
-                        </select>
-                        <button class="refresh-btn" onclick="loadVoices(true)" title="Reload Voices">🔄</button>
-                    </div>
-
-                    <div class="audio-bar">
-                        <button class="icon-btn" id="playBtn" onclick="speakScript()">▶️ Read Aloud</button>
-                        <button class="icon-btn stop-btn" id="stopBtn" onclick="stopSpeaking()">⏹️ Stop Reading</button>
-                    </div>
-                </div>
-            </div>
-
+        <div class="loader-overlay" id="mainLoader">
+            <span class="material-icons-round spin">sync</span> Writing Scripts... Please wait...
         </div>
     </div>
 
-    <script>
-        let synth = window.speechSynthesis;
-        let voices = [];
-        let isSpeaking = false;
-        let voiceLoadAttempts = 0;
+    <input type="hidden" id="global-api-url" value="https://hindi-tts-3gjy.onrender.com">
 
-        // --- IMPROVED VOICE LOADING LOGIC ---
-        function loadVoices(isManual = false) {
-            voices = synth.getVoices();
-            const voiceSelect = document.getElementById('voiceSelect');
-            
-            // Debugging log for mobile
-            console.log("Voices loaded:", voices.length);
+    <div id="segments-list"></div>
+    
+    <div id="empty-state" style="text-align:center; color:#64748b; margin-top:40px;">
+        <span class="material-icons-round" style="font-size:3rem; opacity:0.3;">format_quote</span>
+        <p>No scripts yet. Click "Fetch News" above<br>or "Add Manual Segment" below.</p>
+    </div>
 
-            if (voices.length === 0) {
-                if (isManual) alert("No voices found yet. Try opening in Microsoft Edge.");
-                
-                // Retry automatically a few times
-                if (voiceLoadAttempts < 5 && !isManual) {
-                    voiceLoadAttempts++;
-                    setTimeout(loadVoices, 500); // Try again in 500ms
-                }
-                return;
-            }
+</div>
 
-            // If voices found, populate list
-            voiceSelect.innerHTML = ''; 
-            let selectedIndex = 0;
-            let madhurIndex = -1;
-            let swaraIndex = -1;
-            let otherHindiIndex = -1;
+<button class="fab-add" onclick="addSegment('')">
+    <span class="material-icons-round">add</span> Add Manual Segment
+</button>
 
-            voices.forEach((v, i) => {
-                const opt = document.createElement('option');
-                opt.textContent = `${v.name} (${v.lang})`;
-                opt.value = i;
-                voiceSelect.appendChild(opt);
+<script>
+    let segmentCount = 0;
+    const segmentsList = document.getElementById("segments-list");
+    const emptyState = document.getElementById("empty-state");
+    const globalApiUrl = document.getElementById("global-api-url");
 
-                // Priority Logic
-                if (v.name.includes("Madhur")) {
-                    madhurIndex = i;
-                    opt.textContent = "🌟 " + opt.textContent; // Star for priority
-                } else if (v.name.includes("Swara") || v.name.includes("Sara")) {
-                    swaraIndex = i;
-                    opt.textContent = "🌟 " + opt.textContent;
-                } else if (v.lang.includes('hi') || v.lang.includes('IN')) {
-                    if (otherHindiIndex === -1) otherHindiIndex = i;
+    // Voice Options (Exactly as you wanted)
+    const voiceOptions = `
+        <optgroup label="📺 Professional Hindi News">
+            <option value="hi-male" selected>🇮🇳 Male: Madhur (Deep News)</option>
+            <option value="hi-female">🇮🇳 Female: Swara (Standard Anchor)</option>
+        </optgroup>
+        <optgroup label="🗣️ Casual & Urdu">
+             <option value="ur-male">🇮🇳 Male: Salman (Casual)</option>
+             <option value="ur-pk-male">🇵🇰 Male: Asad (Poetic/Heavy)</option>
+             <option value="ur-pk-female">🇵🇰 Female: Uzma (Soft)</option>
+        </optgroup>
+    `;
+
+    // --- STEP 1: FETCH NEWS & AUTO-POPULATE ---
+    async function fetchAndCreateSegments() {
+        const count = document.getElementById('newsCount').value;
+        const lines = document.getElementById('lineCount').value;
+        const btn = document.getElementById('fetchBtn');
+        const loader = document.getElementById('mainLoader');
+
+        // Reset UI
+        segmentsList.innerHTML = '';
+        checkEmpty();
+        
+        btn.disabled = true;
+        loader.style.display = 'block';
+
+        try {
+            // Call Vercel Backend
+            const response = await fetch('/api/generate-news', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ count, lines })
+            });
+
+            const data = await response.json();
+
+            if (data.error) throw new Error(data.error);
+
+            // MAGIC: Split the script by "|||" and create boxes
+            const rawScript = data.script;
+            const scriptParts = rawScript.split("|||");
+
+            scriptParts.forEach((part, index) => {
+                if(part.trim()) {
+                    // Alternate Voices (Odd = Male, Even = Female)
+                    const preSelectVoice = (index % 2 === 0) ? 'hi-male' : 'hi-female';
+                    addSegment(part.trim(), preSelectVoice, index + 1);
                 }
             });
 
-            // Auto-Select Logic: Madhur > Swara > Hindi > First Available
-            if (madhurIndex !== -1) {
-                voiceSelect.selectedIndex = madhurIndex;
-            } else if (swaraIndex !== -1) {
-                voiceSelect.selectedIndex = swaraIndex;
-            } else if (otherHindiIndex !== -1) {
-                voiceSelect.selectedIndex = otherHindiIndex;
-            } else {
-                voiceSelect.selectedIndex = 0; // Fallback to first voice
-            }
+        } catch (err) {
+            alert("Error: " + err.message);
+        } finally {
+            btn.disabled = false;
+            loader.style.display = 'none';
+        }
+    }
+
+    // --- STEP 2: CREATE SEGMENT CARD ---
+    function addSegment(text = "", preSelectedVoice = "hi-male", newsIndex = null) {
+        segmentCount++;
+        const id = segmentCount;
+        
+        const title = newsIndex ? `News Headline #${newsIndex}` : `Manual Segment #${id}`;
+
+        const div = document.createElement('div');
+        div.className = 'segment-card';
+        div.id = `seg-${id}`;
+        
+        div.innerHTML = `
+            <div class="card-header">
+                <span class="card-title">
+                    <span class="material-icons-round" style="vertical-align:middle; font-size:1.1rem; color:#0ea5e9;">article</span> 
+                    ${title}
+                </span>
+                <button class="btn-delete" onclick="removeSegment(${id})">
+                    <span class="material-icons-round">close</span>
+                </button>
+            </div>
+
+            <label>Select Anchor Voice</label>
+            <select id="voice-${id}">${voiceOptions}</select>
+
+            <textarea id="text-${id}" placeholder="Script will appear here...">${text}</textarea>
+
+            <div class="controls-row">
+                <div class="control-group">
+                    <div class="control-label"><span>Speed</span> <span id="lbl-spd-${id}">0%</span></div>
+                    <input type="range" id="rate-${id}" min="-50" max="50" value="0" oninput="updateLbl(${id})">
+                </div>
+                <div class="control-group">
+                    <div class="control-label"><span>Pitch</span> <span id="lbl-pit-${id}">0Hz</span></div>
+                    <input type="range" id="pitch-${id}" min="-20" max="20" value="0" oninput="updateLbl(${id})">
+                </div>
+            </div>
+
+            <button class="btn-gen" id="btn-gen-${id}" onclick="generateAudio(${id})">
+                <span class="material-icons-round">graphic_eq</span> Generate Audio (Edge TTS)
+            </button>
+            
+            <div id="status-${id}" style="text-align:center; font-size:0.85rem; margin-top:8px; display:none;"></div>
+
+            <div class="audio-wrapper" id="audio-box-${id}">
+                <audio id="player-${id}" controls controlsList="nodownload"></audio>
+                <button class="btn-download" onclick="downloadAudio(${id})">
+                    <span class="material-icons-round">download</span> Download MP3
+                </button>
+            </div>
+        `;
+        
+        segmentsList.appendChild(div);
+        
+        // Set voice if auto-generated
+        if(preSelectedVoice) {
+            document.getElementById(`voice-${id}`).value = preSelectedVoice;
         }
 
-        // Trigger Voice Load on multiple events to catch mobile quirks
-        loadVoices();
-        if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = loadVoices;
-        }
-        // Force retry after 1 sec for slow mobile browsers
-        setTimeout(loadVoices, 1000);
+        checkEmpty();
+        // Scroll to bottom only if manual add
+        if(!text) div.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 
-        async function fetchNews() {
-            const count = document.getElementById('newsCount').value;
-            const lines = document.getElementById('lineCount').value;
-            const btn = document.getElementById('fetchBtn');
-            const loader = document.getElementById('loader');
-            const outputSection = document.getElementById('outputSection');
+    // --- STEP 3: GENERATE AUDIO (Calls Your Python API) ---
+    const audioBlobs = {};
 
-            // Reset Output
-            document.getElementById('metaBox').innerHTML = '';
-            document.getElementById('headlineBox').innerHTML = '';
-            document.getElementById('scriptBox').innerText = '';
+    async function generateAudio(id) {
+        const text = document.getElementById(`text-${id}`).value.trim();
+        const voice = document.getElementById(`voice-${id}`).value;
+        const rate = document.getElementById(`rate-${id}`).value;
+        const pitch = document.getElementById(`pitch-${id}`).value;
+        
+        const btn = document.getElementById(`btn-gen-${id}`);
+        const status = document.getElementById(`status-${id}`);
+        const audioBox = document.getElementById(`audio-box-${id}`);
+        const player = document.getElementById(`player-${id}`);
 
-            btn.disabled = true;
-            loader.style.display = 'block';
-            outputSection.style.display = 'none';
+        if(!text) return alert("Script is empty!");
 
-            try {
-                // Fetch from your backend
-                const response = await fetch('/api/generate-news', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ count, lines })
-                });
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spin material-icons-round">sync</span> Generating...';
+        status.style.display = "block";
+        status.innerText = "Connecting to Pro Voice Server...";
+        status.style.color = "#fbbf24";
+        audioBox.style.display = "none";
 
-                const data = await response.json();
-
-                if (data.error) {
-                    alert("Error: " + data.error);
-                } else {
-                    displayResults(data.metadata, data.script);
-                }
-
-            } catch (err) {
-                alert("Connection Error. Please check internet.");
-            } finally {
-                btn.disabled = false;
-                loader.style.display = 'none';
-            }
-        }
-
-        function displayResults(metadata, script) {
-            const outputSection = document.getElementById('outputSection');
-            const metaBox = document.getElementById('metaBox');
-            const headlineBox = document.getElementById('headlineBox');
-            const scriptBox = document.getElementById('scriptBox');
-
-            outputSection.style.display = 'flex';
-
-            metadata.forEach((item) => {
-                const dateObj = new Date(item.pubDate);
-                const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                const dateStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-
-                // Source
-                const metaDiv = document.createElement('div');
-                metaDiv.className = 'meta-item';
-                metaDiv.innerHTML = `
-                    <span class="meta-source">${item.source}</span>
-                    <span class="meta-time">${timeStr} | ${dateStr}</span>
-                `;
-                metaBox.appendChild(metaDiv);
-
-                // Headline
-                const p = document.createElement('div');
-                p.className = 'headline-item';
-                p.textContent = item.title;
-                headlineBox.appendChild(p);
+        const baseUrl = globalApiUrl.value.replace(/\/$/, ""); // Cleans URL
+        
+        try {
+            // CALLING YOUR RENDER SERVER
+            const res = await fetch(baseUrl + "/tts", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ text, voice, rate, pitch })
             });
 
-            scriptBox.innerText = script;
+            if(!res.ok) throw new Error("Server Error");
+
+            const blob = await res.blob();
+            audioBlobs[id] = blob;
             
-            // Try loading voices again now that user interaction happened
-            loadVoices(); 
-        }
-
-        function copyText(elementId) {
-            const text = document.getElementById(elementId).innerText;
-            navigator.clipboard.writeText(text).then(() => alert("Copied!"));
-        }
-
-        function speakScript() {
-            stopSpeaking();
-            const text = document.getElementById('scriptBox').innerText;
-            if(!text) return;
-
-            // Voice Check
-            const voiceSelect = document.getElementById('voiceSelect');
-            if (voiceSelect.options.length === 0) {
-                loadVoices(true); // Try to force load
-                if (voiceSelect.options.length === 0) {
-                    alert("Voices not loaded yet. Please wait or refresh page.");
-                    return;
-                }
-            }
-
-            const utterance = new SpeechSynthesisUtterance(text);
-            const voiceIdx = voiceSelect.value;
+            const url = URL.createObjectURL(blob);
+            player.src = url;
             
-            if (voices[voiceIdx]) {
-                utterance.voice = voices[voiceIdx];
-            }
+            status.innerText = "✅ Audio Ready!";
+            status.style.color = "#4ade80";
+            audioBox.style.display = "block";
             
-            utterance.rate = 1.0;
-            utterance.pitch = 1.0;
-
-            utterance.onstart = () => {
-                document.getElementById('playBtn').style.display = 'none';
-                document.getElementById('stopBtn').style.display = 'flex';
-            };
-            utterance.onend = stopSpeaking;
-            utterance.onerror = (e) => {
-                console.error("Speech Error:", e);
-                stopSpeaking();
-            };
-
-            synth.speak(utterance);
+        } catch(e) {
+            status.innerText = "❌ Error: " + e.message;
+            status.style.color = "#ef4444";
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-icons-round">graphic_eq</span> Generate Audio (Edge TTS)';
         }
+    }
 
-        function stopSpeaking() {
-            synth.cancel();
-            document.getElementById('playBtn').style.display = 'flex';
-            document.getElementById('stopBtn').style.display = 'none';
-        }
-    </script>
+    // Helpers
+    function removeSegment(id) {
+        document.getElementById(`seg-${id}`).remove();
+        checkEmpty();
+    }
+    
+    function checkEmpty() {
+        emptyState.style.display = (segmentsList.children.length === 0) ? "block" : "none";
+    }
+
+    function updateLbl(id) {
+        document.getElementById(`lbl-spd-${id}`).innerText = document.getElementById(`rate-${id}`).value + "%";
+        document.getElementById(`lbl-pit-${id}`).innerText = document.getElementById(`pitch-${id}`).value + "Hz";
+    }
+
+    function downloadAudio(id) {
+        if(!audioBlobs[id]) return;
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(audioBlobs[id]);
+        a.download = `News_Audio_${id}.mp3`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+</script>
+
 </body>
 </html>
