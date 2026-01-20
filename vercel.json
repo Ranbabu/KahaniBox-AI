@@ -2,8 +2,8 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/generate",
-      "destination": "/api/index.js"
+      "source": "/api/(.*)",
+      "destination": "/server.js"
     }
   ]
 }
