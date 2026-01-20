@@ -3,56 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KahaniBox AI - News Studio</title>
+    <title>News Studio AI</title>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #3b82f6; --border: #334155; }
+        :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #8b5cf6; --border: #334155; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         
         .main-container { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 20px; }
         
         header { text-align: center; margin-bottom: 10px; }
-        h1 { font-size: 2.2rem; background: linear-gradient(to right, #60a5fa, #c084fc); -webkit-background-clip: text; color: transparent; font-weight: 800; }
-        
-        /* Controls Section */
+        h1 { font-size: 2.2rem; background: linear-gradient(to right, #a78bfa, #f472b6); -webkit-background-clip: text; color: transparent; font-weight: 800; }
+        p { color: #94a3b8; }
+
+        /* Controls */
         .controls { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         
         label { font-size: 0.9rem; color: #94a3b8; margin-bottom: 5px; display: block; }
         select { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 8px; outline: none; }
-        
         .full-width { grid-column: span 2; }
         
         .btn { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
         .btn:hover { opacity: 0.9; }
         .btn:disabled { background: var(--border); cursor: not-allowed; }
 
-        /* Output Boxes */
+        /* Boxes */
         .box-container { display: none; flex-direction: column; gap: 20px; }
-        
         .box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-        .box-header { background: #263346; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-        .box-title { font-weight: bold; color: #cbd5e1; font-size: 0.95rem; }
-        .box-content { padding: 15px; max-height: 300px; overflow-y: auto; color: #e2e8f0; white-space: pre-wrap; line-height: 1.6; font-size: 0.95rem; }
+        .box-header { background: #2d3748; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .box-title { font-weight: bold; color: #cbd5e1; font-size: 1rem; }
         
-        /* Specific Box Styles */
-        .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid #334155; padding: 8px 0; font-size: 0.85rem; }
-        .meta-source { color: #4ade80; font-weight: bold; }
+        /* Box Content Areas */
+        .box-content { padding: 15px; max-height: 350px; overflow-y: auto; color: #e2e8f0; white-space: pre-wrap; line-height: 1.8; font-size: 1rem; }
+        
+        /* Styles for Source & Headline */
+        .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid #334155; padding: 8px 0; font-size: 0.9rem; }
+        .meta-item:last-child { border-bottom: none; }
+        .meta-source { color: #34d399; font-weight: bold; }
         .meta-time { color: #94a3b8; }
-        
-        .script-content { font-size: 1.1rem; line-height: 1.8; }
 
-        /* Buttons inside boxes */
-        .copy-btn { background: #334155; border: none; color: white; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
-        .copy-btn:active { background: #475569; }
+        .headline-item { padding: 10px 0; border-bottom: 1px dashed #334155; font-size: 1.05rem; }
+        .headline-item:last-child { border-bottom: none; }
 
-        /* Voice Controls */
+        /* Clean Script Text */
+        .script-text { font-size: 1.15rem; color: #f8fafc; font-weight: 400; letter-spacing: 0.3px; }
+
+        /* Buttons */
+        .copy-btn { background: #475569; border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+        .copy-btn:hover { background: #64748b; }
+
+        /* Audio Controls */
         .audio-bar { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
-        .icon-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 1.2rem; }
+        .icon-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 1.3rem; }
         .stop-btn { color: #ef4444; display: none; }
 
         .loader { text-align: center; display: none; color: var(--accent); font-weight: bold; margin-top: 10px; }
 
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
     </style>
@@ -61,13 +66,13 @@
 
     <div class="main-container">
         <header>
-            <h1>News Studio AI 📡</h1>
-            <p>Real-time Google News Aggregator & Script Writer</p>
+            <h1>News Studio AI 🎙️</h1>
+            <p>Professional News Script Generator</p>
         </header>
 
         <div class="controls">
             <div>
-                <label>कितनी खबरें चाहिए? (Count)</label>
+                <label>Headlines Count</label>
                 <select id="newsCount">
                     <option value="5">Top 5 Headlines</option>
                     <option value="10">Top 10 Headlines</option>
@@ -75,20 +80,18 @@
                     <option value="25">Top 25 Headlines</option>
                 </select>
             </div>
-
             <div>
-                <label>स्क्रिप्ट की लंबाई (Per News)</label>
+                <label>Script Length (Per News)</label>
                 <select id="lineCount">
-                    <option value="2 lines">2 Lines (Short)</option>
+                    <option value="2 lines">2 Lines (Brief)</option>
                     <option value="3 lines">3 Lines (Standard)</option>
                     <option value="5 lines">5 Lines (Detailed)</option>
                     <option value="10 lines">10 Lines (Deep Dive)</option>
                 </select>
             </div>
-
             <div class="full-width">
-                <button class="btn" id="fetchBtn" onclick="fetchNews()">🔴 Fetch Live News & Generate Script</button>
-                <div class="loader" id="loader">Google से खबरें ला रहा हूँ और स्क्रिप्ट लिख रहा हूँ... ⏳</div>
+                <button class="btn" id="fetchBtn" onclick="fetchNews()">🔴 Fetch Live News & Generate</button>
+                <div class="loader" id="loader">Fetching News & Writing Professional Script... ⏳</div>
             </div>
         </div>
 
@@ -96,34 +99,30 @@
             
             <div class="box">
                 <div class="box-header">
-                    <span class="box-title">ℹ️ Source & Time Info</span>
+                    <span class="box-title">ℹ️ Source & Time</span>
                 </div>
-                <div class="box-content" id="metaBox">
-                    </div>
+                <div class="box-content" id="metaBox"></div>
             </div>
 
             <div class="box">
                 <div class="box-header">
-                    <span class="box-title">📰 Top Headlines</span>
+                    <span class="box-title">📰 Headlines</span>
                     <button class="copy-btn" onclick="copyText('headlineBox')">Copy Headlines</button>
                 </div>
-                <div class="box-content" id="headlineBox">
-                    </div>
+                <div class="box-content" id="headlineBox"></div>
             </div>
 
             <div class="box">
                 <div class="box-header">
-                    <span class="box-title">🎙️ AI Anchor Script</span>
-                    <div style="display:flex; gap:10px;">
-                        <button class="copy-btn" onclick="copyText('scriptBox')">Copy Script</button>
-                    </div>
+                    <span class="box-title">🎙️ AI Anchor Script (Clean)</span>
+                    <button class="copy-btn" onclick="copyText('scriptBox')">Copy Script</button>
                 </div>
-                <div class="box-content script-content" id="scriptBox">
-                    </div>
+                <div class="box-content script-text" id="scriptBox"></div>
+                
                 <div style="padding: 10px 15px;">
-                    <select id="voiceSelect" style="margin-bottom: 5px;"><option>Loading Voices...</option></select>
+                    <select id="voiceSelect" style="margin-bottom: 5px; width:100%;"><option>Loading Voices...</option></select>
                     <div class="audio-bar">
-                        <button class="icon-btn" id="playBtn" onclick="speakScript()">▶️ Read News</button>
+                        <button class="icon-btn" id="playBtn" onclick="speakScript()">▶️ Read Aloud</button>
                         <button class="icon-btn stop-btn" id="stopBtn" onclick="stopSpeaking()">⏹️ Stop</button>
                     </div>
                 </div>
@@ -133,7 +132,6 @@
     </div>
 
     <script>
-        // --- Audio Logic ---
         let synth = window.speechSynthesis;
         let voices = [];
         let isSpeaking = false;
@@ -154,7 +152,6 @@
         }
         speechSynthesis.onvoiceschanged = loadVoices;
 
-        // --- Fetch Logic ---
         async function fetchNews() {
             const count = document.getElementById('newsCount').value;
             const lines = document.getElementById('lineCount').value;
@@ -162,7 +159,6 @@
             const loader = document.getElementById('loader');
             const outputSection = document.getElementById('outputSection');
 
-            // Clear previous
             document.getElementById('metaBox').innerHTML = '';
             document.getElementById('headlineBox').innerHTML = '';
             document.getElementById('scriptBox').innerText = '';
@@ -172,19 +168,11 @@
             outputSection.style.display = 'none';
 
             try {
-                // Pointing to the correct API route defined in vercel.json
                 const response = await fetch('/api/generate-news', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ count, lines })
                 });
-
-                // Check if response is JSON (Avoiding the 'Unexpected token T' error)
-                const contentType = response.headers.get("content-type");
-                if (!contentType || !contentType.includes("application/json")) {
-                    const text = await response.text();
-                    throw new Error("Server returned HTML error: " + text.substring(0, 100));
-                }
 
                 const data = await response.json();
 
@@ -195,8 +183,7 @@
                 }
 
             } catch (err) {
-                console.error(err);
-                alert("Network/Server Error: " + err.message);
+                alert("Server Error: " + err.message);
             } finally {
                 btn.disabled = false;
                 loader.style.display = 'none';
@@ -211,44 +198,37 @@
 
             outputSection.style.display = 'flex';
 
-            // 1. Fill Metadata Box & Headline Box
-            let headlinesText = "";
-            
-            metadata.forEach((item, index) => {
-                // Meta Box Entry
+            // 1. Fill Metadata & Headlines
+            metadata.forEach((item) => {
                 const dateObj = new Date(item.pubDate);
                 const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                const dateStr = dateObj.toLocaleDateString('en-IN');
+                const dateStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
+                // Meta Box
                 const metaDiv = document.createElement('div');
                 metaDiv.className = 'meta-item';
                 metaDiv.innerHTML = `
-                    <span>${index + 1}. <span class="meta-source">${item.source}</span></span>
+                    <span class="meta-source">${item.source}</span>
                     <span class="meta-time">${timeStr} | ${dateStr}</span>
                 `;
                 metaBox.appendChild(metaDiv);
 
-                // Headline Box Entry
-                const p = document.createElement('p');
-                p.style.marginBottom = "10px";
-                p.textContent = `${index + 1}. ${item.title}`;
+                // Headline Box (No Numbers)
+                const p = document.createElement('div');
+                p.className = 'headline-item';
+                p.textContent = item.title;
                 headlineBox.appendChild(p);
-
-                headlinesText += `${index + 1}. ${item.title}\n`;
             });
 
-            // 2. Fill Script Box
+            // 2. Fill Script Box (Clean Text)
             scriptBox.innerText = script;
         }
 
         function copyText(elementId) {
             const text = document.getElementById(elementId).innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                alert("Copied to clipboard!");
-            });
+            navigator.clipboard.writeText(text).then(() => alert("Text Copied!"));
         }
 
-        // --- Speech Logic ---
         function speakScript() {
             stopSpeaking();
             const text = document.getElementById('scriptBox').innerText;
@@ -264,10 +244,7 @@
                 document.getElementById('playBtn').style.display = 'none';
                 document.getElementById('stopBtn').style.display = 'flex';
             };
-            utterance.onend = () => {
-                stopSpeaking();
-            };
-
+            utterance.onend = stopSpeaking;
             synth.speak(utterance);
         }
 
