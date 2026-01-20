@@ -172,11 +172,19 @@
             outputSection.style.display = 'none';
 
             try {
+                // Pointing to the correct API route defined in vercel.json
                 const response = await fetch('/api/generate-news', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ count, lines })
                 });
+
+                // Check if response is JSON (Avoiding the 'Unexpected token T' error)
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const text = await response.text();
+                    throw new Error("Server returned HTML error: " + text.substring(0, 100));
+                }
 
                 const data = await response.json();
 
@@ -187,7 +195,8 @@
                 }
 
             } catch (err) {
-                alert("Network Error: " + err.message);
+                console.error(err);
+                alert("Network/Server Error: " + err.message);
             } finally {
                 btn.disabled = false;
                 loader.style.display = 'none';
