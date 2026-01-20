@@ -4,7 +4,6 @@ import cors from "cors";
 
 const app = express();
 
-// CORS Settings
 app.use(cors({
     origin: "*", 
     methods: ["GET", "POST"],
@@ -13,17 +12,14 @@ app.use(cors({
 
 app.use(express.json());
 
-// Google Gemini API URL
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
-
-// Google News RSS Feed (Hindi - India)
 const GOOGLE_NEWS_RSS = "https://news.google.com/rss?hl=hi&gl=IN&ceid=IN:hi";
 
 app.get("/", (req, res) => {
-  res.send("KahaniBox AI News Server is Running Successfully! 🟢");
+  res.send("KahaniBox AI News Server Running! 🟢");
 });
 
-// Helper: XML Parsing Logic
+// RSS Parsing Function (Clean Titles)
 function parseRSS(xmlText, limit) {
     const items = [];
     const itemRegex = /<item>([\s\S]*?)<\/item>/g;
@@ -44,7 +40,7 @@ function parseRSS(xmlText, limit) {
         let cleanTitle = titleMatch ? titleMatch[1] : "No Title";
         const sourceName = sourceMatch ? sourceMatch[1] : "Google News";
         
-        // Remove Source Name from title
+        // Remove Source Name from title for display
         cleanTitle = cleanTitle.split(" - ")[0];
 
         items.push({
@@ -61,47 +57,60 @@ app.post("/api/generate-news", async (req, res) => {
   try {
     const { count, lines } = req.body;
     const limit = parseInt(count) || 5;
-    const lineLimit = lines || "3 lines";
+    
+    // Dynamic Line Instruction
+    let lineInstruction = "Write exactly 2-3 sentences per news.";
+    if(lines.includes("2")) lineInstruction = "Write exactly 2 concise sentences per news.";
+    if(lines.includes("3")) lineInstruction = "Write exactly 3 sentences per news.";
+    if(lines.includes("5")) lineInstruction = "Write 5 detailed sentences per news.";
+    if(lines.includes("10")) lineInstruction = "Write a comprehensive 10-sentence paragraph per news.";
 
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "API Key is missing" });
+    if (!apiKey) return res.status(500).json({ error: "API Key Missing" });
 
-    // 1. Fetch Real-time RSS Feed
+    // 1. Fetch RSS
     const rssResponse = await fetch(GOOGLE_NEWS_RSS);
-    if (!rssResponse.ok) throw new Error("Failed to fetch Google News RSS");
-    
+    if (!rssResponse.ok) throw new Error("RSS Fetch Failed");
     const rssText = await rssResponse.text();
     
-    // 2. Parse Data
+    // 2. Parse
     const newsItems = parseRSS(rssText, limit);
+    if (newsItems.length === 0) return res.json({ error: "No news found." });
 
-    if (newsItems.length === 0) {
-        return res.json({ error: "No news found currently." });
-    }
-
-    // 3. Prepare Prompt
-    const headlinesList = newsItems.map((n, i) => `${i+1}. ${n.title}`).join("\n");
+    // 3. Construct Prompt with Opening/Closing Logic
+    const headlinesList = newsItems.map((n, i) => `News ${i+1}: ${n.title}`).join("\n");
     
     const prompt = `
-    Task: You are a professional Hindi News Anchor scriptwriter.
-    
-    Here are the Top ${limit} real headlines currently in India:
+    Role: You are a professional, engaging Hindi TV News Anchor.
+    Task: Write a continuous news script for the following headlines.
+
+    Headlines:
     ${headlinesList}
 
-    Instructions:
-    1. Write a news script for EACH headline separately.
-    2. The script for each headline must be exactly **${lineLimit} long**.
-    3. Language: Hindi (Devanagari).
-    4. Tone: Professional, Engaging, TV News Style.
-    5. Format:
-       Headline 1: [Script]
-       
-       Headline 2: [Script]
-       ...
-    6. Do NOT invent new news. Only expand on the provided headlines.
+    STRICT RULES FOR SCRIPT GENERATION:
+    1. **FIRST NEWS (Opening):** - Start immediately with a warm, professional greeting (e.g., "नमस्कार," "खबरों में आपका स्वागत है," "आज की मुख्य खबरें," etc.). 
+       - VARY the greeting every time (Don't always use the same one).
+       - Do NOT say "I am [Name]". Just greet the viewer directly.
+       - Then cover the first headline.
+
+    2. **MIDDLE NEWS (Transitions):**
+       - Use smooth connector words between news items (e.g., "वहीं दूसरी तरफ," "अब रुख करते हैं अगली खबर का," "बढ़ते हैं आगे," etc.).
+
+    3. **LAST NEWS (Closing):**
+       - Cover the final headline.
+       - AFTER the final headline, add a closing appeal. Ask viewers to 'Subscribe', 'Like', or 'Stay tuned' for updates.
+       - End with "धन्यवाद" (Dhanyavad) or "जय हिन्द".
+
+    4. **FORMATTING (CRITICAL):**
+       - Language: Pure Hindi (Devanagari).
+       - Length: ${lineInstruction}
+       - **CLEAN TEXT ONLY:** Do NOT use asterisks (**), hashtags (##), or numbers (1. 2.). 
+       - Do NOT write labels like "Headline 1:" or "Anchor:".
+       - Just write the spoken script paragraphs separated by a blank line.
+
     `;
 
-    // 4. Call Gemini
+    // 4. Gemini Call
     const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -109,14 +118,22 @@ app.post("/api/generate-news", async (req, res) => {
     });
 
     if (!geminiResponse.ok) {
-         const errText = await geminiResponse.text();
-         throw new Error(`Gemini Error: ${errText}`);
+        const errText = await geminiResponse.text();
+        throw new Error(`Gemini API Error: ${errText}`);
     }
 
     const data = await geminiResponse.json();
     let generatedScript = data.candidates?.[0]?.content?.parts?.[0]?.text || "Script generation failed.";
 
-    generatedScript = generatedScript.replace(/\*\*/g, "").replace(/##/g, "").trim();
+    // 5. Backend Cleanup (To ensure 100% clean text)
+    generatedScript = generatedScript
+        .replace(/\*\*/g, "")       // Remove bold
+        .replace(/##/g, "")         // Remove headings
+        .replace(/^Headline \d+:/gmi, "") // Remove 'Headline 1:'
+        .replace(/^News \d+:/gmi, "")     // Remove 'News 1:'
+        .replace(/^\d+\.\s*/gm, "") // Remove '1. ' at start of lines
+        .replace(/Anchor:/gi, "")   // Remove 'Anchor:'
+        .trim();
 
     res.json({
         metadata: newsItems,
@@ -124,7 +141,7 @@ app.post("/api/generate-news", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Error:", err);
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
