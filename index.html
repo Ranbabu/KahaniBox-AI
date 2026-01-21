@@ -79,6 +79,8 @@ header {
     display: flex; align-items: center; gap: 8px;
 }
 
+/* Updated Grid for inputs */
+.input-group { margin-bottom: 15px; }
 .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
 
 select {
@@ -149,10 +151,20 @@ label { font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 5px; 
     margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
 }
 .card-title { font-weight: 600; color: var(--primary); font-size: 0.95rem; }
-.btn-delete {
-    background: rgba(239, 68, 68, 0.1); border: none; color: #ef4444; 
-    cursor: pointer; padding: 6px; border-radius: 8px;
+
+.header-actions {
+    display: flex;
+    gap: 8px;
 }
+
+.btn-icon-action {
+    background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); 
+    color: #e2e8f0; cursor: pointer; padding: 6px; border-radius: 8px;
+    transition: background 0.2s;
+}
+.btn-icon-action:hover { background: rgba(255, 255, 255, 0.1); }
+.btn-delete { color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+.btn-copy-script { color: #34d399; border-color: rgba(52, 211, 153, 0.3); }
 
 textarea {
     width: 100%; padding: 14px; border-radius: 12px;
@@ -211,6 +223,16 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
             <span class="material-icons-round">rss_feed</span> Generate News Script
         </div>
         
+        <div class="input-group">
+            <label>Select Category</label>
+            <select id="newsCategory">
+                <option value="general">🌍 General News (Top Headlines)</option>
+                <option value="govt_rules">⚖️ गवर्नमेंट का नया नियम (New Rules)</option>
+                <option value="govt_schemes">🎁 भारत सरकार की नई योजना (Schemes)</option>
+                <option value="govt_regulations">🇮🇳 भारत सरकार के नए नियम (Regulations)</option>
+            </select>
+        </div>
+
         <div class="grid-row">
             <div>
                 <label>Headlines Count</label>
@@ -296,6 +318,8 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
     async function fetchAndCreateSegments() {
         const count = document.getElementById('newsCount').value;
         const lines = document.getElementById('lineCount').value;
+        const category = document.getElementById('newsCategory').value; // Get Category
+        
         const btn = document.getElementById('fetchBtn');
         const loader = document.getElementById('mainLoader');
 
@@ -310,11 +334,11 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
         loader.style.display = 'block';
 
         try {
-            // Call Vercel Backend
+            // Call Vercel Backend (Updated to send Category)
             const response = await fetch('/api/generate-news', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ count, lines })
+                body: JSON.stringify({ count, lines, category }) 
             });
 
             const data = await response.json();
@@ -383,9 +407,14 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
                     <span class="material-icons-round" style="vertical-align:middle; font-size:1.1rem; color:#0ea5e9;">description</span> 
                     ${title}
                 </span>
-                <button class="btn-delete" onclick="removeSegment(${id})">
-                    <span class="material-icons-round">close</span>
-                </button>
+                <div class="header-actions">
+                    <button class="btn-icon-action btn-copy-script" onclick="copySegmentScript(${id})" title="Copy Script">
+                        <span class="material-icons-round">content_copy</span>
+                    </button>
+                    <button class="btn-icon-action btn-delete" onclick="removeSegment(${id})" title="Delete">
+                        <span class="material-icons-round">close</span>
+                    </button>
+                </div>
             </div>
 
             <label>Select Anchor Voice</label>
@@ -481,6 +510,22 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
     function removeSegment(id) {
         document.getElementById(`seg-${id}`).remove();
         checkEmpty();
+    }
+
+    // Function to Copy specific Script
+    function copySegmentScript(id) {
+        const textField = document.getElementById(`text-${id}`);
+        if(textField) {
+            navigator.clipboard.writeText(textField.value).then(() => {
+                // Visual Feedback
+                const btn = document.querySelector(`#seg-${id} .btn-copy-script`);
+                const originalColor = btn.style.color;
+                btn.style.background = "rgba(52, 211, 153, 0.2)";
+                setTimeout(() => {
+                    btn.style.background = "";
+                }, 500);
+            }).catch(err => alert("Failed to copy!"));
+        }
     }
     
     function checkEmpty() {
