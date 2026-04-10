@@ -379,10 +379,15 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
                 `;
                 metaBox.appendChild(metaDiv);
 
-                // 2. Headline Box Item
+                // -----------------------------------------------------------
+                // 2. Headline Box Item (यहाँ Auto-Filter लगाया गया है)
+                // यह लाइन अंग्रेजी के "Breaking News:", "Top News:" जैसे शब्दों को हटा देगी।
+                // -----------------------------------------------------------
+                let cleanTitle = item.title.replace(/^[a-zA-Z\s]*(News|Breaking|Top|Today|Update|Live)[a-zA-Z\s]*[:\-]\s*/gi, '').trim();
+
                 const headDiv = document.createElement('div');
                 headDiv.className = 'headline-item';
-                headDiv.textContent = item.title;
+                headDiv.textContent = cleanTitle; // Cleaned Hindi Title
                 headlineBox.appendChild(headDiv);
             });
 
