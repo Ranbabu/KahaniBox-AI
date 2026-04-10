@@ -230,8 +230,8 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
         <div class="input-group">
             <label>Select Category</label>
             <select id="newsCategory">
-                <option value="general">🌍 General News (Top Headlines)</option>
-                <option value="desh_duniya">🌐 देश-दुनिया की खबरें (National & International)</option> <!-- NEW CATEGORY ADDED HERE -->
+                <!-- देश दुनिया को 'general' वैल्यू दी गई है ताकि बैकएंड इसे आसानी से समझ सके -->
+                <option value="general">🌐 देश-दुनिया की खबरें (National & International)</option>
                 <option value="govt_rules">⚖️ गवर्नमेंट का नया नियम (New Rules)</option>
                 <option value="govt_schemes">🎁 भारत सरकार की नई योजना (Schemes)</option>
                 <option value="govt_regulations">🇮🇳 भारत सरकार के नए नियम (Regulations)</option>
@@ -350,7 +350,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
         loader.style.display = 'block';
 
         try {
-            // Call Backend API with strict instructions for Anchor Style & Pauses
+            // API Call (Safe Payload)
             const response = await fetch('/api/generate-news', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -358,20 +358,22 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
                     count: count, 
                     lines: lines, 
                     category: category,
-                    // Sending hidden instructions to Backend AI for better TTS pauses and specific category focus
-                    instructions: "Generate news ONLY for the selected category. Write the script in a Professional Hindi News Anchor style. Use short sentences, proper commas (,) and periods (.) to ensure natural pauses when converted to Text-to-Speech audio."
+                    // Safe injection for AI to use Anchor Style with pauses
+                    style_instruction: "Write strictly as a Professional Hindi News Anchor. Use small sentences, commas (,) and full stops (.) for text-to-speech pauses." 
                 }) 
             });
 
             const data = await response.json();
 
+            // Check for critical backend errors
             if (data.error) throw new Error(data.error);
-            if (!data.script) throw new Error("No script received from AI.");
 
-            // A. Populate Info Boxes (Source, Headlines)
             infoSection.style.display = 'flex';
             
-            if(data.metadata && Array.isArray(data.metadata)){
+            let validMetadata = data.metadata && Array.isArray(data.metadata) && data.metadata.length > 0;
+
+            // Populate Info Boxes (Source, Headlines)
+            if(validMetadata){
                 data.metadata.forEach((item, idx) => {
                     const dateObj = new Date(item.pubDate);
                     const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
@@ -395,30 +397,41 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
                 });
             }
 
-            // B. SMART SPLIT LOGIC (Fixing the issue where boxes didn't open)
-            let rawScript = data.script.trim();
-            let scriptParts = [];
+            // --- FAIL-SAFE BACKUP SYSTEM ---
+            // अगर AI स्क्रिप्ट नहीं देता है, तो सिस्टम खुद हेडलाइन से एंकर स्क्रिप्ट बना लेगा
+            let rawScript = data.script || data.text || "";
 
+            if (!rawScript || rawScript.trim() === "") {
+                if (validMetadata) {
+                    console.warn("AI failed to give script. Using Backup Generator...");
+                    rawScript = data.metadata.map(m => {
+                        let t = m.title.replace(/^[a-zA-Z\s]*(News|Breaking|Top|Today|Update|Live)[a-zA-Z\s]*[:\-]\s*/gi, '').trim();
+                        // Anchor style fallback text
+                        return `नमस्कार, अगली बड़ी खबर है... ${t}।`; 
+                    }).join("|||");
+                } else {
+                    throw new Error("AI Server did not return any news.");
+                }
+            }
+
+            // Split Script & Create Audio Cards
+            let scriptParts = [];
             if (rawScript.includes("|||")) {
                 scriptParts = rawScript.split("|||");
             } else if (rawScript.includes("---")) {
                 scriptParts = rawScript.split("---");
             } else {
-                // If AI fails to add dividers, smartly split by double newlines or numerical bullet points
-                scriptParts = rawScript.split(/\n\s*\n/).filter(p => p.length > 20);
+                // Split smartly by paragraphs if AI forgets symbols
+                scriptParts = rawScript.split(/\n\s*\n/).filter(p => p.trim().length > 10);
             }
 
-            // Fallback if still empty
-            if(scriptParts.length === 0 && rawScript.length > 0) {
-                scriptParts = [rawScript];
-            }
-
-            // Populate Audio Cards and Script Box
             let displayIndex = 1;
-            scriptParts.forEach((part, index) => {
+            scriptParts.forEach((part) => {
                 let cleanPart = part.trim();
+                // Remove numbering (e.g. 1. 2.) from start so TTS doesn't read numbers
+                cleanPart = cleanPart.replace(/^\d+[\.\)]\s*/, '');
+                
                 if(cleanPart) {
-                    
                     // Populate Full Script Box
                     const scriptDiv = document.createElement('div');
                     scriptDiv.className = 'script-item';
@@ -505,7 +518,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
         if(preSelectedVoice) document.getElementById(`voice-${id}`).value = preSelectedVoice;
         checkEmpty();
         
-        // Only scroll if manually added, otherwise Fetch function handles scroll
+        // Only scroll if manually added
         if(!newsIndex) div.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
@@ -566,18 +579,13 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
         checkEmpty();
     }
 
-    // Function to Copy specific Script
     function copySegmentScript(id) {
         const textField = document.getElementById(`text-${id}`);
         if(textField) {
             navigator.clipboard.writeText(textField.value).then(() => {
-                // Visual Feedback
                 const btn = document.querySelector(`#seg-${id} .btn-copy-script`);
-                const originalColor = btn.style.color;
                 btn.style.background = "rgba(52, 211, 153, 0.2)";
-                setTimeout(() => {
-                    btn.style.background = "";
-                }, 500);
+                setTimeout(() => { btn.style.background = ""; }, 500);
             }).catch(err => alert("Failed to copy!"));
         }
     }
