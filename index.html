@@ -100,7 +100,7 @@ label { font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 5px; 
 .btn-fetch:active { transform: scale(0.98); }
 .btn-fetch:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* --- Section 2: Info Boxes (Source/Headlines) --- */
+/* --- Section 2: Info Boxes (Source/Headlines/Scripts) --- */
 .info-container {
     display: none; /* Hidden initially */
     flex-direction: column;
@@ -114,7 +114,7 @@ label { font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 5px; 
 .box-title { font-weight: bold; color: #cbd5e1; font-size: 0.95rem; }
 .box-content { padding: 15px; max-height: 250px; overflow-y: auto; color: #e2e8f0; white-space: pre-wrap; line-height: 1.6; font-size: 0.9rem; }
 
-/* Meta & Headline Items */
+/* Meta, Headline & Script Items */
 .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid #334155; padding: 8px 0; font-size: 0.85rem; }
 .meta-item:last-child { border-bottom: none; }
 .meta-source { color: #34d399; font-weight: bold; }
@@ -122,6 +122,10 @@ label { font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 5px; 
 
 .headline-item { padding: 8px 0; border-bottom: 1px dashed #334155; font-size: 1rem; }
 .headline-item:last-child { border-bottom: none; }
+
+.script-item { padding: 12px 0; border-bottom: 1px dashed #334155; font-size: 0.95rem; }
+.script-item:last-child { border-bottom: none; }
+.script-item strong { color: #a78bfa; font-size: 1rem; }
 
 .copy-btn { background: #475569; border: none; color: white; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
 .copy-btn:active { background: #64748b; }
@@ -277,6 +281,16 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
             </div>
             <div class="box-content" id="headlineBox"></div>
         </div>
+
+        <!-- NEW SCRIPT BOX ADDED HERE -->
+        <div class="box">
+            <div class="box-header">
+                <span class="box-title">📝 Full Script</span>
+                <button class="copy-btn" onclick="copyText('scriptBox')">Copy Script</button>
+            </div>
+            <div class="box-content" id="scriptBox"></div>
+        </div>
+
     </div>
 
     <div id="segments-list"></div>
@@ -299,6 +313,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
     const infoSection = document.getElementById("infoSection");
     const metaBox = document.getElementById("metaBox");
     const headlineBox = document.getElementById("headlineBox");
+    const scriptBox = document.getElementById("scriptBox"); // NEW VAR
     const globalApiUrl = document.getElementById("global-api-url");
 
     // Voice Options
@@ -318,7 +333,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
     async function fetchAndCreateSegments() {
         const count = document.getElementById('newsCount').value;
         const lines = document.getElementById('lineCount').value;
-        const category = document.getElementById('newsCategory').value; // Get Category
+        const category = document.getElementById('newsCategory').value; 
         
         const btn = document.getElementById('fetchBtn');
         const loader = document.getElementById('mainLoader');
@@ -327,6 +342,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
         segmentsList.innerHTML = '';
         metaBox.innerHTML = '';
         headlineBox.innerHTML = '';
+        scriptBox.innerHTML = ''; // RESET SCRIPT BOX
         infoSection.style.display = 'none';
         checkEmpty();
         
@@ -334,7 +350,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
         loader.style.display = 'block';
 
         try {
-            // Call Vercel Backend (Updated to send Category)
+            // Call Backend API
             const response = await fetch('/api/generate-news', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -345,7 +361,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
 
             if (data.error) throw new Error(data.error);
 
-            // A. Populate Info Boxes (Source & Headlines)
+            // A. Populate Info Boxes (Source, Headlines)
             infoSection.style.display = 'flex';
             
             data.metadata.forEach((item, idx) => {
@@ -370,12 +386,20 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
                 headlineBox.appendChild(headDiv);
             });
 
-            // B. Split Script & Create Audio Cards
+            // B. Split Script & Create Audio Cards + Populate Script Box
             const rawScript = data.script;
             const scriptParts = rawScript.split("|||");
 
             scriptParts.forEach((part, index) => {
                 if(part.trim()) {
+                    
+                    // 3. Populate NEW Script Box
+                    const scriptDiv = document.createElement('div');
+                    scriptDiv.className = 'script-item';
+                    scriptDiv.innerHTML = `<strong>News ${index + 1}:</strong><br/> ${part.trim()}`;
+                    scriptBox.appendChild(scriptDiv);
+
+                    // 4. Create Individual Audio Segment Cards with Script Auto-filled
                     const preSelectVoice = (index % 2 === 0) ? 'hi-male' : 'hi-female';
                     addSegment(part.trim(), preSelectVoice, index + 1);
                 }
