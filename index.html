@@ -231,6 +231,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
             <label>Select Category</label>
             <select id="newsCategory">
                 <option value="general">🌍 General News (Top Headlines)</option>
+                <option value="desh_duniya">🌐 देश-दुनिया की खबरें (National & International)</option> <!-- NEW CATEGORY ADDED HERE -->
                 <option value="govt_rules">⚖️ गवर्नमेंट का नया नियम (New Rules)</option>
                 <option value="govt_schemes">🎁 भारत सरकार की नई योजना (Schemes)</option>
                 <option value="govt_regulations">🇮🇳 भारत सरकार के नए नियम (Regulations)</option>
@@ -282,7 +283,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
             <div class="box-content" id="headlineBox"></div>
         </div>
 
-        <!-- NEW SCRIPT BOX ADDED HERE -->
         <div class="box">
             <div class="box-header">
                 <span class="box-title">📝 Full Script</span>
@@ -313,7 +313,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
     const infoSection = document.getElementById("infoSection");
     const metaBox = document.getElementById("metaBox");
     const headlineBox = document.getElementById("headlineBox");
-    const scriptBox = document.getElementById("scriptBox"); // NEW VAR
+    const scriptBox = document.getElementById("scriptBox"); 
     const globalApiUrl = document.getElementById("global-api-url");
 
     // Voice Options
@@ -342,7 +342,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
         segmentsList.innerHTML = '';
         metaBox.innerHTML = '';
         headlineBox.innerHTML = '';
-        scriptBox.innerHTML = ''; // RESET SCRIPT BOX
+        scriptBox.innerHTML = ''; 
         infoSection.style.display = 'none';
         checkEmpty();
         
@@ -350,63 +350,86 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
         loader.style.display = 'block';
 
         try {
-            // Call Backend API
+            // Call Backend API with strict instructions for Anchor Style & Pauses
             const response = await fetch('/api/generate-news', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ count, lines, category }) 
+                body: JSON.stringify({ 
+                    count: count, 
+                    lines: lines, 
+                    category: category,
+                    // Sending hidden instructions to Backend AI for better TTS pauses and specific category focus
+                    instructions: "Generate news ONLY for the selected category. Write the script in a Professional Hindi News Anchor style. Use short sentences, proper commas (,) and periods (.) to ensure natural pauses when converted to Text-to-Speech audio."
+                }) 
             });
 
             const data = await response.json();
 
             if (data.error) throw new Error(data.error);
+            if (!data.script) throw new Error("No script received from AI.");
 
             // A. Populate Info Boxes (Source, Headlines)
             infoSection.style.display = 'flex';
             
-            data.metadata.forEach((item, idx) => {
-                // Time Formatting
-                const dateObj = new Date(item.pubDate);
-                const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                const dateStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+            if(data.metadata && Array.isArray(data.metadata)){
+                data.metadata.forEach((item, idx) => {
+                    const dateObj = new Date(item.pubDate);
+                    const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                    const dateStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
-                // 1. Meta Box Item
-                const metaDiv = document.createElement('div');
-                metaDiv.className = 'meta-item';
-                metaDiv.innerHTML = `
-                    <span>${idx + 1}. <span class="meta-source">${item.source}</span></span>
-                    <span class="meta-time">${timeStr} | ${dateStr}</span>
-                `;
-                metaBox.appendChild(metaDiv);
+                    const metaDiv = document.createElement('div');
+                    metaDiv.className = 'meta-item';
+                    metaDiv.innerHTML = `
+                        <span>${idx + 1}. <span class="meta-source">${item.source || "News Source"}</span></span>
+                        <span class="meta-time">${timeStr} | ${dateStr}</span>
+                    `;
+                    metaBox.appendChild(metaDiv);
 
-                // -----------------------------------------------------------
-                // 2. Headline Box Item (यहाँ Auto-Filter लगाया गया है)
-                // यह लाइन अंग्रेजी के "Breaking News:", "Top News:" जैसे शब्दों को हटा देगी।
-                // -----------------------------------------------------------
-                let cleanTitle = item.title.replace(/^[a-zA-Z\s]*(News|Breaking|Top|Today|Update|Live)[a-zA-Z\s]*[:\-]\s*/gi, '').trim();
+                    // Clean Title
+                    let cleanTitle = (item.title || "").replace(/^[a-zA-Z\s]*(News|Breaking|Top|Today|Update|Live)[a-zA-Z\s]*[:\-]\s*/gi, '').trim();
 
-                const headDiv = document.createElement('div');
-                headDiv.className = 'headline-item';
-                headDiv.textContent = cleanTitle; // Cleaned Hindi Title
-                headlineBox.appendChild(headDiv);
-            });
+                    const headDiv = document.createElement('div');
+                    headDiv.className = 'headline-item';
+                    headDiv.textContent = cleanTitle; 
+                    headlineBox.appendChild(headDiv);
+                });
+            }
 
-            // B. Split Script & Create Audio Cards + Populate Script Box
-            const rawScript = data.script;
-            const scriptParts = rawScript.split("|||");
+            // B. SMART SPLIT LOGIC (Fixing the issue where boxes didn't open)
+            let rawScript = data.script.trim();
+            let scriptParts = [];
 
+            if (rawScript.includes("|||")) {
+                scriptParts = rawScript.split("|||");
+            } else if (rawScript.includes("---")) {
+                scriptParts = rawScript.split("---");
+            } else {
+                // If AI fails to add dividers, smartly split by double newlines or numerical bullet points
+                scriptParts = rawScript.split(/\n\s*\n/).filter(p => p.length > 20);
+            }
+
+            // Fallback if still empty
+            if(scriptParts.length === 0 && rawScript.length > 0) {
+                scriptParts = [rawScript];
+            }
+
+            // Populate Audio Cards and Script Box
+            let displayIndex = 1;
             scriptParts.forEach((part, index) => {
-                if(part.trim()) {
+                let cleanPart = part.trim();
+                if(cleanPart) {
                     
-                    // 3. Populate NEW Script Box
+                    // Populate Full Script Box
                     const scriptDiv = document.createElement('div');
                     scriptDiv.className = 'script-item';
-                    scriptDiv.innerHTML = `<strong>News ${index + 1}:</strong><br/> ${part.trim()}`;
+                    scriptDiv.innerHTML = `<strong>News ${displayIndex}:</strong><br/> ${cleanPart}`;
                     scriptBox.appendChild(scriptDiv);
 
-                    // 4. Create Individual Audio Segment Cards with Script Auto-filled
-                    const preSelectVoice = (index % 2 === 0) ? 'hi-male' : 'hi-female';
-                    addSegment(part.trim(), preSelectVoice, index + 1);
+                    // Create Individual Audio Segment Cards
+                    const preSelectVoice = (displayIndex % 2 !== 0) ? 'hi-male' : 'hi-female';
+                    addSegment(cleanPart, preSelectVoice, displayIndex);
+                    
+                    displayIndex++;
                 }
             });
 
@@ -416,7 +439,9 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
             btn.disabled = false;
             loader.style.display = 'none';
             // Scroll to Info Section smoothly
-            infoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (infoSection.style.display === 'flex') {
+                infoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
     }
 
