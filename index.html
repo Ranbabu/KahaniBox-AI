@@ -230,8 +230,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
         <div class="input-group">
             <label>Select Category</label>
             <select id="newsCategory">
-                <!-- देश दुनिया को 'general' वैल्यू दी गई है ताकि बैकएंड इसे आसानी से समझ सके -->
-                <option value="general">🌐 देश-दुनिया की खबरें (National & International)</option>
+                <option value="general">🌍 General News (Top Headlines)</option>
                 <option value="govt_rules">⚖️ गवर्नमेंट का नया नियम (New Rules)</option>
                 <option value="govt_schemes">🎁 भारत सरकार की नई योजना (Schemes)</option>
                 <option value="govt_regulations">🇮🇳 भारत सरकार के नए नियम (Regulations)</option>
@@ -283,6 +282,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
             <div class="box-content" id="headlineBox"></div>
         </div>
 
+        <!-- NEW SCRIPT BOX ADDED HERE -->
         <div class="box">
             <div class="box-header">
                 <span class="box-title">📝 Full Script</span>
@@ -313,7 +313,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
     const infoSection = document.getElementById("infoSection");
     const metaBox = document.getElementById("metaBox");
     const headlineBox = document.getElementById("headlineBox");
-    const scriptBox = document.getElementById("scriptBox"); 
+    const scriptBox = document.getElementById("scriptBox"); // NEW VAR
     const globalApiUrl = document.getElementById("global-api-url");
 
     // Voice Options
@@ -342,7 +342,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
         segmentsList.innerHTML = '';
         metaBox.innerHTML = '';
         headlineBox.innerHTML = '';
-        scriptBox.innerHTML = ''; 
+        scriptBox.innerHTML = ''; // RESET SCRIPT BOX
         infoSection.style.display = 'none';
         checkEmpty();
         
@@ -350,99 +350,63 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
         loader.style.display = 'block';
 
         try {
-            // API Call (Safe Payload)
+            // Call Backend API
             const response = await fetch('/api/generate-news', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    count: count, 
-                    lines: lines, 
-                    category: category,
-                    // Safe injection for AI to use Anchor Style with pauses
-                    style_instruction: "Write strictly as a Professional Hindi News Anchor. Use small sentences, commas (,) and full stops (.) for text-to-speech pauses." 
-                }) 
+                body: JSON.stringify({ count, lines, category }) 
             });
 
             const data = await response.json();
 
-            // Check for critical backend errors
             if (data.error) throw new Error(data.error);
 
+            // A. Populate Info Boxes (Source, Headlines)
             infoSection.style.display = 'flex';
             
-            let validMetadata = data.metadata && Array.isArray(data.metadata) && data.metadata.length > 0;
+            data.metadata.forEach((item, idx) => {
+                // Time Formatting
+                const dateObj = new Date(item.pubDate);
+                const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                const dateStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
-            // Populate Info Boxes (Source, Headlines)
-            if(validMetadata){
-                data.metadata.forEach((item, idx) => {
-                    const dateObj = new Date(item.pubDate);
-                    const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                    const dateStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                // 1. Meta Box Item
+                const metaDiv = document.createElement('div');
+                metaDiv.className = 'meta-item';
+                metaDiv.innerHTML = `
+                    <span>${idx + 1}. <span class="meta-source">${item.source}</span></span>
+                    <span class="meta-time">${timeStr} | ${dateStr}</span>
+                `;
+                metaBox.appendChild(metaDiv);
 
-                    const metaDiv = document.createElement('div');
-                    metaDiv.className = 'meta-item';
-                    metaDiv.innerHTML = `
-                        <span>${idx + 1}. <span class="meta-source">${item.source || "News Source"}</span></span>
-                        <span class="meta-time">${timeStr} | ${dateStr}</span>
-                    `;
-                    metaBox.appendChild(metaDiv);
+                // -----------------------------------------------------------
+                // 2. Headline Box Item (यहाँ Auto-Filter लगाया गया है)
+                // यह लाइन अंग्रेजी के "Breaking News:", "Top News:" जैसे शब्दों को हटा देगी।
+                // -----------------------------------------------------------
+                let cleanTitle = item.title.replace(/^[a-zA-Z\s]*(News|Breaking|Top|Today|Update|Live)[a-zA-Z\s]*[:\-]\s*/gi, '').trim();
 
-                    // Clean Title
-                    let cleanTitle = (item.title || "").replace(/^[a-zA-Z\s]*(News|Breaking|Top|Today|Update|Live)[a-zA-Z\s]*[:\-]\s*/gi, '').trim();
+                const headDiv = document.createElement('div');
+                headDiv.className = 'headline-item';
+                headDiv.textContent = cleanTitle; // Cleaned Hindi Title
+                headlineBox.appendChild(headDiv);
+            });
 
-                    const headDiv = document.createElement('div');
-                    headDiv.className = 'headline-item';
-                    headDiv.textContent = cleanTitle; 
-                    headlineBox.appendChild(headDiv);
-                });
-            }
+            // B. Split Script & Create Audio Cards + Populate Script Box
+            const rawScript = data.script;
+            const scriptParts = rawScript.split("|||");
 
-            // --- FAIL-SAFE BACKUP SYSTEM ---
-            // अगर AI स्क्रिप्ट नहीं देता है, तो सिस्टम खुद हेडलाइन से एंकर स्क्रिप्ट बना लेगा
-            let rawScript = data.script || data.text || "";
-
-            if (!rawScript || rawScript.trim() === "") {
-                if (validMetadata) {
-                    console.warn("AI failed to give script. Using Backup Generator...");
-                    rawScript = data.metadata.map(m => {
-                        let t = m.title.replace(/^[a-zA-Z\s]*(News|Breaking|Top|Today|Update|Live)[a-zA-Z\s]*[:\-]\s*/gi, '').trim();
-                        // Anchor style fallback text
-                        return `नमस्कार, अगली बड़ी खबर है... ${t}।`; 
-                    }).join("|||");
-                } else {
-                    throw new Error("AI Server did not return any news.");
-                }
-            }
-
-            // Split Script & Create Audio Cards
-            let scriptParts = [];
-            if (rawScript.includes("|||")) {
-                scriptParts = rawScript.split("|||");
-            } else if (rawScript.includes("---")) {
-                scriptParts = rawScript.split("---");
-            } else {
-                // Split smartly by paragraphs if AI forgets symbols
-                scriptParts = rawScript.split(/\n\s*\n/).filter(p => p.trim().length > 10);
-            }
-
-            let displayIndex = 1;
-            scriptParts.forEach((part) => {
-                let cleanPart = part.trim();
-                // Remove numbering (e.g. 1. 2.) from start so TTS doesn't read numbers
-                cleanPart = cleanPart.replace(/^\d+[\.\)]\s*/, '');
-                
-                if(cleanPart) {
-                    // Populate Full Script Box
+            scriptParts.forEach((part, index) => {
+                if(part.trim()) {
+                    
+                    // 3. Populate NEW Script Box
                     const scriptDiv = document.createElement('div');
                     scriptDiv.className = 'script-item';
-                    scriptDiv.innerHTML = `<strong>News ${displayIndex}:</strong><br/> ${cleanPart}`;
+                    scriptDiv.innerHTML = `<strong>News ${index + 1}:</strong><br/> ${part.trim()}`;
                     scriptBox.appendChild(scriptDiv);
 
-                    // Create Individual Audio Segment Cards
-                    const preSelectVoice = (displayIndex % 2 !== 0) ? 'hi-male' : 'hi-female';
-                    addSegment(cleanPart, preSelectVoice, displayIndex);
-                    
-                    displayIndex++;
+                    // 4. Create Individual Audio Segment Cards with Script Auto-filled
+                    const preSelectVoice = (index % 2 === 0) ? 'hi-male' : 'hi-female';
+                    addSegment(part.trim(), preSelectVoice, index + 1);
                 }
             });
 
@@ -452,9 +416,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
             btn.disabled = false;
             loader.style.display = 'none';
             // Scroll to Info Section smoothly
-            if (infoSection.style.display === 'flex') {
-                infoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+            infoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
 
@@ -518,7 +480,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
         if(preSelectedVoice) document.getElementById(`voice-${id}`).value = preSelectedVoice;
         checkEmpty();
         
-        // Only scroll if manually added
+        // Only scroll if manually added, otherwise Fetch function handles scroll
         if(!newsIndex) div.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
@@ -579,13 +541,18 @@ audio { width: 100%; height: 40px; border-radius: 20px; }
         checkEmpty();
     }
 
+    // Function to Copy specific Script
     function copySegmentScript(id) {
         const textField = document.getElementById(`text-${id}`);
         if(textField) {
             navigator.clipboard.writeText(textField.value).then(() => {
+                // Visual Feedback
                 const btn = document.querySelector(`#seg-${id} .btn-copy-script`);
+                const originalColor = btn.style.color;
                 btn.style.background = "rgba(52, 211, 153, 0.2)";
-                setTimeout(() => { btn.style.background = ""; }, 500);
+                setTimeout(() => {
+                    btn.style.background = "";
+                }, 500);
             }).catch(err => alert("Failed to copy!"));
         }
     }
