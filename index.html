@@ -451,7 +451,7 @@ News Count: ${count}
 Script Length (per news): ${lines}
 
 Rules:
-1. हर न्यूज़ के लिए एक स्पष्ट 'Headline' दें।
+1. हर न्यूज़ के लिए एक स्पष्ट 'Headline' दें। (हेडलाइन बहुत बड़ी ना हो)
 2. उसके बाद 'Script' दें जो एंकर पढ़ेगा।
 3. हर न्यूज़ आइटम को ||| (three pipes) से अलग करें।
 4. सिर्फ और सिर्फ हिंदी में उत्तर दें।
@@ -524,7 +524,7 @@ Script: [दूसरी स्क्रिप्ट]`;
                     
                     const preSelectVoice = (validScriptCount % 2 === 0) ? 'hi-male' : 'hi-female';
                     
-                    // Add segment using the strict headline for image search
+                    // Add segment using the strict headline
                     const segId = addSegment(extractedScript, preSelectVoice, validScriptCount + 1, extractedHeadline);
                     fetchGoogleImagesForSegment(segId, extractedHeadline, imageLimit);
                     validScriptCount++;
@@ -568,7 +568,15 @@ Script: [दूसरी स्क्रिप्ट]`;
                 </div>
             </div>
 
-            <div class="image-gallery-placeholder" id="img-status-${id}">Images will load here based on headline...</div>
+            <label style="color:#a78bfa;">Image Search Query (Shorten if no results):</label>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <input type="text" id="img-query-${id}" value="${headline || text.substring(0, 30)}" style="margin:0; flex:1;" placeholder="Enter keywords to search image...">
+                <button class="btn-action-green" style="margin:0; width:auto; padding:10px 15px; border-radius:8px;" onclick="manualImageSearch(${id})">
+                    <span class="material-icons-round">search</span> Search
+                </button>
+            </div>
+
+            <div class="image-gallery-placeholder" id="img-status-${id}">Images will load here...</div>
             <div class="image-gallery" id="gallery-${id}"></div>
 
             <label>Select Anchor Voice</label>
@@ -601,38 +609,56 @@ Script: [दूसरी स्क्रिप्ट]`;
         return id; 
     }
 
-    // --- STEP 3: FETCH IMAGES VIA GOOGLE API (Strictly By Headline) ---
+    // --- MANUAL IMAGE SEARCH FUNCTION ---
+    function manualImageSearch(segId) {
+        const query = document.getElementById(`img-query-${segId}`).value.trim();
+        const limit = document.getElementById('imageFetchCount').value;
+        if(!query) return alert("Please enter a search query!");
+        
+        // Update the headline data fallback in case user changes context
+        segmentsData[segId].headline = query;
+        fetchGoogleImagesForSegment(segId, query, limit);
+    }
+
+    // --- STEP 3: FETCH IMAGES VIA GOOGLE API ---
     async function fetchGoogleImagesForSegment(segId, query, limit) {
         const apiKey = localStorage.getItem('googleApiKey');
         const cx = localStorage.getItem('googleCxId');
         const statusBox = document.getElementById(`img-status-${segId}`);
         const gallery = document.getElementById(`gallery-${segId}`);
 
-        if(!apiKey || !cx) { statusBox.innerText = "⚠️ Google API Key or CX not set in settings."; return; }
+        if(!apiKey || !cx) { 
+            statusBox.style.display = "block";
+            statusBox.innerText = "⚠️ Google API Key or CX not set in settings."; 
+            return; 
+        }
 
-        statusBox.innerText = "Searching images for headline...";
+        statusBox.style.display = "block";
+        statusBox.innerText = "Searching images...";
+        statusBox.style.color = "#94a3b8";
+        
+        gallery.innerHTML = ''; // Clear previous images
+        segmentsData[segId].images = []; // Reset image array
+
         try {
             const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}&searchType=image&num=${limit}`;
             const res = await fetch(url);
             const data = await res.json();
 
             if(data.error) throw new Error(data.error.message);
-            if(!data.items || data.items.length === 0) throw new Error("No images found for this headline.");
+            if(!data.items || data.items.length === 0) throw new Error("No images found. Try shortening the keyword.");
 
             statusBox.style.display = "none"; 
-            segmentsData[segId].images = [];
             
             data.items.forEach(item => {
-                // To fix Canvas CORS issue, we use a proxy approach or anonymous tag
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(item.link)}`;
+                // Using highly reliable wsrv.nl proxy to bypass CORS for canvas
+                const proxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(item.link)}`;
                 
                 const img = document.createElement('img');
                 img.crossOrigin = "anonymous";
-                img.src = proxyUrl; // Use proxy to ensure it draws on canvas later
+                img.src = proxyUrl;
                 img.onerror = function() { 
                     this.style.display = 'none'; 
-                    // Fallback to direct link if proxy fails
-                    this.src = item.link; 
                 };
                 gallery.appendChild(img);
                 
@@ -642,6 +668,7 @@ Script: [दूसरी स्क्रिप्ट]`;
                 imgObj.src = proxyUrl;
             });
         } catch(e) {
+            statusBox.style.display = "block";
             statusBox.innerText = "❌ Image Search Failed: " + e.message;
             statusBox.style.color = "#ef4444";
         }
