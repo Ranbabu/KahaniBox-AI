@@ -62,9 +62,10 @@ header {
     z-index: 90; padding: 20px; box-shadow: -5px 0 15px rgba(0,0,0,0.5); overflow-y: auto;
 }
 .sidebar.active { right: 0; }
-.sidebar h3 { margin-top: 0; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.sidebar h3 { margin-top: 0; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;}
+.sidebar label { font-weight: bold; margin-bottom: 8px; color: #cbd5e1;}
 .sidebar input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: #fff; }
-.sidebar-btns { display: flex; gap: 10px; }
+.sidebar-btns { display: flex; gap: 10px; margin-top: 10px; }
 .btn-save { background: #10b981; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; flex: 1; font-weight: bold; }
 .btn-clear { background: #ef4444; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; flex: 1; font-weight: bold; }
 
@@ -200,11 +201,16 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
 </header>
 
 <div class="sidebar" id="apiSidebar">
-    <h3>Google API Settings</h3>
+    <h3><span class="material-icons-round" style="vertical-align:middle;">smart_toy</span> Groq API Settings (AI Script)</h3>
+    <label>Groq API Key</label>
+    <input type="password" id="groqApiKey" placeholder="Enter Groq API Key">
+    
+    <h3 style="margin-top:20px;"><span class="material-icons-round" style="vertical-align:middle;">image</span> Google API Settings (Images)</h3>
     <label>Google API Key</label>
     <input type="password" id="gApiKey" placeholder="Enter API Key">
     <label>Search Engine ID (CX)</label>
     <input type="text" id="gCxId" placeholder="Enter CX ID">
+    
     <div class="sidebar-btns">
         <button class="btn-save" onclick="saveSettings()">Save</button>
         <button class="btn-clear" onclick="clearSettings()">Clear</button>
@@ -299,11 +305,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         <button class="btn-fetch" id="fetchBtn" onclick="fetchAndCreateSegments()">
             <span class="material-icons-round">auto_awesome</span> Fetch News & Generate Segments
         </button>
-        <div class="loader-overlay" id="mainLoader"><span class="material-icons-round spin">sync</span> Processing...</div>
-        
-        <div id="scriptWarning" style="display:none; color:#ef4444; font-size:0.85rem; margin-top:10px; text-align:center; padding:10px; background:rgba(239, 68, 68, 0.1); border-radius:8px;">
-            ⚠️ चेतावनी: आपके बैकएंड सर्वर ने डिटेल्ड स्क्रिप्ट नहीं दी है, इसलिए केवल हेडलाइन को ही स्क्रिप्ट माना गया है। कृपया अपने API/Python सर्वर की जाँच करें।
-        </div>
+        <div class="loader-overlay" id="mainLoader"><span class="material-icons-round spin">sync</span> AI Script Generating...</div>
     </div>
 
     <input type="hidden" id="global-api-url" value="https://hindi-tts-3gjy.onrender.com">
@@ -319,7 +321,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     
     <div id="empty-state" style="text-align:center; color:#64748b; margin-top:40px;">
         <span class="material-icons-round" style="font-size:3rem; opacity:0.3;">format_quote</span>
-        <p>No scripts yet. Click "Fetch News" above to populate.</p>
+        <p>No scripts yet. Click "Fetch News" above to populate using AI.</p>
     </div>
 
 </div>
@@ -356,9 +358,29 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     // Sidebar & Settings
     function toggleSidebar() { document.getElementById('apiSidebar').classList.toggle('active'); document.getElementById('dataSidebar').classList.remove('active'); }
     function toggleDataSidebar() { document.getElementById('dataSidebar').classList.toggle('active'); document.getElementById('apiSidebar').classList.remove('active');}
-    function saveSettings() { localStorage.setItem('googleApiKey', document.getElementById('gApiKey').value); localStorage.setItem('googleCxId', document.getElementById('gCxId').value); alert('Settings Saved!'); toggleSidebar(); }
-    function loadSettings() { const key = localStorage.getItem('googleApiKey'); const cx = localStorage.getItem('googleCxId'); if(key) document.getElementById('gApiKey').value = key; if(cx) document.getElementById('gCxId').value = cx; }
-    function clearSettings() { localStorage.removeItem('googleApiKey'); localStorage.removeItem('googleCxId'); document.getElementById('gApiKey').value = ''; document.getElementById('gCxId').value = ''; alert('Settings Cleared!'); }
+    function saveSettings() { 
+        localStorage.setItem('groqApiKey', document.getElementById('groqApiKey').value);
+        localStorage.setItem('googleApiKey', document.getElementById('gApiKey').value); 
+        localStorage.setItem('googleCxId', document.getElementById('gCxId').value); 
+        alert('Settings Saved Successfully!'); toggleSidebar(); 
+    }
+    function loadSettings() { 
+        const groqKey = localStorage.getItem('groqApiKey');
+        const key = localStorage.getItem('googleApiKey'); 
+        const cx = localStorage.getItem('googleCxId'); 
+        if(groqKey) document.getElementById('groqApiKey').value = groqKey;
+        if(key) document.getElementById('gApiKey').value = key; 
+        if(cx) document.getElementById('gCxId').value = cx; 
+    }
+    function clearSettings() { 
+        localStorage.removeItem('groqApiKey');
+        localStorage.removeItem('googleApiKey'); 
+        localStorage.removeItem('googleCxId'); 
+        document.getElementById('groqApiKey').value = '';
+        document.getElementById('gApiKey').value = ''; 
+        document.getElementById('gCxId').value = ''; 
+        alert('Settings Cleared!'); 
+    }
 
     // --- GLOBAL VOICE SYNC FUNCTION ---
     function syncAllVoices(selectedValue) {
@@ -368,8 +390,15 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         });
     }
 
-    // --- STEP 1: FETCH NEWS ---
+    // --- STEP 1: FETCH NEWS SCRIPT VIA GROQ API ---
     async function fetchAndCreateSegments() {
+        const groqKey = localStorage.getItem('groqApiKey');
+        if(!groqKey) {
+            alert("कृपया सेटिंग्स में जाकर पहले Groq API Key सेव करें!");
+            toggleSidebar();
+            return;
+        }
+
         const count = document.getElementById('newsCount').value;
         const lines = document.getElementById('lineCount').value;
         const category = document.getElementById('newsCategory').value; 
@@ -377,72 +406,88 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         
         const btn = document.getElementById('fetchBtn');
         const loader = document.getElementById('mainLoader');
-        const warningBox = document.getElementById('scriptWarning');
 
         segmentsList.innerHTML = '';
         document.getElementById("metaBox").innerHTML = '';
         document.getElementById("headlineBox").innerHTML = '';
         document.getElementById("scriptBox").innerHTML = '';
-        warningBox.style.display = 'none';
         checkEmpty();
         
         btn.disabled = true;
         loader.style.display = 'block';
 
+        const prompt = `आप एक प्रोफेशनल हिंदी न्यूज़ एंकर के लिए स्क्रिप्ट राइटर हैं।
+मुझे इंटरनेट की ताज़ा खबरों या जानकारी के आधार पर न्यूज़ स्क्रिप्ट चाहिए।
+Category/Topic: ${category}
+News Count: ${count}
+Script Length (per news): ${lines}
+
+Rules:
+1. हर न्यूज़ के लिए एक स्पष्ट 'Headline' दें।
+2. उसके बाद 'Script' दें जो एंकर पढ़ेगा।
+3. हर न्यूज़ आइटम को ||| (three pipes) से अलग करें।
+4. सिर्फ और सिर्फ हिंदी में उत्तर दें।
+
+Format required:
+Headline: [हेडलाइन यहाँ लिखें]
+Script: [स्क्रिप्ट यहाँ लिखें]
+|||
+Headline: [दूसरी हेडलाइन]
+Script: [दूसरी स्क्रिप्ट]`;
+
         try {
-            const response = await fetch('/api/generate-news', {
+            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ count, lines, category }) 
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${groqKey}`
+                },
+                body: JSON.stringify({ 
+                    model: "llama3-70b-8192", 
+                    messages: [{role: "user", content: prompt}],
+                    temperature: 0.7
+                }) 
             });
             
             const data = await response.json();
-            if (data.error) throw new Error(data.error);
+            if (data.error) throw new Error(data.error.message);
 
+            const aiText = data.choices[0].message.content;
             document.getElementById('dataSidebar').classList.add('active');
 
-            const cleanHeadlines = [];
+            const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById("metaBox").innerHTML += `<div class="meta-item"><span><span class="meta-source">Groq AI (Llama 3)</span></span><span class="meta-time">${timeStr}</span></div>`;
 
-            if(data.metadata && Array.isArray(data.metadata)) {
-                data.metadata.forEach((item, idx) => {
-                    const dateObj = item.pubDate ? new Date(item.pubDate) : new Date();
-                    const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                    document.getElementById("metaBox").innerHTML += `<div class="meta-item"><span>${idx + 1}. <span class="meta-source">${item.source || 'News'}</span></span><span class="meta-time">${timeStr}</span></div>`;
-                    let cleanTitle = (item.title || "").replace(/^[a-zA-Z\s]*(News|Breaking|Top|Today|Update|Live)[a-zA-Z\s]*[:\-]\s*/gi, '').trim();
-                    cleanHeadlines.push(cleanTitle);
-                    document.getElementById("headlineBox").innerHTML += `<div class="headline-item">${cleanTitle}</div>`;
-                });
-            }
-
-            let scriptParts = [];
-            // Backend Script Check Logic
-            if (data.script && typeof data.script === 'string' && data.script.includes("|||")) {
-                scriptParts = data.script.split("|||");
-            } else {
-                console.warn("Backend failed to generate detailed script. Using headlines.");
-                warningBox.style.display = "block"; // Show warning to user
-                scriptParts = cleanHeadlines;
-            }
-
+            let scriptParts = aiText.split("|||");
             let validScriptCount = 0;
+
             for (let index = 0; index < scriptParts.length; index++) {
-                const part = scriptParts[index];
-                if(part && part.trim()) {
-                    document.getElementById("scriptBox").innerHTML += `<div class="script-item"><strong>News ${validScriptCount + 1}:</strong><br/> ${part.trim()}</div>`;
+                const part = scriptParts[index].trim();
+                if(part) {
+                    let headlineMatch = part.match(/Headline:\s*([^\n]+)/i);
+                    let scriptMatch = part.match(/Script:\s*([\s\S]+)/i);
+                    
+                    let extractedHeadline = headlineMatch ? headlineMatch[1].trim() : `News ${validScriptCount + 1}`;
+                    let extractedScript = scriptMatch ? scriptMatch[1].trim() : part;
+
+                    document.getElementById("headlineBox").innerHTML += `<div class="headline-item">${extractedHeadline}</div>`;
+                    document.getElementById("scriptBox").innerHTML += `<div class="script-item"><strong>${extractedHeadline}</strong><br/> ${extractedScript}</div>`;
                     
                     const preSelectVoice = (validScriptCount % 2 === 0) ? 'hi-male' : 'hi-female';
-                    const matchedHeadline = cleanHeadlines[index] || part.substring(0, 30);
                     
-                    const segId = addSegment(part.trim(), preSelectVoice, validScriptCount + 1, matchedHeadline);
-                    fetchGoogleImagesForSegment(segId, matchedHeadline, imageLimit);
+                    // Add segment using the strict headline for image search
+                    const segId = addSegment(extractedScript, preSelectVoice, validScriptCount + 1, extractedHeadline);
+                    fetchGoogleImagesForSegment(segId, extractedHeadline, imageLimit);
                     validScriptCount++;
                 }
             }
 
-            if(validScriptCount === 0) document.getElementById("scriptBox").innerHTML = "<div class='script-item'>No script content generated.</div>";
+            if(validScriptCount === 0) {
+                throw new Error("AI could not generate scripts in the correct format.");
+            }
 
         } catch (err) {
-            alert("Error fetching news: " + err.message);
+            alert("Error generating script: " + err.message);
         } finally {
             btn.disabled = false;
             loader.style.display = 'none';
@@ -455,11 +500,12 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         const id = segmentCount;
         
         let displayTitle = headline ? headline : text;
-        if(displayTitle.length > 40) displayTitle = displayTitle.substring(0, 40) + "...";
+        if(displayTitle.length > 50) displayTitle = displayTitle.substring(0, 50) + "...";
         
         const title = newsIndex ? `News #${newsIndex} : ${displayTitle}` : `Manual Segment #${id}`;
 
-        segmentsData[id] = { images: [], audioUrl: null, duration: 0 };
+        // Store headline properly in segmentsData for fallback text in Canvas
+        segmentsData[id] = { images: [], audioUrl: null, duration: 0, headline: headline };
 
         const div = document.createElement('div');
         div.className = 'segment-card';
@@ -473,7 +519,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
                 </div>
             </div>
 
-            <div class="image-gallery-placeholder" id="img-status-${id}">Images will load here...</div>
+            <div class="image-gallery-placeholder" id="img-status-${id}">Images will load here based on headline...</div>
             <div class="image-gallery" id="gallery-${id}"></div>
 
             <label>Select Anchor Voice</label>
@@ -506,38 +552,45 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         return id; 
     }
 
-    // --- STEP 3: FETCH IMAGES ---
+    // --- STEP 3: FETCH IMAGES VIA GOOGLE API (Strictly By Headline) ---
     async function fetchGoogleImagesForSegment(segId, query, limit) {
         const apiKey = localStorage.getItem('googleApiKey');
         const cx = localStorage.getItem('googleCxId');
         const statusBox = document.getElementById(`img-status-${segId}`);
         const gallery = document.getElementById(`gallery-${segId}`);
 
-        if(!apiKey || !cx) { statusBox.innerText = "⚠️ Google API Key or CX not set."; return; }
+        if(!apiKey || !cx) { statusBox.innerText = "⚠️ Google API Key or CX not set in settings."; return; }
 
-        statusBox.innerText = "Searching images...";
+        statusBox.innerText = "Searching images for headline...";
         try {
             const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}&searchType=image&num=${limit}`;
             const res = await fetch(url);
             const data = await res.json();
 
             if(data.error) throw new Error(data.error.message);
-            if(!data.items || data.items.length === 0) throw new Error("No images found.");
+            if(!data.items || data.items.length === 0) throw new Error("No images found for this headline.");
 
             statusBox.style.display = "none"; 
             segmentsData[segId].images = [];
             
             data.items.forEach(item => {
+                // To fix Canvas CORS issue, we use a proxy approach or anonymous tag
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(item.link)}`;
+                
                 const img = document.createElement('img');
-                img.src = item.link;
                 img.crossOrigin = "anonymous";
-                img.onerror = function() { this.style.display = 'none'; };
+                img.src = proxyUrl; // Use proxy to ensure it draws on canvas later
+                img.onerror = function() { 
+                    this.style.display = 'none'; 
+                    // Fallback to direct link if proxy fails
+                    this.src = item.link; 
+                };
                 gallery.appendChild(img);
                 
                 const imgObj = new Image();
                 imgObj.crossOrigin = "anonymous";
                 imgObj.onload = () => { segmentsData[segId].images.push(imgObj); };
-                imgObj.src = item.link;
+                imgObj.src = proxyUrl;
             });
         } catch(e) {
             statusBox.innerText = "❌ Image Search Failed: " + e.message;
@@ -589,7 +642,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         }
     }
 
-    // --- NEW: PLAY ALL AUDIO SEQUENCE ---
+    // --- PLAY ALL AUDIO SEQUENCE ---
     async function playAllAudioSequence() {
         const validIds = Object.keys(segmentsData).filter(id => segmentsData[id].audioUrl);
         if(validIds.length === 0) return alert("Please generate audio first!");
@@ -606,7 +659,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         }
     }
 
-    // --- STEP 5: VIDEO COMPILATION (Preview OR Download) ---
+    // --- STEP 5: VIDEO COMPILATION (Preview OR Download Fixed) ---
     async function runVideoSequence(isRecording = false) {
         if(isVideoEngineRunning) return alert("Please wait for current process to finish.");
         
@@ -717,16 +770,16 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
 
             function drawLoop(now) {
                 const elapsed = now - startTime;
-                if(images.length > 0) {
-                    currentImgIndex = Math.floor(elapsed / timePerImage);
-                    if(currentImgIndex >= images.length) currentImgIndex = images.length - 1;
-                    
+                currentImgIndex = Math.floor(elapsed / timePerImage);
+                if(currentImgIndex >= images.length) currentImgIndex = images.length - 1;
+                
+                ctx.fillStyle = "#0f172a";
+                ctx.fillRect(0,0, canvas.width, canvas.height);
+
+                if(images.length > 0 && images[currentImgIndex]) {
                     const img = images[currentImgIndex];
                     if(img.complete && img.naturalHeight !== 0) {
-                        ctx.fillStyle = "black";
-                        ctx.fillRect(0,0, canvas.width, canvas.height);
-                        
-                        // NEW FIX: Math.max ensures image covers the entire 16:9 canvas without black borders
+                        // Image Fill logic to avoid black borders
                         const hRatio = canvas.width / img.width;
                         const vRatio = canvas.height / img.height;
                         const ratio  = Math.max(hRatio, vRatio); 
@@ -736,15 +789,25 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
                         ctx.drawImage(img, 0,0, img.width, img.height, centerShift_x, centerShift_y, img.width*ratio, img.height*ratio);
                     }
                 } else {
+                    // Fallback: If image fails to load via CORS, show Headline Text smoothly
                     ctx.fillStyle = "#1e293b"; ctx.fillRect(0,0,canvas.width, canvas.height);
-                    ctx.fillStyle = "white"; ctx.font = "40px Arial"; ctx.textAlign = "center";
-                    ctx.fillText("No Valid Images Available", canvas.width/2, canvas.height/2);
+                    ctx.fillStyle = "#0ea5e9"; ctx.font = "bold 40px 'Segoe UI', Arial"; ctx.textAlign = "center";
+                    ctx.fillText("Breaking News", canvas.width/2, canvas.height/2 - 40);
+                    
+                    ctx.fillStyle = "white"; ctx.font = "30px 'Segoe UI', Arial"; 
+                    const maxTextWidth = canvas.width - 100;
+                    wrapText(ctx, data.headline || "News Segment", canvas.width/2, canvas.height/2 + 20, maxTextWidth, 40);
                 }
+                
                 animationFrameId = requestAnimationFrame(drawLoop);
             }
 
-            audioObj.play();
-            requestAnimationFrame(drawLoop);
+            audioObj.play().then(() => {
+                requestAnimationFrame(drawLoop);
+            }).catch(e => {
+                console.error("Audio Play Error:", e);
+                resolve();
+            });
         });
     }
 
@@ -772,15 +835,36 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
 
             function drawLoop() {
                 if(!videoEle.paused && !videoEle.ended) {
-                    // Fill whole canvas
                     ctx.drawImage(videoEle, 0, 0, canvas.width, canvas.height);
                 }
                 animationFrameId = requestAnimationFrame(drawLoop);
             }
 
-            videoEle.play();
-            requestAnimationFrame(drawLoop);
+            videoEle.play().then(() => {
+                requestAnimationFrame(drawLoop);
+            }).catch(e => {
+                resolve();
+            });
         });
+    }
+
+    // Utility function to wrap text on canvas if image is missing
+    function wrapText(context, text, x, y, maxWidth, lineHeight) {
+        var words = text.split(' ');
+        var line = '';
+        for(var n = 0; n < words.length; n++) {
+            var testLine = line + words[n] + ' ';
+            var metrics = context.measureText(testLine);
+            var testWidth = metrics.width;
+            if (testWidth > maxWidth && n > 0) {
+                context.fillText(line, x, y);
+                line = words[n] + ' ';
+                y += lineHeight;
+            } else {
+                line = testLine;
+            }
+        }
+        context.fillText(line, x, y);
     }
 
     function removeSegment(id) { document.getElementById(`seg-${id}`).remove(); delete segmentsData[id]; checkEmpty(); }
