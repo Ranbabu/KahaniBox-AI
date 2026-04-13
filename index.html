@@ -253,7 +253,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         
         <div class="input-group">
             <label>Breaking News Clip (2 sec video) [Optional]</label>
-            <!-- Added onchange event here to load the video properly -->
             <input type="file" id="transitionVideoInput" accept="video/mp4,video/webm" onchange="loadTransitionVideo(this)">
         </div>
 
@@ -341,7 +340,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     <span class="material-icons-round">add</span> Add Manual
 </button>
 
-<!-- Removed crossOrigin="anonymous" to fix local video export bug -->
 <video id="hiddenTransVideo" style="display:none;" playsinline></video>
 
 <script>
@@ -353,7 +351,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     let isVideoEngineRunning = false;
     let cancelVideoSequence = false;
     
-    // --- FIX: Global Audio Context to prevent crashing on second play ---
     let globalAudioCtx = null;
     function getAudioContext() {
         if (!globalAudioCtx) {
@@ -379,7 +376,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         </optgroup>
     `;
 
-    // Sidebar & Settings
     function toggleSidebar() { document.getElementById('apiSidebar').classList.toggle('active'); document.getElementById('dataSidebar').classList.remove('active'); }
     function toggleDataSidebar() { document.getElementById('dataSidebar').classList.toggle('active'); document.getElementById('apiSidebar').classList.remove('active');}
     function saveSettings() { 
@@ -418,7 +414,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         alert('Settings Cleared!'); 
     }
 
-    // --- GLOBAL VOICE SYNC FUNCTION ---
     function syncAllVoices(selectedValue) {
         const selects = document.querySelectorAll('select[id^="voice-"]');
         selects.forEach(select => {
@@ -426,7 +421,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         });
     }
 
-    // --- STEP 1: FETCH NEWS SCRIPT VIA AI (Groq OR Mistral) ---
     async function fetchAndCreateSegments() {
         const aiProvider = document.getElementById('aiProviderSelect').value;
         const groqKey = localStorage.getItem('groqApiKey');
@@ -555,7 +549,6 @@ Script: [दूसरी स्क्रिप्ट]`;
         }
     }
 
-    // --- STEP 2: CREATE SEGMENT ---
     function addSegment(text = "", preSelectedVoice = "hi-male", newsIndex = null, headline = "") {
         segmentCount++;
         const id = segmentCount;
@@ -620,7 +613,6 @@ Script: [दूसरी स्क्रिप्ट]`;
         return id; 
     }
 
-    // --- MANUAL IMAGE SEARCH FUNCTION ---
     function manualImageSearch(segId) {
         const query = document.getElementById(`img-query-${segId}`).value.trim();
         const limit = document.getElementById('imageFetchCount').value;
@@ -630,7 +622,6 @@ Script: [दूसरी स्क्रिप्ट]`;
         fetchGoogleImagesForSegment(segId, query, limit);
     }
 
-    // --- STEP 3: FETCH IMAGES VIA GOOGLE API ---
     async function fetchGoogleImagesForSegment(segId, query, limit) {
         const apiKey = localStorage.getItem('googleApiKey');
         const cx = localStorage.getItem('googleCxId');
@@ -683,7 +674,6 @@ Script: [दूसरी स्क्रिप्ट]`;
         }
     }
 
-    // --- STEP 4: GENERATE AUDIO ---
     async function generateAudio(id) {
         const text = document.getElementById(`text-${id}`).value.trim();
         const voice = document.getElementById(`voice-${id}`).value;
@@ -727,7 +717,6 @@ Script: [दूसरी स्क्रिप्ट]`;
         }
     }
 
-    // --- PLAY ALL AUDIO SEQUENCE ---
     async function playAllAudioSequence() {
         const validIds = Object.keys(segmentsData).filter(id => segmentsData[id].audioUrl);
         if(validIds.length === 0) return alert("Please generate audio first!");
@@ -744,16 +733,14 @@ Script: [दूसरी स्क्रिप्ट]`;
         }
     }
 
-    // --- FIX: LOAD TRANSITION VIDEO PROPERLY ---
     function loadTransitionVideo(input) {
         if(input.files && input.files.length > 0) {
             const transVid = document.getElementById("hiddenTransVideo");
             transVid.src = URL.createObjectURL(input.files[0]);
-            transVid.load(); // Load it into memory beforehand
+            transVid.load(); 
         }
     }
 
-    // --- STEP 5: VIDEO COMPILATION (Preview OR Download Fixed) ---
     async function runVideoSequence(isRecording = false) {
         if(isVideoEngineRunning) return alert("Please wait for current process to finish.");
         
@@ -769,7 +756,6 @@ Script: [दूसरी स्क्रिप्ट]`;
         const btnDownload = document.getElementById("btnDownload");
         const recIndicator = document.getElementById("recIndicator");
         
-        // FIX: Using global audio context to prevent browser crashing on second run
         const audioCtx = getAudioContext();
         const dest = audioCtx.createMediaStreamDestination();
         
@@ -778,6 +764,29 @@ Script: [दूसरी स्क्रिप्ट]`;
         
         let recorder, chunks = [];
 
+        // --- SMART FORMAT SELECTOR FOR MP4/KINEMASTER SUPPORT ---
+        let bestMimeType = '';
+        let fileExtension = 'mp4'; // Default aim for mp4
+        const supportedFormats = [
+            'video/mp4', // Best: Natively supports MP4 (Chrome 107+, Safari)
+            'video/webm;codecs=h264,aac', // Fallback 1: H.264 video inside WebM
+            'video/webm;codecs=h264,opus', // Fallback 2: H.264 with Opus
+            'video/webm;codecs=vp8,opus', // Fallback 3: Standard WebM
+            'video/webm'
+        ];
+
+        for (let format of supportedFormats) {
+            if (MediaRecorder.isTypeSupported(format)) {
+                bestMimeType = format;
+                // If it's pure webm with vp8, downloading as mp4 might corrupt in KineMaster, so we keep webm
+                // But if it has h264 or is native mp4, .mp4 extension works beautifully!
+                if (!format.includes('mp4') && !format.includes('h264')) {
+                    fileExtension = 'webm';
+                }
+                break;
+            }
+        }
+
         if(isRecording) {
             btnDownload.disabled = true; btnDownload.innerHTML = '<span class="spin material-icons-round">sync</span> Recording...';
             btnPreview.disabled = true;
@@ -785,13 +794,14 @@ Script: [दूसरी स्क्रिप्ट]`;
             
             const stream = canvas.captureStream(30);
             const combinedStream = new MediaStream([...stream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
-            recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm; codecs=vp8,opus' });
+            
+            recorder = new MediaRecorder(combinedStream, { mimeType: bestMimeType });
             recorder.ondataavailable = e => chunks.push(e.data);
             recorder.onstop = () => {
-                const finalBlob = new Blob(chunks, { type: 'video/webm' });
+                const finalBlob = new Blob(chunks, { type: bestMimeType });
                 const a = document.createElement("a");
                 a.href = URL.createObjectURL(finalBlob);
-                a.download = "News_Studio_Output.webm";
+                a.download = `News_Studio_Output.${fileExtension}`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -852,7 +862,6 @@ Script: [दूसरी स्क्रिप्ट]`;
 
             audioObj.onended = () => {
                 cancelAnimationFrame(animationFrameId);
-                // Safe disconnect as this node is unique to this iteration
                 source.disconnect();
                 resolve();
             };
@@ -918,7 +927,6 @@ Script: [दूसरी स्क्रिप्ट]`;
 
             videoEle.onended = () => {
                 cancelAnimationFrame(animationFrameId);
-                // Fix: Properly disconnect only output paths so it can be reused smoothly
                 source.disconnect(audioCtx.destination);
                 if(isRecording) source.disconnect(dest);
                 resolve();
