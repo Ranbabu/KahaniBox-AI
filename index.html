@@ -399,9 +399,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ count, lines, category }) 
             });
-
-            // Fallback for demo if backend is not connected:
-            // const data = { metadata: [{source:"Aaj Tak", pubDate: new Date(), title:"Breaking: Election Results Announced"}], script: "Breaking: Election Results Announced. The results are out.|||" };
             
             const data = await response.json();
             if (data.error) throw new Error(data.error);
@@ -409,40 +406,62 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
             infoSection.style.display = 'flex';
             const cleanHeadlines = [];
 
-            data.metadata.forEach((item, idx) => {
-                const dateObj = new Date(item.pubDate);
-                const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                
-                document.getElementById("metaBox").innerHTML += `
-                    <div class="meta-item"><span>${idx + 1}. <span class="meta-source">${item.source}</span></span><span class="meta-time">${timeStr}</span></div>
-                `;
+            // 1. Process Metadata safely
+            if(data.metadata && Array.isArray(data.metadata)) {
+                data.metadata.forEach((item, idx) => {
+                    const dateObj = item.pubDate ? new Date(item.pubDate) : new Date();
+                    const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                    
+                    document.getElementById("metaBox").innerHTML += `
+                        <div class="meta-item"><span>${idx + 1}. <span class="meta-source">${item.source || 'News'}</span></span><span class="meta-time">${timeStr}</span></div>
+                    `;
 
-                let cleanTitle = item.title.replace(/^[a-zA-Z\s]*(News|Breaking|Top|Today|Update|Live)[a-zA-Z\s]*[:\-]\s*/gi, '').trim();
-                cleanHeadlines.push(cleanTitle);
+                    let cleanTitle = (item.title || "").replace(/^[a-zA-Z\s]*(News|Breaking|Top|Today|Update|Live)[a-zA-Z\s]*[:\-]\s*/gi, '').trim();
+                    cleanHeadlines.push(cleanTitle);
 
-                document.getElementById("headlineBox").innerHTML += `<div class="headline-item">${cleanTitle}</div>`;
-            });
+                    document.getElementById("headlineBox").innerHTML += `<div class="headline-item">${cleanTitle}</div>`;
+                });
+            }
 
-            const rawScript = data.script;
-            const scriptParts = rawScript.split("|||");
+            // 2. Safe Script Processing (CRASH FIX)
+            let scriptParts = [];
+            
+            if (data.script && typeof data.script === 'string' && data.script.includes("|||")) {
+                // If API returned proper script
+                scriptParts = data.script.split("|||");
+            } else {
+                // FALLBACK: If API failed to generate script, use the headlines as script!
+                console.warn("Script generation failed or returned empty. Using headlines as fallback script.");
+                scriptParts = cleanHeadlines;
+            }
 
+            let validScriptCount = 0;
             for (let index = 0; index < scriptParts.length; index++) {
                 const part = scriptParts[index];
-                if(part.trim()) {
-                    document.getElementById("scriptBox").innerHTML += `<div class="script-item"><strong>News ${index + 1}:</strong><br/> ${part.trim()}</div>`;
+                if(part && part.trim()) {
+                    document.getElementById("scriptBox").innerHTML += `<div class="script-item"><strong>News ${validScriptCount + 1}:</strong><br/> ${part.trim()}</div>`;
                     
-                    const preSelectVoice = (index % 2 === 0) ? 'hi-male' : 'hi-female';
-                    const matchedHeadline = cleanHeadlines[index] || "Current News";
+                    const preSelectVoice = (validScriptCount % 2 === 0) ? 'hi-male' : 'hi-female';
+                    // Match headline or use part text
+                    const matchedHeadline = cleanHeadlines[index] || part.substring(0, 30);
                     
                     // Create Segment
-                    const segId = addSegment(part.trim(), preSelectVoice, index + 1, matchedHeadline);
+                    const segId = addSegment(part.trim(), preSelectVoice, validScriptCount + 1, matchedHeadline);
                     
                     // Trigger Image Fetch for this segment
                     fetchGoogleImagesForSegment(segId, matchedHeadline, imageLimit);
+                    
+                    validScriptCount++;
                 }
             }
+
+            if(validScriptCount === 0) {
+                document.getElementById("scriptBox").innerHTML = "<div class='script-item'>No script content generated.</div>";
+            }
+
         } catch (err) {
             alert("Error fetching news: " + err.message);
+            console.error(err);
         } finally {
             btn.disabled = false;
             loader.style.display = 'none';
@@ -454,7 +473,12 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     function addSegment(text = "", preSelectedVoice = "hi-male", newsIndex = null, headline = "") {
         segmentCount++;
         const id = segmentCount;
-        const title = newsIndex ? `News #${newsIndex} : ${headline.substring(0,30)}...` : `Manual Segment #${id}`;
+        
+        // Safe headline processing
+        let displayTitle = headline ? headline : text;
+        if(displayTitle.length > 30) displayTitle = displayTitle.substring(0, 30) + "...";
+        
+        const title = newsIndex ? `News #${newsIndex} : ${displayTitle}` : `Manual Segment #${id}`;
 
         // Initialize Data Store for this segment
         segmentsData[id] = { images: [], audioUrl: null, duration: 0 };
