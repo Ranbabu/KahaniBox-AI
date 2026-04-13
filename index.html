@@ -203,7 +203,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
 <div class="sidebar" id="apiSidebar">
     <h3><span class="material-icons-round" style="vertical-align:middle;">smart_toy</span> AI Provider Settings</h3>
     
-    <label>Select AI Provider</label>
+    <label>Select AI Provider (Script)</label>
     <select id="aiProviderSelect">
         <option value="groq">Groq AI (Fastest)</option>
         <option value="mistral">Mistral AI (High Quality)</option>
@@ -215,9 +215,16 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     <label>Mistral AI API Key</label>
     <input type="password" id="mistralApiKey" placeholder="Enter Mistral API Key">
     
-    <h3 style="margin-top:20px;"><span class="material-icons-round" style="vertical-align:middle;">image</span> Google API Settings (Images)</h3>
-    <label>Google API Key</label>
-    <input type="password" id="gApiKey" placeholder="Enter API Key">
+    <h3 style="margin-top:20px; border-top: 1px solid var(--border); padding-top:10px;"><span class="material-icons-round" style="vertical-align:middle;">image</span> Image Search Settings</h3>
+    
+    <label style="color:#34d399;">Select Image Source</label>
+    <select id="imageProviderSelect">
+        <option value="google">Google API (Fast, Daily 100 Limit)</option>
+        <option value="free">Free Web Scraper (Unlimited)</option>
+    </select>
+
+    <label>Google API Key (If Google API selected)</label>
+    <input type="password" id="gApiKey" placeholder="Enter Google API Key">
     <label>Search Engine ID (CX)</label>
     <input type="text" id="gCxId" placeholder="Enter CX ID">
     
@@ -380,6 +387,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     function toggleDataSidebar() { document.getElementById('dataSidebar').classList.toggle('active'); document.getElementById('apiSidebar').classList.remove('active');}
     function saveSettings() { 
         localStorage.setItem('aiProvider', document.getElementById('aiProviderSelect').value);
+        localStorage.setItem('imageProvider', document.getElementById('imageProviderSelect').value);
         localStorage.setItem('groqApiKey', document.getElementById('groqApiKey').value);
         localStorage.setItem('mistralApiKey', document.getElementById('mistralApiKey').value);
         localStorage.setItem('googleApiKey', document.getElementById('gApiKey').value); 
@@ -388,12 +396,14 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     }
     function loadSettings() { 
         const aiProvider = localStorage.getItem('aiProvider');
+        const imgProvider = localStorage.getItem('imageProvider');
         const groqKey = localStorage.getItem('groqApiKey');
         const mistralKey = localStorage.getItem('mistralApiKey');
         const key = localStorage.getItem('googleApiKey'); 
         const cx = localStorage.getItem('googleCxId'); 
         
         if(aiProvider) document.getElementById('aiProviderSelect').value = aiProvider;
+        if(imgProvider) document.getElementById('imageProviderSelect').value = imgProvider;
         if(groqKey) document.getElementById('groqApiKey').value = groqKey;
         if(mistralKey) document.getElementById('mistralApiKey').value = mistralKey;
         if(key) document.getElementById('gApiKey').value = key; 
@@ -401,12 +411,14 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     }
     function clearSettings() { 
         localStorage.removeItem('aiProvider');
+        localStorage.removeItem('imageProvider');
         localStorage.removeItem('groqApiKey');
         localStorage.removeItem('mistralApiKey');
         localStorage.removeItem('googleApiKey'); 
         localStorage.removeItem('googleCxId'); 
         
         document.getElementById('aiProviderSelect').value = 'groq';
+        document.getElementById('imageProviderSelect').value = 'google';
         document.getElementById('groqApiKey').value = '';
         document.getElementById('mistralApiKey').value = '';
         document.getElementById('gApiKey').value = ''; 
@@ -532,7 +544,7 @@ Script: [दूसरी स्क्रिप्ट]`;
                     const preSelectVoice = (validScriptCount % 2 === 0) ? 'hi-male' : 'hi-female';
                     
                     const segId = addSegment(extractedScript, preSelectVoice, validScriptCount + 1, extractedHeadline);
-                    fetchGoogleImagesForSegment(segId, extractedHeadline, imageLimit);
+                    fetchImagesForSegment(segId, extractedHeadline, imageLimit);
                     validScriptCount++;
                 }
             }
@@ -619,59 +631,92 @@ Script: [दूसरी स्क्रिप्ट]`;
         if(!query) return alert("Please enter a search query!");
         
         segmentsData[segId].headline = query;
-        fetchGoogleImagesForSegment(segId, query, limit);
+        fetchImagesForSegment(segId, query, limit);
     }
 
-    async function fetchGoogleImagesForSegment(segId, query, limit) {
-        const apiKey = localStorage.getItem('googleApiKey');
-        const cx = localStorage.getItem('googleCxId');
+    // --- SMART IMAGE FETCHER (Google API or Free Unlimited Scraper) ---
+    async function fetchImagesForSegment(segId, query, limit) {
+        const imgProvider = document.getElementById('imageProviderSelect').value;
         const statusBox = document.getElementById(`img-status-${segId}`);
         const gallery = document.getElementById(`gallery-${segId}`);
-
-        if(!apiKey || !cx) { 
-            statusBox.style.display = "block";
-            statusBox.innerText = "⚠️ Google API Key or CX not set in settings."; 
-            return; 
-        }
-
-        statusBox.style.display = "block";
-        statusBox.innerText = "Searching images...";
-        statusBox.style.color = "#94a3b8";
         
+        statusBox.style.display = "block";
+        statusBox.style.color = "#94a3b8";
         gallery.innerHTML = ''; 
         segmentsData[segId].images = []; 
 
-        try {
-            const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}&searchType=image&num=${limit}`;
-            const res = await fetch(url);
-            const data = await res.json();
-
-            if(data.error) throw new Error(data.error.message);
-            if(!data.items || data.items.length === 0) throw new Error("No images found. Try shortening the keyword.");
-
-            statusBox.style.display = "none"; 
+        if (imgProvider === 'google') {
+            // Option 1: Google API
+            const apiKey = localStorage.getItem('googleApiKey');
+            const cx = localStorage.getItem('googleCxId');
+            if(!apiKey || !cx) { 
+                statusBox.innerText = "⚠️ Google API Key or CX not set in settings. Please use Free Scraper or add keys."; 
+                return; 
+            }
+            statusBox.innerText = "Searching images via Google...";
             
-            data.items.forEach(item => {
-                const proxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(item.link)}`;
+            try {
+                const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}&searchType=image&num=${limit}`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if(data.error) throw new Error(data.error.message);
+                if(!data.items || data.items.length === 0) throw new Error("No images found.");
+
+                processAndRenderImages(segId, data.items.map(item => item.link), statusBox, gallery);
+            } catch(e) {
+                statusBox.innerText = "❌ Google Search Failed: " + e.message;
+                statusBox.style.color = "#ef4444";
+            }
+            
+        } else {
+            // Option 2: Free Unlimited Scraper (Using Bing Images via Proxy)
+            statusBox.innerText = "Scraping images for free (Unlimited)...";
+            try {
+                const bingUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(query + " news")}`;
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(bingUrl)}`;
                 
-                const img = document.createElement('img');
-                img.crossOrigin = "anonymous";
-                img.src = proxyUrl;
-                img.onerror = function() { 
-                    this.style.display = 'none'; 
-                };
-                gallery.appendChild(img);
+                const res = await fetch(proxyUrl);
+                if (!res.ok) throw new Error("Proxy Server Down. Try again later.");
                 
-                const imgObj = new Image();
-                imgObj.crossOrigin = "anonymous";
-                imgObj.onload = () => { segmentsData[segId].images.push(imgObj); };
-                imgObj.src = proxyUrl;
-            });
-        } catch(e) {
-            statusBox.style.display = "block";
-            statusBox.innerText = "❌ Image Search Failed: " + e.message;
-            statusBox.style.color = "#ef4444";
+                const data = await res.json();
+                const html = data.contents;
+                
+                // Regex to find image URLs in Bing's HTML
+                const urls = [];
+                const regex = /murl&quot;:&quot;(.*?)&quot;/g;
+                let match;
+                while ((match = regex.exec(html)) !== null && urls.length < limit) {
+                    urls.push(match[1]);
+                }
+
+                if(urls.length === 0) throw new Error("No images found via Scraper. Try shortening the keyword.");
+                
+                processAndRenderImages(segId, urls, statusBox, gallery);
+            } catch(e) {
+                statusBox.innerText = "❌ Scraper Failed: " + e.message;
+                statusBox.style.color = "#ef4444";
+            }
         }
+    }
+
+    // Helper function to safely load images into canvas without CORS errors
+    function processAndRenderImages(segId, urlArray, statusBox, gallery) {
+        statusBox.style.display = "none"; 
+        urlArray.forEach(url => {
+            const proxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
+            
+            const img = document.createElement('img');
+            img.crossOrigin = "anonymous";
+            img.src = proxyUrl;
+            img.onerror = function() { this.style.display = 'none'; };
+            gallery.appendChild(img);
+            
+            const imgObj = new Image();
+            imgObj.crossOrigin = "anonymous";
+            imgObj.onload = () => { segmentsData[segId].images.push(imgObj); };
+            imgObj.src = proxyUrl;
+        });
     }
 
     async function generateAudio(id) {
@@ -764,22 +809,19 @@ Script: [दूसरी स्क्रिप्ट]`;
         
         let recorder, chunks = [];
 
-        // --- SMART FORMAT SELECTOR FOR MP4/KINEMASTER SUPPORT ---
         let bestMimeType = '';
-        let fileExtension = 'mp4'; // Default aim for mp4
+        let fileExtension = 'mp4'; 
         const supportedFormats = [
-            'video/mp4', // Best: Natively supports MP4 (Chrome 107+, Safari)
-            'video/webm;codecs=h264,aac', // Fallback 1: H.264 video inside WebM
-            'video/webm;codecs=h264,opus', // Fallback 2: H.264 with Opus
-            'video/webm;codecs=vp8,opus', // Fallback 3: Standard WebM
+            'video/mp4', 
+            'video/webm;codecs=h264,aac', 
+            'video/webm;codecs=h264,opus', 
+            'video/webm;codecs=vp8,opus', 
             'video/webm'
         ];
 
         for (let format of supportedFormats) {
             if (MediaRecorder.isTypeSupported(format)) {
                 bestMimeType = format;
-                // If it's pure webm with vp8, downloading as mp4 might corrupt in KineMaster, so we keep webm
-                // But if it has h264 or is native mp4, .mp4 extension works beautifully!
                 if (!format.includes('mp4') && !format.includes('h264')) {
                     fileExtension = 'webm';
                 }
