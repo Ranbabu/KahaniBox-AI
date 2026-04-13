@@ -113,7 +113,8 @@ label { font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 5px; 
 }
 .btn-action { background: linear-gradient(135deg, #3b82f6, #2dd4bf); margin-top:10px; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
 .btn-action-green { background: linear-gradient(135deg, #10b981, #059669); margin-top:10px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
-.btn-fetch:active, .btn-action:active, .btn-action-green:active { transform: scale(0.98); }
+.btn-action-upload { background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; color: white; padding: 10px 15px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.9rem; }
+.btn-fetch:active, .btn-action:active, .btn-action-green:active, .btn-action-upload:active { transform: scale(0.98); }
 .btn-fetch:disabled, .btn-action:disabled, .btn-action-green:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* --- Live Video Preview --- */
@@ -220,8 +221,12 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     <label style="color:#34d399;">Select Image Source</label>
     <select id="imageProviderSelect">
         <option value="google">Google API (Fast, Daily 100 Limit)</option>
-        <option value="free">Free Web Scraper (Unlimited)</option>
+        <option value="free">Free API (Wikimedia - Stable)</option>
+        <option value="custom" selected>Custom API (ranimage)</option>
     </select>
+
+    <label>Custom API URL (If Custom API selected)</label>
+    <input type="text" id="customImageUrl" placeholder="Enter Custom API URL" value="https://ranimage.onrender.com/api/search">
 
     <label>Google API Key (If Google API selected)</label>
     <input type="password" id="gApiKey" placeholder="Enter Google API Key">
@@ -388,6 +393,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     function saveSettings() { 
         localStorage.setItem('aiProvider', document.getElementById('aiProviderSelect').value);
         localStorage.setItem('imageProvider', document.getElementById('imageProviderSelect').value);
+        localStorage.setItem('customImageUrl', document.getElementById('customImageUrl').value);
         localStorage.setItem('groqApiKey', document.getElementById('groqApiKey').value);
         localStorage.setItem('mistralApiKey', document.getElementById('mistralApiKey').value);
         localStorage.setItem('googleApiKey', document.getElementById('gApiKey').value); 
@@ -397,6 +403,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     function loadSettings() { 
         const aiProvider = localStorage.getItem('aiProvider');
         const imgProvider = localStorage.getItem('imageProvider');
+        const customUrl = localStorage.getItem('customImageUrl');
         const groqKey = localStorage.getItem('groqApiKey');
         const mistralKey = localStorage.getItem('mistralApiKey');
         const key = localStorage.getItem('googleApiKey'); 
@@ -404,6 +411,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         
         if(aiProvider) document.getElementById('aiProviderSelect').value = aiProvider;
         if(imgProvider) document.getElementById('imageProviderSelect').value = imgProvider;
+        if(customUrl) document.getElementById('customImageUrl').value = customUrl;
         if(groqKey) document.getElementById('groqApiKey').value = groqKey;
         if(mistralKey) document.getElementById('mistralApiKey').value = mistralKey;
         if(key) document.getElementById('gApiKey').value = key; 
@@ -412,13 +420,15 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     function clearSettings() { 
         localStorage.removeItem('aiProvider');
         localStorage.removeItem('imageProvider');
+        localStorage.removeItem('customImageUrl');
         localStorage.removeItem('groqApiKey');
         localStorage.removeItem('mistralApiKey');
         localStorage.removeItem('googleApiKey'); 
         localStorage.removeItem('googleCxId'); 
         
         document.getElementById('aiProviderSelect').value = 'groq';
-        document.getElementById('imageProviderSelect').value = 'google';
+        document.getElementById('imageProviderSelect').value = 'custom';
+        document.getElementById('customImageUrl').value = 'https://ranimage.onrender.com/api/search';
         document.getElementById('groqApiKey').value = '';
         document.getElementById('mistralApiKey').value = '';
         document.getElementById('gApiKey').value = ''; 
@@ -584,12 +594,17 @@ Script: [दूसरी स्क्रिप्ट]`;
                 </div>
             </div>
 
-            <label style="color:#a78bfa;">Image Search Query (Shorten if no results):</label>
-            <div style="display:flex; gap:10px; margin-bottom:10px;">
-                <input type="text" id="img-query-${id}" value="${headline || text.substring(0, 30)}" style="margin:0; flex:1;" placeholder="Enter keywords to search image...">
+            <label style="color:#a78bfa;">Image Search Query & Manual Upload:</label>
+            <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap: wrap;">
+                <input type="text" id="img-query-${id}" value="${headline || text.substring(0, 30)}" style="margin:0; flex:1; min-width: 200px;" placeholder="Keywords...">
                 <button class="btn-action-green" style="margin:0; width:auto; padding:10px 15px; border-radius:8px;" onclick="manualImageSearch(${id})">
                     <span class="material-icons-round">search</span> Search
                 </button>
+                
+                <label for="manual-upload-${id}" class="btn-action-upload" style="margin:0;">
+                    <span class="material-icons-round">upload_file</span> Upload
+                </label>
+                <input type="file" id="manual-upload-${id}" accept="image/*" multiple style="display:none;" onchange="handleManualImageUpload(event, ${id})">
             </div>
 
             <div class="image-gallery-placeholder" id="img-status-${id}">Images will load here...</div>
@@ -625,6 +640,30 @@ Script: [दूसरी स्क्रिप्ट]`;
         return id; 
     }
 
+    function handleManualImageUpload(event, segId) {
+        const files = event.target.files;
+        if (!files || files.length === 0) return;
+        
+        const gallery = document.getElementById(`gallery-${segId}`);
+        const statusBox = document.getElementById(`img-status-${segId}`);
+        statusBox.style.display = "none";
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const objectUrl = URL.createObjectURL(file);
+            
+            const img = document.createElement('img');
+            img.src = objectUrl;
+            gallery.appendChild(img);
+            
+            const imgObj = new Image();
+            imgObj.onload = () => { segmentsData[segId].images.push(imgObj); };
+            imgObj.src = objectUrl;
+        }
+        
+        event.target.value = "";
+    }
+
     function manualImageSearch(segId) {
         const query = document.getElementById(`img-query-${segId}`).value.trim();
         const limit = document.getElementById('imageFetchCount').value;
@@ -634,7 +673,7 @@ Script: [दूसरी स्क्रिप्ट]`;
         fetchImagesForSegment(segId, query, limit);
     }
 
-    // --- SMART IMAGE FETCHER (Google API or Free Unlimited Scraper) ---
+    // --- SMART IMAGE FETCHER (Google API, Free Wiki API, or Custom Render API) ---
     async function fetchImagesForSegment(segId, query, limit) {
         const imgProvider = document.getElementById('imageProviderSelect').value;
         const statusBox = document.getElementById(`img-status-${segId}`);
@@ -642,65 +681,95 @@ Script: [दूसरी स्क्रिप्ट]`;
         
         statusBox.style.display = "block";
         statusBox.style.color = "#94a3b8";
+        
+        let seconds = 0;
+        let searchingText = imgProvider === 'custom' ? "Searching Custom API (Server waking up)..." : "Searching images...";
+        
+        statusBox.innerText = `${searchingText} (${seconds}s)`;
+        const timerId = setInterval(() => {
+            seconds++;
+            statusBox.innerText = `${searchingText} (${seconds}s)`;
+        }, 1000);
+
         gallery.innerHTML = ''; 
         segmentsData[segId].images = []; 
 
-        if (imgProvider === 'google') {
-            // Option 1: Google API
-            const apiKey = localStorage.getItem('googleApiKey');
-            const cx = localStorage.getItem('googleCxId');
-            if(!apiKey || !cx) { 
-                statusBox.innerText = "⚠️ Google API Key or CX not set in settings. Please use Free Scraper or add keys."; 
-                return; 
-            }
-            statusBox.innerText = "Searching images via Google...";
-            
-            try {
+        try {
+            if (imgProvider === 'google') {
+                const apiKey = localStorage.getItem('googleApiKey');
+                const cx = localStorage.getItem('googleCxId');
+                if(!apiKey || !cx) { 
+                    throw new Error("Google API Key or CX not set in settings."); 
+                }
+                
                 const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}&searchType=image&num=${limit}`;
                 const res = await fetch(url);
                 const data = await res.json();
 
                 if(data.error) throw new Error(data.error.message);
-                if(!data.items || data.items.length === 0) throw new Error("No images found.");
+                if(!data.items || data.items.length === 0) throw new Error("No images found. Try a shorter keyword.");
 
                 processAndRenderImages(segId, data.items.map(item => item.link), statusBox, gallery);
-            } catch(e) {
-                statusBox.innerText = "❌ Google Search Failed: " + e.message;
-                statusBox.style.color = "#ef4444";
-            }
-            
-        } else {
-            // Option 2: Free Unlimited Scraper (Using Bing Images via Proxy)
-            statusBox.innerText = "Scraping images for free (Unlimited)...";
-            try {
-                const bingUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(query + " news")}`;
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(bingUrl)}`;
                 
-                const res = await fetch(proxyUrl);
-                if (!res.ok) throw new Error("Proxy Server Down. Try again later.");
+            } else if (imgProvider === 'custom') {
+                // Option 3: Custom API (ranimage.onrender.com)
+                const customUrlBase = document.getElementById('customImageUrl').value || "https://ranimage.onrender.com/api/search";
+                const url = `${customUrlBase}?q=${encodeURIComponent(query)}&limit=${limit}`;
+                
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("Custom Server might be sleeping. Please wait or try again.");
                 
                 const data = await res.json();
-                const html = data.contents;
                 
-                // Regex to find image URLs in Bing's HTML
-                const urls = [];
-                const regex = /murl&quot;:&quot;(.*?)&quot;/g;
-                let match;
-                while ((match = regex.exec(html)) !== null && urls.length < limit) {
-                    urls.push(match[1]);
+                // Smart Parser: Extracts URLs no matter what JSON structure your API sends
+                let urls = [];
+                if (Array.isArray(data)) urls = data;
+                else if (data.images && Array.isArray(data.images)) urls = data.images.map(i => i.url || i.link || i);
+                else if (data.items && Array.isArray(data.items)) urls = data.items.map(i => i.link || i.url || i);
+                else if (data.data && Array.isArray(data.data)) urls = data.data.map(i => i.url || i.link || i);
+                else if (data.results && Array.isArray(data.results)) urls = data.results.map(i => i.url || i.link || i);
+                
+                // Fallback Regex parser just in case structure is completely different
+                if (urls.length === 0) {
+                   const strData = JSON.stringify(data);
+                   const matches = strData.match(/https?:\/\/[^"'\s]+/g);
+                   if(matches) urls = matches.filter(u => u.match(/\.(jpeg|jpg|gif|png|webp)/i));
                 }
 
-                if(urls.length === 0) throw new Error("No images found via Scraper. Try shortening the keyword.");
+                if(urls.length === 0) throw new Error("No images found from Custom API. Try another keyword.");
+                
+                // slice to limit
+                urls = urls.slice(0, limit);
+                processAndRenderImages(segId, urls, statusBox, gallery);
+
+            } else {
+                // Option 2: Wikimedia Commons Free API
+                const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=${limit}&prop=imageinfo&iiprop=url&format=json&origin=*`;
+                
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("Free API Server error.");
+                
+                const data = await res.json();
+                
+                if(!data.query || !data.query.pages) {
+                    throw new Error("No images found on Free API. Try English keywords or upload manually.");
+                }
+                
+                const pages = data.query.pages;
+                const urls = Object.values(pages).map(page => page.imageinfo[0].url);
+
+                if(urls.length === 0) throw new Error("No images found. Try uploading manually.");
                 
                 processAndRenderImages(segId, urls, statusBox, gallery);
-            } catch(e) {
-                statusBox.innerText = "❌ Scraper Failed: " + e.message;
-                statusBox.style.color = "#ef4444";
             }
+        } catch(e) {
+            statusBox.innerText = "❌ Search Failed: " + e.message;
+            statusBox.style.color = "#ef4444";
+        } finally {
+            clearInterval(timerId); 
         }
     }
 
-    // Helper function to safely load images into canvas without CORS errors
     function processAndRenderImages(segId, urlArray, statusBox, gallery) {
         statusBox.style.display = "none"; 
         urlArray.forEach(url => {
