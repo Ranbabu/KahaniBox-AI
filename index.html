@@ -253,7 +253,8 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         
         <div class="input-group">
             <label>Breaking News Clip (2 sec video) [Optional]</label>
-            <input type="file" id="transitionVideoInput" accept="video/mp4,video/webm">
+            <!-- Added onchange event here to load the video properly -->
+            <input type="file" id="transitionVideoInput" accept="video/mp4,video/webm" onchange="loadTransitionVideo(this)">
         </div>
 
         <div class="video-preview-container">
@@ -340,7 +341,8 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     <span class="material-icons-round">add</span> Add Manual
 </button>
 
-<video id="hiddenTransVideo" style="display:none;" crossOrigin="anonymous"></video>
+<!-- Removed crossOrigin="anonymous" to fix local video export bug -->
+<video id="hiddenTransVideo" style="display:none;" playsinline></video>
 
 <script>
     let segmentCount = 0;
@@ -350,6 +352,18 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     const segmentsData = {};
     let isVideoEngineRunning = false;
     let cancelVideoSequence = false;
+    
+    // --- FIX: Global Audio Context to prevent crashing on second play ---
+    let globalAudioCtx = null;
+    function getAudioContext() {
+        if (!globalAudioCtx) {
+            globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (globalAudioCtx.state === 'suspended') {
+            globalAudioCtx.resume();
+        }
+        return globalAudioCtx;
+    }
 
     window.onload = () => { loadSettings(); }
 
@@ -467,12 +481,11 @@ Script: [दूसरी स्क्रिप्ट]`;
         let apiHeaders = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
         let apiBody = {};
 
-        // Configure based on selected Provider
         if (aiProvider === 'groq') {
             apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
             apiHeaders['Authorization'] = `Bearer ${groqKey}`;
             apiBody = {
-                model: "llama-3.3-70b-versatile", // NEWEST WORKING GROQ MODEL
+                model: "llama-3.3-70b-versatile", 
                 messages: [{role: "user", content: prompt}],
                 temperature: 0.7
             };
@@ -480,7 +493,7 @@ Script: [दूसरी स्क्रिप्ट]`;
             apiUrl = 'https://api.mistral.ai/v1/chat/completions';
             apiHeaders['Authorization'] = `Bearer ${mistralKey}`;
             apiBody = {
-                model: "mistral-large-latest", // MISTRAL MODEL
+                model: "mistral-large-latest", 
                 messages: [{role: "user", content: prompt}],
                 temperature: 0.7
             };
@@ -524,7 +537,6 @@ Script: [दूसरी स्क्रिप्ट]`;
                     
                     const preSelectVoice = (validScriptCount % 2 === 0) ? 'hi-male' : 'hi-female';
                     
-                    // Add segment using the strict headline
                     const segId = addSegment(extractedScript, preSelectVoice, validScriptCount + 1, extractedHeadline);
                     fetchGoogleImagesForSegment(segId, extractedHeadline, imageLimit);
                     validScriptCount++;
@@ -553,7 +565,6 @@ Script: [दूसरी स्क्रिप्ट]`;
         
         const title = newsIndex ? `News #${newsIndex} : ${displayTitle}` : `Manual Segment #${id}`;
 
-        // Store headline properly in segmentsData for fallback text in Canvas
         segmentsData[id] = { images: [], audioUrl: null, duration: 0, headline: headline };
 
         const div = document.createElement('div');
@@ -615,7 +626,6 @@ Script: [दूसरी स्क्रिप्ट]`;
         const limit = document.getElementById('imageFetchCount').value;
         if(!query) return alert("Please enter a search query!");
         
-        // Update the headline data fallback in case user changes context
         segmentsData[segId].headline = query;
         fetchGoogleImagesForSegment(segId, query, limit);
     }
@@ -637,8 +647,8 @@ Script: [दूसरी स्क्रिप्ट]`;
         statusBox.innerText = "Searching images...";
         statusBox.style.color = "#94a3b8";
         
-        gallery.innerHTML = ''; // Clear previous images
-        segmentsData[segId].images = []; // Reset image array
+        gallery.innerHTML = ''; 
+        segmentsData[segId].images = []; 
 
         try {
             const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}&searchType=image&num=${limit}`;
@@ -651,7 +661,6 @@ Script: [दूसरी स्क्रिप्ट]`;
             statusBox.style.display = "none"; 
             
             data.items.forEach(item => {
-                // Using highly reliable wsrv.nl proxy to bypass CORS for canvas
                 const proxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(item.link)}`;
                 
                 const img = document.createElement('img');
@@ -735,6 +744,15 @@ Script: [दूसरी स्क्रिप्ट]`;
         }
     }
 
+    // --- FIX: LOAD TRANSITION VIDEO PROPERLY ---
+    function loadTransitionVideo(input) {
+        if(input.files && input.files.length > 0) {
+            const transVid = document.getElementById("hiddenTransVideo");
+            transVid.src = URL.createObjectURL(input.files[0]);
+            transVid.load(); // Load it into memory beforehand
+        }
+    }
+
     // --- STEP 5: VIDEO COMPILATION (Preview OR Download Fixed) ---
     async function runVideoSequence(isRecording = false) {
         if(isVideoEngineRunning) return alert("Please wait for current process to finish.");
@@ -751,18 +769,13 @@ Script: [दूसरी स्क्रिप्ट]`;
         const btnDownload = document.getElementById("btnDownload");
         const recIndicator = document.getElementById("recIndicator");
         
-        const fileInput = document.getElementById("transitionVideoInput");
-        const transVid = document.getElementById("hiddenTransVideo");
-        let hasTransVid = false;
-        
-        if(fileInput.files.length > 0) {
-            transVid.src = URL.createObjectURL(fileInput.files[0]);
-            transVid.load();
-            hasTransVid = true;
-        }
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // FIX: Using global audio context to prevent browser crashing on second run
+        const audioCtx = getAudioContext();
         const dest = audioCtx.createMediaStreamDestination();
+        
+        const transVid = document.getElementById("hiddenTransVideo");
+        let hasTransVid = (transVid.src && transVid.src !== "" && !transVid.src.endsWith(window.location.host+"/"));
+        
         let recorder, chunks = [];
 
         if(isRecording) {
@@ -796,6 +809,7 @@ Script: [दूसरी स्क्रिप्ट]`;
             if(cancelVideoSequence) break;
             const segId = validSegmentIds[i];
             const data = segmentsData[segId];
+            
             await playSegmentOnCanvas(data, ctx, canvas, audioCtx, dest, isRecording);
             
             if(hasTransVid && i < validSegmentIds.length - 1 && !cancelVideoSequence) {
@@ -825,8 +839,8 @@ Script: [दूसरी स्क्रिप्ट]`;
             const audioObj = new Audio(data.audioUrl);
             const source = audioCtx.createMediaElementSource(audioObj);
             
-            source.connect(audioCtx.destination); // Always play on speakers for preview
-            if(isRecording) source.connect(dest); // Connect to recorder if downloading
+            source.connect(audioCtx.destination); 
+            if(isRecording) source.connect(dest); 
             
             const images = data.images;
             const duration = data.duration * 1000; 
@@ -838,6 +852,7 @@ Script: [दूसरी स्क्रिप्ट]`;
 
             audioObj.onended = () => {
                 cancelAnimationFrame(animationFrameId);
+                // Safe disconnect as this node is unique to this iteration
                 source.disconnect();
                 resolve();
             };
@@ -855,7 +870,6 @@ Script: [दूसरी स्क्रिप्ट]`;
                 if(images.length > 0 && images[currentImgIndex]) {
                     const img = images[currentImgIndex];
                     if(img.complete && img.naturalHeight !== 0) {
-                        // Image Fill logic to avoid black borders
                         const hRatio = canvas.width / img.width;
                         const vRatio = canvas.height / img.height;
                         const ratio  = Math.max(hRatio, vRatio); 
@@ -865,7 +879,6 @@ Script: [दूसरी स्क्रिप्ट]`;
                         ctx.drawImage(img, 0,0, img.width, img.height, centerShift_x, centerShift_y, img.width*ratio, img.height*ratio);
                     }
                 } else {
-                    // Fallback: If image fails to load via CORS, show Headline Text smoothly
                     ctx.fillStyle = "#1e293b"; ctx.fillRect(0,0,canvas.width, canvas.height);
                     ctx.fillStyle = "#0ea5e9"; ctx.font = "bold 40px 'Segoe UI', Arial"; ctx.textAlign = "center";
                     ctx.fillText("Breaking News", canvas.width/2, canvas.height/2 - 40);
@@ -905,7 +918,9 @@ Script: [दूसरी स्क्रिप्ट]`;
 
             videoEle.onended = () => {
                 cancelAnimationFrame(animationFrameId);
-                source.disconnect();
+                // Fix: Properly disconnect only output paths so it can be reused smoothly
+                source.disconnect(audioCtx.destination);
+                if(isRecording) source.disconnect(dest);
                 resolve();
             };
 
@@ -919,12 +934,12 @@ Script: [दूसरी स्क्रिप्ट]`;
             videoEle.play().then(() => {
                 requestAnimationFrame(drawLoop);
             }).catch(e => {
+                console.error("Transition Video Play Error:", e);
                 resolve();
             });
         });
     }
 
-    // Utility function to wrap text on canvas if image is missing
     function wrapText(context, text, x, y, maxWidth, lineHeight) {
         var words = text.split(' ');
         var line = '';
