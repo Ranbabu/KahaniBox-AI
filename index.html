@@ -609,7 +609,7 @@ Script: [स्क्रिप्ट यहाँ लिखें]
         fetchImagesForSegment(segId, query, limit); 
     }
 
-    // 🔥 UPDATED MASTER IMAGE FETCH FUNCTION (With Timer & Auto-URL Fix) 🔥
+    // 🔥 UPDATED MASTER IMAGE FETCH FUNCTION 🔥
     async function fetchImagesForSegment(segId, query, limit) {
         const provider = document.getElementById('imgProviderSelect').value;
         const statusBox = document.getElementById(`img-status-${segId}`);
@@ -650,11 +650,9 @@ Script: [स्क्रिप्ट यहाँ लिखें]
                 let apiUrl = document.getElementById('hfApiUrl').value.trim();
                 if(!apiUrl) throw new Error("Hugging Face API URL not set in settings.");
 
-                // Auto-Fix for 404 Error: Convert old Gradio URL to new one
-                if(apiUrl.endsWith('/api/predict')) {
-                    apiUrl = apiUrl.replace('/api/predict', '/run/predict');
-                } else if (!apiUrl.includes('/predict')) {
-                    apiUrl = apiUrl.replace(/\/$/, "") + "/run/predict"; 
+                // Auto-Fix: Ensure URL has an endpoint, but don't force replace /api/predict 
+                if (!apiUrl.includes('/predict')) {
+                    apiUrl = apiUrl.replace(/\/$/, "") + "/api/predict"; 
                 }
 
                 const response = await fetch(apiUrl, {
