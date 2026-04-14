@@ -609,7 +609,7 @@ Script: [स्क्रिप्ट यहाँ लिखें]
         fetchImagesForSegment(segId, query, limit); 
     }
 
-    // 🔥 UPDATED MASTER IMAGE FETCH FUNCTION 🔥
+    // 🔥 SMART AUTO-FIX URL & MASTER IMAGE FETCH FUNCTION 🔥
     async function fetchImagesForSegment(segId, query, limit) {
         const provider = document.getElementById('imgProviderSelect').value;
         const statusBox = document.getElementById(`img-status-${segId}`);
@@ -647,21 +647,51 @@ Script: [स्क्रिप्ट यहाँ लिखें]
                 processAndRenderImages(data.items.map(item => item.link), gallery, segId);
 
             } else {
-                let apiUrl = document.getElementById('hfApiUrl').value.trim();
-                if(!apiUrl) throw new Error("Hugging Face API URL not set in settings.");
+                let rawUrl = document.getElementById('hfApiUrl').value.trim();
+                if(!rawUrl) throw new Error("Hugging Face API URL not set in settings.");
 
-                // Auto-Fix: Ensure URL has an endpoint, but don't force replace /api/predict 
-                if (!apiUrl.includes('/predict')) {
-                    apiUrl = apiUrl.replace(/\/$/, "") + "/api/predict"; 
+                // 🔥 SMART FIX: अगर यूजर ने "https://huggingface.co/spaces/Amina786/image-search-api" डाला है तो इसे ऑटोमैटिक सही API लिंक में बदलें 🔥
+                if (rawUrl.includes('huggingface.co/spaces/')) {
+                    // यूजरनेम और स्पेसनेम अलग करें
+                    let parts = rawUrl.split('huggingface.co/spaces/')[1].split('?')[0].split('/');
+                    if(parts.length >= 2) {
+                        let user = parts[0].toLowerCase().replace(/[_.]/g, '-');
+                        let space = parts[1].toLowerCase().replace(/[_.]/g, '-');
+                        rawUrl = `https://${user}-${space}.hf.space/api/predict`;
+                    }
                 }
 
-                const response = await fetch(apiUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ data: [query] })
-                });
+                // अगर लिंक में 'predict' नहीं है, तो उसे जोड़ें
+                if (!rawUrl.includes('/predict')) {
+                    rawUrl = rawUrl.replace(/\/$/, "") + "/api/predict"; 
+                }
 
-                if (!response.ok) throw new Error(`API request failed with status: ${response.status} (Make sure Space is Public and Running)`);
+                // 🔥 डबल-चेक सिस्टम: अगर एक API काम न करे तो दूसरे को ट्राई करें 🔥
+                let urlsToTry = [rawUrl];
+                if (rawUrl.endsWith('/api/predict')) {
+                    urlsToTry.push(rawUrl.replace('/api/predict', '/run/predict'));
+                } else if (rawUrl.endsWith('/run/predict')) {
+                    urlsToTry.push(rawUrl.replace('/run/predict', '/api/predict'));
+                }
+
+                let response = null;
+                for (let url of urlsToTry) {
+                    try {
+                        response = await fetch(url, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ data: [query] })
+                        });
+                        // अगर सही जवाब मिला तो इस लूप से बाहर आ जाएं
+                        if (response.ok) break; 
+                    } catch (err) {
+                        console.log("Fetch failed for:", url);
+                    }
+                }
+
+                if (!response || !response.ok) {
+                    throw new Error(`API request failed (Status: ${response ? response.status : 'Unknown'}). कृपया सेटिंग्स में सही लिंक डालें।`);
+                }
                 
                 const result = await response.json();
                 let imageUrls = result.data[0]; 
