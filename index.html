@@ -161,10 +161,17 @@ textarea {
     display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; border-top: 1px dashed var(--border);
     margin-bottom: 10px; min-height: 100px; align-items: center;
 }
-.image-gallery img {
+.image-gallery-placeholder { font-size: 0.8rem; color: var(--text-muted); font-style: italic; padding: 10px 0; }
+
+.gallery-item-wrapper { position: relative; display: inline-block; }
+.gallery-item-wrapper img, .gallery-item-wrapper video {
     height: 80px; width: 120px; border-radius: 6px; border: 1px solid var(--border); object-fit: cover; background: #000;
 }
-.image-gallery-placeholder { font-size: 0.8rem; color: var(--text-muted); font-style: italic; padding: 10px 0; }
+.btn-remove-media {
+    position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border: none; 
+    border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
 
 .controls-row { display: flex; gap: 12px; margin-bottom: 15px; }
 .control-group { flex: 1; background: rgba(0,0,0,0.25); padding: 10px; border-radius: 10px; border: 1px solid #334155; }
@@ -255,10 +262,8 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     </div>
 
     <div class="overlay-setting">
-        <label><input type="checkbox" id="chkTopTicker" checked> Show Top Breaking News</label>
+        <label><input type="checkbox" id="chkTopTicker"> Show Top Ticker (Optional)</label>
         <input type="text" id="topTickerTxt" value="BREAKING NEWS - ताज़ा और बड़ी खबरें" placeholder="Enter Top Ticker Text">
-        <label style="margin-top:10px; font-size:0.75rem;">Height</label>
-        <input type="range" id="topTickerHeight" min="30" max="80" value="45">
         <div class="color-row"><span>Background Color:</span> <input type="color" id="topTickerColor" value="#ef4444"></div>
     </div>
 
@@ -268,20 +273,20 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     </div>
 
     <div class="overlay-setting">
+        <label><input type="checkbox" id="chkHeadline" checked> Show Headline Band</label>
+    </div>
+
+    <div class="overlay-setting">
         <label><input type="checkbox" id="chkChannelName" checked> Show Channel Name</label>
         <input type="text" id="channelNameTxt" value="RAN News Tek" placeholder="Enter Channel Name">
         <div class="color-row"><span>Background Color:</span> <input type="color" id="channelNameColor" value="#b91c1c"></div>
     </div>
 
     <div class="overlay-setting">
-        <label><input type="checkbox" id="chkHeadline" checked> Show Headline Ticker</label>
-    </div>
-
-    <div class="overlay-setting">
-        <label><input type="checkbox" id="chkSubscribe" checked> Show Subscribe Ticker (Bottom)</label>
+        <label><input type="checkbox" id="chkSubscribe" checked> Show Subscribe Ticker</label>
         <input type="text" id="subscribeTxt" value="कृपया हमारे चैनल को सब्सक्राइब करें और बेल आइकन दबाएं | पल-पल की ख़बरों के लिए जुड़े रहें |" placeholder="Enter Subscribe Text">
-        <label style="margin-top:10px; font-size:0.75rem;">Height</label>
-        <input type="range" id="bottomTickerHeight" min="30" max="80" value="45">
+        <label style="margin-top:10px; font-size:0.75rem;">Bottom Ticker Height</label>
+        <input type="range" id="bottomTickerHeight" min="40" max="80" value="50">
         <div class="color-row"><span>Background Color:</span> <input type="color" id="bottomTickerColor" value="#dc2626"></div>
     </div>
 
@@ -346,7 +351,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         </div>
     </div>
 
-    <!-- NEW: Advanced Quick Paste Panel -->
     <div class="news-control-panel">
         <div class="panel-title"><span class="material-icons-round">content_paste</span> Quick Paste & Auto-Segment</div>
         <label>अपनी पूरी स्क्रिप्ट यहाँ पेस्ट करें। सिस्टम ऑटोमैटिकली 1, 2, 3 नंबरों से ख़बरों को पहचान कर अलग-अलग ऑडियो/इमेज बॉक्स बना देगा।</label>
@@ -531,7 +535,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         alert('Settings Cleared!'); 
     }
 
-    // Overlays Global Loaders
     function loadGlobalImage(input, type) {
         if(input.files && input.files[0]) {
             const reader = new FileReader();
@@ -549,13 +552,12 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         selects.forEach(select => { select.value = selectedValue; });
     }
 
-    // SYNC AUDIO SPEEDS
     function syncAllSpeeds(selectedValue) {
         const selects = document.querySelectorAll('select[id^="rate-"]');
         selects.forEach(select => { select.value = selectedValue; });
     }
 
-    // --- CORE SCRIPT PARSER (Manual & AI) ---
+    // --- CORE SCRIPT PARSER ---
     function parseScriptIntoSegments(rawText) {
         let cleanText = rawText.replace(/\*\*/g, '').trim();
         let lines = cleanText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
@@ -568,32 +570,24 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
 
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
-            
-            // Check if line starts with a number like "1.", "1)", "2."
             let numMatch = line.match(/^(\d+)[\.\)]\s*(.*)/);
 
             if (numMatch) {
-                // Save previous segment
                 if (currentScript.length > 0) {
                     parsedSegments.push({ type: currentMode, newsIndex: currentMode === 'NEWS' ? newsCounter : null, headline: currentHeadline, script: currentScript.join('\n') });
                 }
-                
-                // Start a new NEWS segment
                 newsCounter++;
                 currentMode = 'NEWS';
                 currentHeadline = numMatch[2] || `News ${newsCounter}`;
                 currentScript = [];
             } else {
-                // Outro trigger check
                 let lowerLine = line.toLowerCase();
                 let isOutroTrigger = lowerLine.includes('सब्सक्राइब') || lowerLine.includes('धन्यवाद') || lowerLine.includes('जय हिंद') || lowerLine.includes('दोस्तों, अगर');
                 
                 if (currentMode === 'NEWS' && isOutroTrigger) {
-                    // Save current news segment
                     if (currentScript.length > 0) {
                         parsedSegments.push({ type: currentMode, newsIndex: newsCounter, headline: currentHeadline, script: currentScript.join('\n') });
                     }
-                    // Start OUTRO
                     currentMode = 'OUTRO';
                     currentHeadline = 'Outro / चैनल अपील';
                     currentScript = [line];
@@ -605,11 +599,9 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         if (currentScript.length > 0) {
             parsedSegments.push({ type: currentMode, newsIndex: currentMode === 'NEWS' ? newsCounter : null, headline: currentHeadline, script: currentScript.join('\n') });
         }
-        
         return parsedSegments;
     }
 
-    // Triggered by manual paste
     function createSegmentsFromAdvancedPaste() {
         const text = document.getElementById('quickPasteScript').value.trim();
         if(!text) return alert("Please paste the script first.");
@@ -627,11 +619,9 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
             let searchKeyword = (seg.type === 'INTRO' || seg.type === 'OUTRO') ? "Breaking News Studio India" : seg.headline;
             fetchImagesForSegment(segId, searchKeyword, imageLimit);
         });
-        
         document.getElementById('quickPasteScript').value = ""; 
     }
 
-    // Triggered by AI
     async function fetchAndCreateSegments() {
         const aiProvider = document.getElementById('aiProviderSelect').value;
         const groqKey = localStorage.getItem('groqApiKey');
@@ -697,7 +687,6 @@ RULES (Strict Format):
             document.getElementById("scriptBox").innerText = aiText;
 
             const parsedData = parseScriptIntoSegments(aiText);
-            
             if(parsedData.length === 0) throw new Error("AI could not generate scripts in the correct format.");
 
             parsedData.forEach((seg, index) => {
@@ -705,7 +694,6 @@ RULES (Strict Format):
                 let segId = addSegment(seg.script, preSelectVoice, seg.newsIndex, seg.headline);
                 
                 document.getElementById("headlineBox").innerHTML += `<div class="headline-item">${seg.headline}</div>`;
-
                 let searchKeyword = (seg.type === 'INTRO' || seg.type === 'OUTRO') ? "Breaking News Studio India" : seg.headline;
                 fetchImagesForSegment(segId, searchKeyword, imageLimit);
             });
@@ -725,9 +713,9 @@ RULES (Strict Format):
         
         let titleText = newsIndex ? `News #${newsIndex} : ${displayTitle}` : `${displayTitle}`;
         
-        segmentsData[id] = { images: [], audioUrl: null, duration: 0, headline: headline, newsIndex: newsIndex };
+        // media array replaces images array
+        segmentsData[id] = { media: [], audioUrl: null, duration: 0, headline: headline, newsIndex: newsIndex };
 
-        // Get currently synced speed from existing segments (if any)
         let currentSyncedSpeed = "0";
         const existingSpeedSelect = document.querySelector('select[id^="rate-"]');
         if (existingSpeedSelect) currentSyncedSpeed = existingSpeedSelect.value;
@@ -752,8 +740,8 @@ RULES (Strict Format):
 
             <div class="manual-upload-row">
                 <div>
-                    <label style="color:#34d399;">Upload Manual Image</label>
-                    <input type="file" accept="image/*" onchange="uploadManualImage(this, ${id})" style="padding:8px;">
+                    <label style="color:#34d399;">Upload Manual Media (Image/Video)</label>
+                    <input type="file" accept="image/*,video/*" onchange="uploadManualMedia(this, ${id})" style="padding:8px;">
                 </div>
                 <div>
                     <label style="color:#f472b6;">Upload Manual Audio</label>
@@ -804,17 +792,62 @@ RULES (Strict Format):
         checkEmpty(); return id; 
     }
 
-    function uploadManualImage(input, segId) {
-        if(input.files && input.files[0]) {
-            const fileUrl = URL.createObjectURL(input.files[0]);
-            const gallery = document.getElementById(`gallery-${segId}`);
-            const img = document.createElement('img');
-            img.src = fileUrl;
-            gallery.appendChild(img);
+    // GALLERY RENDERING & REMOVAL
+    function renderGallery(segId) {
+        const gallery = document.getElementById(`gallery-${segId}`);
+        gallery.innerHTML = '';
+        
+        segmentsData[segId].media.forEach((item, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'gallery-item-wrapper';
             
-            const imgObj = new Image();
-            imgObj.onload = () => { segmentsData[segId].images.push(imgObj); };
-            imgObj.src = fileUrl;
+            let visual;
+            if(item.type === 'vid') {
+                visual = document.createElement('video');
+                visual.src = item.src.src;
+                visual.muted = true;
+            } else {
+                visual = document.createElement('img');
+                visual.src = item.src.src;
+            }
+            
+            const btn = document.createElement('button');
+            btn.innerHTML = 'X';
+            btn.className = 'btn-remove-media';
+            btn.onclick = () => {
+                segmentsData[segId].media.splice(index, 1);
+                renderGallery(segId);
+            };
+            
+            wrapper.appendChild(visual);
+            wrapper.appendChild(btn);
+            gallery.appendChild(wrapper);
+        });
+    }
+
+    function uploadManualMedia(input, segId) {
+        if(input.files && input.files[0]) {
+            const file = input.files[0];
+            const fileUrl = URL.createObjectURL(file);
+            
+            if(file.type.startsWith('video/')) {
+                const vidObj = document.createElement('video');
+                vidObj.src = fileUrl;
+                vidObj.muted = true;
+                vidObj.playsInline = true;
+                vidObj.loop = true; 
+                vidObj.onloadeddata = () => {
+                    segmentsData[segId].media.push({ type: 'vid', src: vidObj });
+                    renderGallery(segId);
+                };
+            } else {
+                const imgObj = new Image();
+                imgObj.onload = () => { 
+                    segmentsData[segId].media.push({ type: 'img', src: imgObj });
+                    renderGallery(segId);
+                };
+                imgObj.src = fileUrl;
+            }
         }
     }
 
@@ -853,8 +886,8 @@ RULES (Strict Format):
         const statusBox = document.getElementById(`img-status-${segId}`);
         const gallery = document.getElementById(`gallery-${segId}`);
 
-        gallery.innerHTML = ''; 
-        segmentsData[segId].images = []; 
+        segmentsData[segId].media = []; 
+        renderGallery(segId);
 
         let seconds = 0;
         statusBox.style.display = "block";
@@ -884,7 +917,7 @@ RULES (Strict Format):
                 if(data.error) throw new Error(data.error.message);
                 if(!data.items || data.items.length === 0) throw new Error("No images found.");
 
-                processAndRenderImages(data.items.map(item => item.link), gallery, segId);
+                processAndRenderImages(data.items.map(item => item.link), segId);
 
             } else if (provider === 'ranimage') {
                 const rawUrl = document.getElementById('ranApiUrl').value.trim();
@@ -907,7 +940,7 @@ RULES (Strict Format):
 
                 if(imgs.length === 0) throw new Error("No images found in Ranimage response. Try another keyword.");
                 
-                processAndRenderImages(imgs.slice(0, limit), gallery, segId);
+                processAndRenderImages(imgs.slice(0, limit), segId);
             }
             
             clearInterval(timerInterval);
@@ -921,18 +954,15 @@ RULES (Strict Format):
         }
     }
 
-    function processAndRenderImages(urlArray, gallery, segId) {
+    function processAndRenderImages(urlArray, segId) {
         urlArray.forEach(url => {
             const proxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
-            const img = document.createElement('img');
-            img.crossOrigin = "anonymous";
-            img.src = proxyUrl;
-            img.onerror = function() { this.style.display = 'none'; };
-            gallery.appendChild(img);
-            
             const imgObj = new Image();
             imgObj.crossOrigin = "anonymous";
-            imgObj.onload = () => { segmentsData[segId].images.push(imgObj); };
+            imgObj.onload = () => { 
+                segmentsData[segId].media.push({ type: 'img', src: imgObj });
+                renderGallery(segId);
+            };
             imgObj.src = proxyUrl;
         });
     }
@@ -1074,11 +1104,16 @@ RULES (Strict Format):
             const source = audioCtx.createMediaElementSource(audioObj);
             source.connect(audioCtx.destination); if(isRecording) source.connect(dest); 
             
-            const images = data.images; const duration = data.duration * 1000; 
-            const imgCount = images.length > 0 ? images.length : 1; const timePerImage = duration / imgCount;
-            let currentImgIndex = 0; let animationFrameId;
+            const mediaArr = data.media; const duration = data.duration * 1000; 
+            const mediaCount = mediaArr.length > 0 ? mediaArr.length : 1; const timePerMedia = duration / mediaCount;
+            let currentMediaIndex = 0; let animationFrameId;
 
-            audioObj.onended = () => { cancelAnimationFrame(animationFrameId); source.disconnect(); resolve(); };
+            audioObj.onended = () => { 
+                cancelAnimationFrame(animationFrameId); 
+                mediaArr.forEach(m => { if(m.type === 'vid' && !m.src.paused) m.src.pause(); });
+                source.disconnect(); 
+                resolve(); 
+            };
             const startTime = performance.now();
 
             const showLogo = document.getElementById('chkLogo').checked;
@@ -1103,38 +1138,65 @@ RULES (Strict Format):
             
             const topHeight = parseInt(document.getElementById('topTickerHeight').value);
             const activeSubHeight = showSub ? parseInt(document.getElementById('bottomTickerHeight').value) : 0;
-            const headHeight = showHead ? 55 : 0; 
+            const headHeight = showHead ? 45 : 0; 
+            const breakingHeight = showHead ? 35 : 0;
+            const numHeight = 45;
             const safePadding = 40; 
 
-            // Calculate Bottom Y positions
+            // Calculate Stacked Y positions
             const bottomY = canvas.height - activeSubHeight;
             const headY = bottomY - headHeight;
+            const breakingY = headY - breakingHeight;
+            const numY = breakingY - numHeight;
 
             function drawLoop(now) {
                 const elapsed = now - startTime;
-                currentImgIndex = Math.floor(elapsed / timePerImage);
-                if(currentImgIndex >= images.length) currentImgIndex = images.length - 1;
+                currentMediaIndex = Math.floor(elapsed / timePerMedia);
+                if(currentMediaIndex >= mediaArr.length) currentMediaIndex = mediaArr.length - 1;
                 
                 ctx.fillStyle = "#0f172a"; ctx.fillRect(0,0, canvas.width, canvas.height);
                 
-                // Ken Burns Effect
-                if(images.length > 0 && images[currentImgIndex] && images[currentImgIndex].complete && images[currentImgIndex].naturalHeight !== 0) {
-                    const img = images[currentImgIndex];
-                    const ratio  = Math.max(canvas.width / img.width, canvas.height / img.height); 
-                    const drawWidth = img.width * ratio;
-                    const drawHeight = img.height * ratio;
+                let activeMedia = mediaArr.length > 0 ? mediaArr[currentMediaIndex] : null;
+
+                if(activeMedia) {
+                    let element = activeMedia.src;
                     
-                    let imgTimeElapsed = elapsed % timePerImage;
-                    let progress = imgTimeElapsed / timePerImage;
-                    let isZoomIn = (currentImgIndex % 2 === 0);
-                    let scale = isZoomIn ? 1.0 + (0.15 * progress) : 1.15 - (0.15 * progress);
+                    // Handle Video Playback
+                    if(activeMedia.type === 'vid') {
+                        if(element.paused) element.play().catch(e=>console.log(e));
+                    }
+                    mediaArr.forEach((m, idx) => {
+                        if(idx !== currentMediaIndex && m.type === 'vid' && !m.src.paused) m.src.pause();
+                    });
 
-                    ctx.save();
-                    ctx.translate(canvas.width / 2, canvas.height / 2);
-                    ctx.scale(scale, scale);
-                    ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
-                    ctx.restore();
+                    // Draw Element
+                    if(element.videoWidth || element.complete) { 
+                        const nW = element.videoWidth || element.naturalWidth || element.width;
+                        const nH = element.videoHeight || element.naturalHeight || element.height;
+                        
+                        if(nW !== 0 && nH !== 0) {
+                            const ratio  = Math.max(canvas.width / nW, canvas.height / nH); 
+                            const drawWidth = nW * ratio;
+                            const drawHeight = nH * ratio;
 
+                            if(activeMedia.type === 'img') {
+                                // Ken Burns
+                                let imgTimeElapsed = elapsed % timePerMedia;
+                                let progress = imgTimeElapsed / timePerMedia;
+                                let isZoomIn = (currentMediaIndex % 2 === 0);
+                                let scale = isZoomIn ? 1.0 + (0.15 * progress) : 1.15 - (0.15 * progress);
+
+                                ctx.save();
+                                ctx.translate(canvas.width / 2, canvas.height / 2);
+                                ctx.scale(scale, scale);
+                                ctx.drawImage(element, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+                                ctx.restore();
+                            } else {
+                                // Direct Video Draw (Centered, no scale change)
+                                ctx.drawImage(element, (canvas.width - drawWidth)/2, (canvas.height - drawHeight)/2, drawWidth, drawHeight);
+                            }
+                        }
+                    }
                 } else {
                     ctx.fillStyle = "#1e293b"; ctx.fillRect(0,0,canvas.width, canvas.height);
                     ctx.fillStyle = "#0ea5e9"; ctx.font = "bold 40px 'Segoe UI', Arial"; ctx.textAlign = "center";
@@ -1145,7 +1207,8 @@ RULES (Strict Format):
 
                 ctx.textAlign = "left"; 
 
-                // --- 1. TOP BREAKING TICKER ---
+                // --- 1. TOP BREAKING TICKER (Optional) ---
+                let topYPadding = safePadding;
                 if(showTopTicker) {
                     ctx.fillStyle = topTickerColor; 
                     ctx.fillRect(0, 0, canvas.width, topHeight);
@@ -1153,11 +1216,10 @@ RULES (Strict Format):
                     const tW = ctx.measureText(topTickerTxt).width;
                     let tX = canvas.width - ((elapsed * 0.18) % (canvas.width + tW));
                     ctx.fillText(topTickerTxt, tX, (topHeight / 2) + 8);
+                    topYPadding = topHeight + 15;
                 }
 
                 // --- 2. LOGO & LIVE ICON ---
-                let topYPadding = showTopTicker ? (topHeight + 15) : safePadding;
-
                 if(showLogo && globalLogoImg) {
                     ctx.drawImage(globalLogoImg, canvas.width - safePadding - 100, topYPadding, 100, 100);
                 }
@@ -1170,61 +1232,13 @@ RULES (Strict Format):
                     ctx.fillText("LIVE", safePadding + 15, topYPadding + 28);
                 }
 
-                // --- 3. HEADLINE TICKER (White Bar + Breaking News Box) ---
-                let breakingBoxWidth = 240; 
-                if(showHead) {
-                    // White Scrolling Area
-                    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-                    ctx.fillRect(breakingBoxWidth, headY, canvas.width - breakingBoxWidth, headHeight);
-                    
-                    // Headline Text
-                    ctx.fillStyle = "black"; ctx.font = "bold 32px Arial";
-                    let safeHeadline = data.headline || "ताज़ा खबर";
-                    if(safeHeadline.toLowerCase().includes('intro')) safeHeadline = "ताज़ा और बड़ी खबरें";
-                    if(safeHeadline.toLowerCase().includes('outro')) safeHeadline = "ख़बरों का सिलसिला जारी रहेगा...";
-                    
-                    const hTxt = "► " + safeHeadline.toUpperCase();
-                    const hW = ctx.measureText(hTxt).width;
-                    let hX = canvas.width - ((elapsed * 0.2) % (canvas.width + hW));
-                    
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.rect(breakingBoxWidth, headY, canvas.width - breakingBoxWidth, headHeight);
-                    ctx.clip();
-                    ctx.fillText(hTxt, Math.max(hX, breakingBoxWidth + 15), headY + 38);
-                    ctx.restore();
-
-                    // Red BREAKING NEWS Box on the Left
-                    ctx.fillStyle = "#b91c1c"; 
-                    ctx.fillRect(0, headY, breakingBoxWidth, headHeight);
-                    ctx.fillStyle = "white"; ctx.font = "bold 24px Arial";
-                    ctx.textAlign = "center";
-                    ctx.fillText("BREAKING NEWS", breakingBoxWidth/2, headY + 36);
-                    ctx.textAlign = "left"; // Reset
-                }
-
-                // --- 4. NEWS NUMBER (Square Box Above Breaking News) ---
-                if(showNewsNum && data.newsIndex) {
-                    let numHeight = 45;
-                    let numWidth = 60;
-                    let numY = showHead ? (headY - numHeight) : (bottomY - numHeight); // Place above headline
-                    
-                    ctx.fillStyle = newsNumColor; 
-                    ctx.fillRect(0, numY, numWidth, numHeight);
-                    ctx.fillStyle = "black"; ctx.font = "bold 28px Arial";
-                    ctx.textAlign = "center";
-                    ctx.fillText(data.newsIndex, numWidth/2, numY + 32);
-                    ctx.textAlign = "left"; // reset
-                }
-
-                // --- 5. BOTTOM SUBSCRIBE TICKER & CHANNEL NAME ---
+                // --- 3. BOTTOM SUBSCRIBE TICKER (Full width red background) ---
                 if(showSub || showCName) {
                     let cWidth = showCName ? 260 : 0;
 
-                    // Red Subscribe Scrolling Area
                     if(showSub) {
                         ctx.fillStyle = subColor; 
-                        ctx.fillRect(cWidth, bottomY, canvas.width - cWidth, activeSubHeight);
+                        ctx.fillRect(0, bottomY, canvas.width, activeSubHeight); // Fill full width
                         
                         ctx.fillStyle = "white"; ctx.font = "bold 26px Arial";
                         const sW = ctx.measureText(subTxt).width;
@@ -1232,21 +1246,64 @@ RULES (Strict Format):
                         
                         ctx.save();
                         ctx.beginPath();
-                        ctx.rect(cWidth, bottomY, canvas.width - cWidth, activeSubHeight);
+                        ctx.rect(cWidth, bottomY, canvas.width - cWidth, activeSubHeight); // Clip text under Channel name
                         ctx.clip();
                         ctx.fillText(subTxt, sX, canvas.height - (activeSubHeight / 2) + 8);
                         ctx.restore();
                     }
 
-                    // Channel Name Box on the Left
                     if(showCName) {
                         ctx.fillStyle = cNameColor; 
-                        ctx.fillRect(0, bottomY, cWidth, activeSubHeight);
+                        ctx.fillRect(0, bottomY, cWidth, activeSubHeight); 
                         ctx.fillStyle = "white"; ctx.font = "bold 26px Arial";
                         ctx.textAlign = "center";
                         ctx.fillText(cNameTxt, cWidth/2, canvas.height - (activeSubHeight / 2) + 8);
                         ctx.textAlign = "left"; 
                     }
+                }
+
+                // --- 4. HEADLINE TICKER (White Bar) ---
+                if(showHead) {
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+                    ctx.fillRect(0, headY, canvas.width, headHeight);
+                    
+                    ctx.fillStyle = "black"; ctx.font = "bold 28px Arial";
+                    let safeHeadline = data.headline || "ताज़ा खबर";
+                    if(safeHeadline.toLowerCase().includes('intro')) safeHeadline = "ताज़ा और बड़ी खबरें";
+                    if(safeHeadline.toLowerCase().includes('outro')) safeHeadline = "ख़बरों का सिलसिला जारी रहेगा...";
+                    
+                    const hTxt = safeHeadline.toUpperCase();
+                    const hW = ctx.measureText(hTxt).width;
+                    let hX = canvas.width - ((elapsed * 0.2) % (canvas.width + hW));
+                    
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.rect(0, headY, canvas.width, headHeight);
+                    ctx.clip();
+                    ctx.fillText(hTxt, hX, headY + 32);
+                    ctx.restore();
+                }
+
+                // --- 5. BREAKING NEWS BOX (Red, Left side) ---
+                if(showHead) {
+                    let breakingBoxWidth = 220; 
+                    ctx.fillStyle = "#b91c1c"; 
+                    ctx.fillRect(safePadding, breakingY, breakingBoxWidth, breakingHeight);
+                    ctx.fillStyle = "white"; ctx.font = "bold 20px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText("BREAKING NEWS", safePadding + breakingBoxWidth/2, breakingY + 24);
+                    ctx.textAlign = "left"; 
+                }
+
+                // --- 6. NEWS NUMBER (Yellow Box) ---
+                if(showNewsNum && data.newsIndex) {
+                    let numWidth = 55;
+                    ctx.fillStyle = newsNumColor; 
+                    ctx.fillRect(safePadding, numY, numWidth, numHeight);
+                    ctx.fillStyle = "black"; ctx.font = "bold 26px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText(data.newsIndex, safePadding + numWidth/2, numY + 32);
+                    ctx.textAlign = "left"; 
                 }
 
                 animationFrameId = requestAnimationFrame(drawLoop);
