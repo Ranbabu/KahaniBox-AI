@@ -342,7 +342,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         </div>
 
         <div class="grid-row">
-            <button class="btn-action" id="btnPreview" onclick="runVideoSequence(false)">
+            <button class="btn-action" id="btnPreview" onclick="togglePreview()">
                 <span class="material-icons-round">play_arrow</span> Preview Video
             </button>
             <button class="btn-action-green" id="btnDownload" onclick="runVideoSequence(true)">
@@ -445,12 +445,15 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     const emptyState = document.getElementById("empty-state");
     const globalApiUrl = document.getElementById("global-api-url");
     const segmentsData = {};
+    
+    // Global State Variables for Play/Stop functionality
     let isVideoEngineRunning = false;
     let cancelVideoSequence = false;
     
     let globalAudioCtx = null;
     let globalLogoImg = null;
     let globalLiveImg = null;
+    let bgmAudio = null;
 
     function getAudioContext() {
         if (!globalAudioCtx) {
@@ -713,7 +716,6 @@ RULES (Strict Format):
         
         let titleText = newsIndex ? `News #${newsIndex} : ${displayTitle}` : `${displayTitle}`;
         
-        // media array replaces images array
         segmentsData[id] = { media: [], audioUrl: null, duration: 0, headline: headline, newsIndex: newsIndex };
 
         let currentSyncedSpeed = "0";
@@ -792,7 +794,6 @@ RULES (Strict Format):
         checkEmpty(); return id; 
     }
 
-    // GALLERY RENDERING & REMOVAL
     function renderGallery(segId) {
         const gallery = document.getElementById(`gallery-${segId}`);
         gallery.innerHTML = '';
@@ -1026,31 +1027,44 @@ RULES (Strict Format):
         }
     }
 
+    // --- TOGGLE PREVIEW (PLAY / STOP) ---
+    function togglePreview() {
+        if(isVideoEngineRunning) {
+            cancelVideoSequence = true; // Signal current running loop to break immediately
+        } else {
+            runVideoSequence(false);
+        }
+    }
+
     async function runVideoSequence(isRecording = false) {
-        if(isVideoEngineRunning) return alert("Please wait for current process to finish.");
+        if(isVideoEngineRunning && isRecording) return alert("Please wait for current process to finish.");
         
         const validSegmentIds = Object.keys(segmentsData).filter(id => segmentsData[id].audioUrl);
         if(validSegmentIds.length === 0) return alert("No audio generated. Please generate audio first.");
 
-        isVideoEngineRunning = true; cancelVideoSequence = false;
-        const canvas = document.getElementById("liveCanvas"); const ctx = canvas.getContext("2d");
-        const btnPreview = document.getElementById("btnPreview"); const btnDownload = document.getElementById("btnDownload");
+        isVideoEngineRunning = true; 
+        cancelVideoSequence = false;
+        
+        const canvas = document.getElementById("liveCanvas"); 
+        const ctx = canvas.getContext("2d");
+        const btnPreview = document.getElementById("btnPreview"); 
+        const btnDownload = document.getElementById("btnDownload");
         const recIndicator = document.getElementById("recIndicator");
         
-        const audioCtx = getAudioContext(); const dest = audioCtx.createMediaStreamDestination();
+        const audioCtx = getAudioContext(); 
+        const dest = audioCtx.createMediaStreamDestination();
         const transVid = document.getElementById("hiddenTransVideo");
         let hasTransVid = (transVid.src && transVid.src !== "" && !transVid.src.endsWith(window.location.host+"/"));
         let recorder, chunks = [];
 
-        let bgmAudio = null;
-        let bgmGain = null;
+        // START BGM LOGIC 
         const bgmInput = document.getElementById('bgmInput');
         if(bgmInput.files && bgmInput.files.length > 0) {
             const bgmUrl = URL.createObjectURL(bgmInput.files[0]);
             bgmAudio = new Audio(bgmUrl);
             bgmAudio.loop = true; 
             const bgmSource = audioCtx.createMediaElementSource(bgmAudio);
-            bgmGain = audioCtx.createGain();
+            let bgmGain = audioCtx.createGain();
             bgmGain.gain.value = parseFloat(document.getElementById('bgmVolume').value);
             bgmSource.connect(bgmGain);
             bgmGain.connect(audioCtx.destination);
@@ -1073,7 +1087,10 @@ RULES (Strict Format):
             };
             recorder.start();
         } else {
-            btnPreview.disabled = true; btnPreview.innerHTML = '<span class="spin material-icons-round">sync</span> Playing...'; btnDownload.disabled = true;
+            // Change Button to STOP PREVIEW
+            btnPreview.innerHTML = '<span class="material-icons-round">stop</span> Stop Preview';
+            btnPreview.style.background = 'linear-gradient(135deg, #ef4444, #991b1b)';
+            btnDownload.disabled = true;
         }
 
         canvas.scrollIntoView({behavior: 'smooth', block: 'center'});
@@ -1086,14 +1103,21 @@ RULES (Strict Format):
             }
         }
 
-        if(bgmAudio) { bgmAudio.pause(); bgmAudio.src = ""; }
+        // Cleanup
+        if(bgmAudio) { bgmAudio.pause(); bgmAudio.src = ""; bgmAudio = null; }
 
         if(isRecording && recorder && recorder.state !== "inactive") recorder.stop(); else resetVideoUI();
-        ctx.fillStyle = "black"; ctx.fillRect(0, 0, canvas.width, canvas.height); isVideoEngineRunning = false;
+        
+        ctx.fillStyle = "black"; ctx.fillRect(0, 0, canvas.width, canvas.height); 
+        isVideoEngineRunning = false;
+        cancelVideoSequence = false;
 
         function resetVideoUI() {
-            btnPreview.disabled = false; btnPreview.innerHTML = '<span class="material-icons-round">play_arrow</span> Preview Video';
-            btnDownload.disabled = false; btnDownload.innerHTML = '<span class="material-icons-round">download</span> Download Video';
+            btnPreview.disabled = false; 
+            btnPreview.innerHTML = '<span class="material-icons-round">play_arrow</span> Preview Video';
+            btnPreview.style.background = ''; // restore normal css
+            btnDownload.disabled = false; 
+            btnDownload.innerHTML = '<span class="material-icons-round">download</span> Download Video';
             recIndicator.style.display = "none";
         }
     }
@@ -1104,16 +1128,26 @@ RULES (Strict Format):
             const source = audioCtx.createMediaElementSource(audioObj);
             source.connect(audioCtx.destination); if(isRecording) source.connect(dest); 
             
-            const mediaArr = data.media; const duration = data.duration * 1000; 
-            const mediaCount = mediaArr.length > 0 ? mediaArr.length : 1; const timePerMedia = duration / mediaCount;
+            // DURATION FIX: Safely determine duration fallback if audio loads late or fails
+            let duration = data.duration;
+            if (!duration || isNaN(duration) || duration <= 0) {
+                duration = audioObj.duration;
+                if (!duration || isNaN(duration)) duration = 10; // 10 second fallback to prevent freeze
+            }
+            const durationMs = duration * 1000;
+            const mediaArr = data.media; 
+            const mediaCount = mediaArr.length > 0 ? mediaArr.length : 1; 
+            const timePerMedia = durationMs / mediaCount;
+            
             let currentMediaIndex = 0; let animationFrameId;
 
             audioObj.onended = () => { 
-                cancelAnimationFrame(animationFrameId); 
+                if(animationFrameId) cancelAnimationFrame(animationFrameId); 
                 mediaArr.forEach(m => { if(m.type === 'vid' && !m.src.paused) m.src.pause(); });
                 source.disconnect(); 
                 resolve(); 
             };
+            
             const startTime = performance.now();
 
             const showLogo = document.getElementById('chkLogo').checked;
@@ -1143,16 +1177,35 @@ RULES (Strict Format):
             const numHeight = 45;
             const safePadding = 40; 
 
-            // Calculate Stacked Y positions
             const bottomY = canvas.height - activeSubHeight;
             const headY = bottomY - headHeight;
             const breakingY = headY - breakingHeight;
             const numY = breakingY - numHeight;
 
             function drawLoop(now) {
+                // Check if user clicked STOP PREVIEW
+                if (cancelVideoSequence) {
+                    audioObj.pause();
+                    mediaArr.forEach(m => { if(m.type === 'vid' && !m.src.paused) m.src.pause(); });
+                    if(animationFrameId) cancelAnimationFrame(animationFrameId);
+                    resolve();
+                    return;
+                }
+
                 const elapsed = now - startTime;
+                
+                // End fallback for safety if audio onended fails
+                if(elapsed > durationMs + 1000) {
+                    audioObj.pause();
+                    mediaArr.forEach(m => { if(m.type === 'vid' && !m.src.paused) m.src.pause(); });
+                    if(animationFrameId) cancelAnimationFrame(animationFrameId);
+                    resolve();
+                    return;
+                }
+
                 currentMediaIndex = Math.floor(elapsed / timePerMedia);
                 if(currentMediaIndex >= mediaArr.length) currentMediaIndex = mediaArr.length - 1;
+                if(currentMediaIndex < 0) currentMediaIndex = 0;
                 
                 ctx.fillStyle = "#0f172a"; ctx.fillRect(0,0, canvas.width, canvas.height);
                 
@@ -1161,7 +1214,6 @@ RULES (Strict Format):
                 if(activeMedia) {
                     let element = activeMedia.src;
                     
-                    // Handle Video Playback
                     if(activeMedia.type === 'vid') {
                         if(element.paused) element.play().catch(e=>console.log(e));
                     }
@@ -1169,18 +1221,16 @@ RULES (Strict Format):
                         if(idx !== currentMediaIndex && m.type === 'vid' && !m.src.paused) m.src.pause();
                     });
 
-                    // Draw Element
                     if(element.videoWidth || element.complete) { 
                         const nW = element.videoWidth || element.naturalWidth || element.width;
                         const nH = element.videoHeight || element.naturalHeight || element.height;
                         
-                        if(nW !== 0 && nH !== 0) {
+                        if(nW && nH) {
                             const ratio  = Math.max(canvas.width / nW, canvas.height / nH); 
                             const drawWidth = nW * ratio;
                             const drawHeight = nH * ratio;
 
                             if(activeMedia.type === 'img') {
-                                // Ken Burns
                                 let imgTimeElapsed = elapsed % timePerMedia;
                                 let progress = imgTimeElapsed / timePerMedia;
                                 let isZoomIn = (currentMediaIndex % 2 === 0);
@@ -1192,7 +1242,6 @@ RULES (Strict Format):
                                 ctx.drawImage(element, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
                                 ctx.restore();
                             } else {
-                                // Direct Video Draw (Centered, no scale change)
                                 ctx.drawImage(element, (canvas.width - drawWidth)/2, (canvas.height - drawHeight)/2, drawWidth, drawHeight);
                             }
                         }
@@ -1207,7 +1256,7 @@ RULES (Strict Format):
 
                 ctx.textAlign = "left"; 
 
-                // --- 1. TOP BREAKING TICKER (Optional) ---
+                // --- 1. TOP BREAKING TICKER ---
                 let topYPadding = safePadding;
                 if(showTopTicker) {
                     ctx.fillStyle = topTickerColor; 
@@ -1232,13 +1281,13 @@ RULES (Strict Format):
                     ctx.fillText("LIVE", safePadding + 15, topYPadding + 28);
                 }
 
-                // --- 3. BOTTOM SUBSCRIBE TICKER (Full width red background) ---
+                // --- 3. BOTTOM SUBSCRIBE TICKER & CHANNEL NAME ---
                 if(showSub || showCName) {
                     let cWidth = showCName ? 260 : 0;
 
                     if(showSub) {
                         ctx.fillStyle = subColor; 
-                        ctx.fillRect(0, bottomY, canvas.width, activeSubHeight); // Fill full width
+                        ctx.fillRect(0, bottomY, canvas.width, activeSubHeight); 
                         
                         ctx.fillStyle = "white"; ctx.font = "bold 26px Arial";
                         const sW = ctx.measureText(subTxt).width;
@@ -1246,7 +1295,7 @@ RULES (Strict Format):
                         
                         ctx.save();
                         ctx.beginPath();
-                        ctx.rect(cWidth, bottomY, canvas.width - cWidth, activeSubHeight); // Clip text under Channel name
+                        ctx.rect(cWidth, bottomY, canvas.width - cWidth, activeSubHeight); 
                         ctx.clip();
                         ctx.fillText(subTxt, sX, canvas.height - (activeSubHeight / 2) + 8);
                         ctx.restore();
@@ -1308,7 +1357,15 @@ RULES (Strict Format):
 
                 animationFrameId = requestAnimationFrame(drawLoop);
             }
-            audioObj.play().then(() => { requestAnimationFrame(drawLoop); }).catch(e => { console.error("Audio Play Error:", e); resolve(); });
+
+            // Fallback play pattern for audio blocks
+            audioObj.play().then(() => { 
+                animationFrameId = requestAnimationFrame(drawLoop); 
+            }).catch(e => { 
+                console.error("Audio Play Error/Blocked:", e); 
+                // Still run visuals if audio fails!
+                animationFrameId = requestAnimationFrame(drawLoop); 
+            });
         });
     }
 
@@ -1320,13 +1377,29 @@ RULES (Strict Format):
             source.connect(audioCtx.destination); if(isRecording) source.connect(dest);
             
             videoEle.currentTime = 0; let animationFrameId;
-            videoEle.onended = () => { cancelAnimationFrame(animationFrameId); source.disconnect(audioCtx.destination); if(isRecording) source.disconnect(dest); resolve(); };
+            videoEle.onended = () => { 
+                if(animationFrameId) cancelAnimationFrame(animationFrameId); 
+                source.disconnect(audioCtx.destination); 
+                if(isRecording) source.disconnect(dest); 
+                resolve(); 
+            };
 
             function drawLoop() {
+                if (cancelVideoSequence) {
+                    videoEle.pause();
+                    if(animationFrameId) cancelAnimationFrame(animationFrameId);
+                    resolve();
+                    return;
+                }
                 if(!videoEle.paused && !videoEle.ended) ctx.drawImage(videoEle, 0, 0, canvas.width, canvas.height);
                 animationFrameId = requestAnimationFrame(drawLoop);
             }
-            videoEle.play().then(() => { requestAnimationFrame(drawLoop); }).catch(e => { console.error("Transition Video Play Error:", e); resolve(); });
+            videoEle.play().then(() => { 
+                animationFrameId = requestAnimationFrame(drawLoop); 
+            }).catch(e => { 
+                console.error("Transition Video Play Error:", e); 
+                resolve(); 
+            });
         });
     }
 
