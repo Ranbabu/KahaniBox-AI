@@ -216,9 +216,8 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     
     <label>Select Image Provider</label>
     <select id="imgProviderSelect" onchange="toggleImageSettings()">
-        <option value="hf">Hugging Face API (Free DuckDuckGo)</option>
+        <option value="ranimage">Custom API (Ranimage / DuckDuckGo)</option>
         <option value="google">Google Custom Search</option>
-        <option value="ranimage">Custom API (Ranimage)</option>
     </select>
 
     <div id="googleSettingsBox" style="display: none; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
@@ -228,12 +227,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         <input type="text" id="gCxId" placeholder="Enter CX ID">
     </div>
 
-    <div id="hfSettingsBox" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-        <label>Live API URL (Hugging Face)</label>
-        <input type="text" id="hfApiUrl" placeholder="Enter Hugging Face API URL" value="https://amina786-image-search-api.hf.space/api/predict">
-    </div>
-
-    <div id="ranSettingsBox" style="display: none; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+    <div id="ranSettingsBox" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
         <label>Custom API URL (Ranimage)</label>
         <input type="text" id="ranApiUrl" value="https://ranimage.onrender.com/api/search" placeholder="Enter Custom API URL">
         <small style="color: #fbbf24;">Note: Server may take 2-3 mins to wake up initially.</small>
@@ -256,6 +250,15 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     <div class="overlay-setting">
         <label><input type="checkbox" id="chkLive" checked> Show LIVE Icon</label>
         <input type="file" id="liveUpload" accept="image/*" onchange="loadGlobalImage(this, 'live')">
+    </div>
+
+    <div class="overlay-setting">
+        <label><input type="checkbox" id="chkTopTicker" checked> Show Top Breaking News</label>
+        <input type="text" id="topTickerTxt" value="BREAKING NEWS - ताज़ा और बड़ी खबरें" placeholder="Enter Top Ticker Text">
+    </div>
+
+    <div class="overlay-setting">
+        <label><input type="checkbox" id="chkNewsNumber" checked> Show News Number Badge</label>
     </div>
 
     <div class="overlay-setting">
@@ -299,7 +302,16 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         <div class="panel-title"><span class="material-icons-round">movie</span> 1. Live Video Studio & Export</div>
         
         <div class="input-group">
-            <label>Breaking News Clip (2 sec video) [Optional]</label>
+            <label>Background Music (BGM) [Auto loops to match news length]</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <input type="file" id="bgmInput" accept="audio/*" style="flex:2;">
+                <label style="margin:0;">Vol:</label>
+                <input type="range" id="bgmVolume" min="0" max="1" step="0.05" value="0.1" style="flex:1;">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Breaking News Clip (2 sec video) [Optional Transition]</label>
             <input type="file" id="transitionVideoInput" accept="video/mp4,video/webm" onchange="loadTransitionVideo(this)">
         </div>
 
@@ -433,12 +445,10 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     function toggleImageSettings() {
         const provider = document.getElementById('imgProviderSelect').value;
         document.getElementById('googleSettingsBox').style.display = 'none';
-        document.getElementById('hfSettingsBox').style.display = 'none';
         document.getElementById('ranSettingsBox').style.display = 'none';
 
         if(provider === 'google') document.getElementById('googleSettingsBox').style.display = 'block';
         else if(provider === 'ranimage') document.getElementById('ranSettingsBox').style.display = 'block';
-        else document.getElementById('hfSettingsBox').style.display = 'block';
     }
 
     function saveSettings() { 
@@ -449,7 +459,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         localStorage.setItem('imageProvider', document.getElementById('imgProviderSelect').value);
         localStorage.setItem('googleApiKey', document.getElementById('gApiKey').value); 
         localStorage.setItem('googleCxId', document.getElementById('gCxId').value); 
-        localStorage.setItem('hfApiUrl', document.getElementById('hfApiUrl').value);
         localStorage.setItem('ranApiUrl', document.getElementById('ranApiUrl').value);
         
         alert('Settings Saved Successfully!'); toggleSidebar(); 
@@ -463,7 +472,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         const imgProv = localStorage.getItem('imageProvider');
         const key = localStorage.getItem('googleApiKey'); 
         const cx = localStorage.getItem('googleCxId'); 
-        const hfUrl = localStorage.getItem('hfApiUrl');
         const ranUrl = localStorage.getItem('ranApiUrl');
         
         if(aiProvider) document.getElementById('aiProviderSelect').value = aiProvider;
@@ -473,7 +481,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         if(imgProv) document.getElementById('imgProviderSelect').value = imgProv;
         if(key) document.getElementById('gApiKey').value = key; 
         if(cx) document.getElementById('gCxId').value = cx; 
-        if(hfUrl) document.getElementById('hfApiUrl').value = hfUrl;
         if(ranUrl) document.getElementById('ranApiUrl').value = ranUrl;
     }
     
@@ -482,10 +489,9 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         document.getElementById('aiProviderSelect').value = 'groq';
         document.getElementById('groqApiKey').value = '';
         document.getElementById('mistralApiKey').value = '';
-        document.getElementById('imgProviderSelect').value = 'hf';
+        document.getElementById('imgProviderSelect').value = 'ranimage';
         document.getElementById('gApiKey').value = ''; 
         document.getElementById('gCxId').value = ''; 
-        document.getElementById('hfApiUrl').value = 'https://amina786-image-search-api.hf.space/api/predict';
         document.getElementById('ranApiUrl').value = 'https://ranimage.onrender.com/api/search';
         toggleImageSettings();
         alert('Settings Cleared!'); 
@@ -719,7 +725,7 @@ Script: [स्क्रिप्ट यहाँ लिखें]
         fetchImagesForSegment(segId, query, limit); 
     }
 
-    // API Image Fetch Function (Includes new Ranimage)
+    // API Image Fetch Function (Fixed DuckDuckGo format)
     async function fetchImagesForSegment(segId, query, limit) {
         const provider = document.getElementById('imgProviderSelect').value;
         const statusBox = document.getElementById(`img-status-${segId}`);
@@ -768,64 +774,23 @@ Script: [स्क्रिप्ट यहाँ लिखें]
                 const data = await res.json();
                 let imgs = [];
                 
-                // Parse flexible JSON response from custom scrapers
-                if(Array.isArray(data)) {
-                    imgs = data.map(i => i.url || i.image || i.link || i);
-                } else if(data.results || data.data || data.images) {
-                    const arr = data.results || data.data || data.images;
-                    imgs = arr.map(i => i.url || i.image || i.link || i);
-                } else {
-                    throw new Error("Invalid response format from Ranimage.");
-                }
+                // Smart DuckDuckGo / Custom API JSON Parser
+                let arr = Array.isArray(data) ? data : (data.results || data.data || data.images || []);
+                
+                // Map out URLs, checking common DuckDuckGo keys
+                imgs = arr.map(i => {
+                    if(typeof i === 'string') return i;
+                    return i.image || i.url || i.src || i.thumbnail || i.link;
+                });
+                
+                // Filter out undefined/null
+                imgs = imgs.filter(url => url);
 
-                if(imgs.length === 0) throw new Error("No images found in Ranimage response.");
+                if(imgs.length === 0) throw new Error("No images found in Ranimage response. Try another keyword.");
+                
+                // Enforce the requested image limit exactly
                 processAndRenderImages(imgs.slice(0, limit), gallery, segId);
 
-            } else {
-                // HuggingFace
-                let rawUrl = document.getElementById('hfApiUrl').value.trim();
-                if(!rawUrl) throw new Error("Hugging Face API URL not set in settings.");
-
-                if (rawUrl.includes('huggingface.co/spaces/')) {
-                    let parts = rawUrl.split('huggingface.co/spaces/')[1].split('?')[0].split('/');
-                    if(parts.length >= 2) {
-                        let user = parts[0].toLowerCase().replace(/[_.]/g, '-');
-                        let space = parts[1].toLowerCase().replace(/[_.]/g, '-');
-                        rawUrl = `https://${user}-${space}.hf.space/api/predict`;
-                    }
-                }
-
-                if (!rawUrl.includes('/predict')) {
-                    rawUrl = rawUrl.replace(/\/$/, "") + "/api/predict"; 
-                }
-
-                let urlsToTry = [rawUrl];
-                if (rawUrl.endsWith('/api/predict')) {
-                    urlsToTry.push(rawUrl.replace('/api/predict', '/run/predict'));
-                } else if (rawUrl.endsWith('/run/predict')) {
-                    urlsToTry.push(rawUrl.replace('/run/predict', '/api/predict'));
-                }
-
-                let response = null;
-                for (let url of urlsToTry) {
-                    try {
-                        response = await fetch(url, {
-                            method: "POST", headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ data: [query] })
-                        });
-                        if (response.ok) break; 
-                    } catch (err) { console.log("Fetch failed for:", url); }
-                }
-
-                if (!response || !response.ok) throw new Error(`API request failed. कृपया सेटिंग्स में सही लिंक डालें।`);
-                
-                const result = await response.json();
-                let imageUrls = result.data[0]; 
-                
-                if (!imageUrls || imageUrls.length === 0) throw new Error("No images found. Try shortening the keyword.");
-                
-                imageUrls = imageUrls.slice(0, limit);
-                processAndRenderImages(imageUrls, gallery, segId);
             }
             
             clearInterval(timerInterval);
@@ -930,6 +895,23 @@ Script: [स्क्रिप्ट यहाँ लिखें]
         let hasTransVid = (transVid.src && transVid.src !== "" && !transVid.src.endsWith(window.location.host+"/"));
         let recorder, chunks = [];
 
+        // START BGM LOGIC
+        let bgmAudio = null;
+        let bgmGain = null;
+        const bgmInput = document.getElementById('bgmInput');
+        if(bgmInput.files && bgmInput.files.length > 0) {
+            const bgmUrl = URL.createObjectURL(bgmInput.files[0]);
+            bgmAudio = new Audio(bgmUrl);
+            bgmAudio.loop = true; // Auto loop
+            const bgmSource = audioCtx.createMediaElementSource(bgmAudio);
+            bgmGain = audioCtx.createGain();
+            bgmGain.gain.value = document.getElementById('bgmVolume').value;
+            bgmSource.connect(bgmGain);
+            bgmGain.connect(audioCtx.destination);
+            if(isRecording) bgmGain.connect(dest);
+            bgmAudio.play().catch(e => console.error("BGM Play Error:", e));
+        }
+
         if(isRecording) {
             btnDownload.disabled = true; btnDownload.innerHTML = '<span class="spin material-icons-round">sync</span> Recording...';
             btnPreview.disabled = true; recIndicator.style.display = "block";
@@ -952,11 +934,14 @@ Script: [स्क्रिप्ट यहाँ लिखें]
 
         for(let i=0; i<validSegmentIds.length; i++) {
             if(cancelVideoSequence) break;
-            await playSegmentOnCanvas(segmentsData[validSegmentIds[i]], ctx, canvas, audioCtx, dest, isRecording);
+            await playSegmentOnCanvas(segmentsData[validSegmentIds[i]], ctx, canvas, audioCtx, dest, isRecording, i + 1);
             if(hasTransVid && i < validSegmentIds.length - 1 && !cancelVideoSequence) {
                 await playTransitionOnCanvas(transVid, ctx, canvas, audioCtx, dest, isRecording);
             }
         }
+
+        // STOP BGM
+        if(bgmAudio) { bgmAudio.pause(); bgmAudio.src = ""; }
 
         if(isRecording && recorder && recorder.state !== "inactive") recorder.stop(); else resetVideoUI();
         ctx.fillStyle = "black"; ctx.fillRect(0, 0, canvas.width, canvas.height); isVideoEngineRunning = false;
@@ -968,7 +953,7 @@ Script: [स्क्रिप्ट यहाँ लिखें]
         }
     }
 
-    function playSegmentOnCanvas(data, ctx, canvas, audioCtx, dest, isRecording) {
+    function playSegmentOnCanvas(data, ctx, canvas, audioCtx, dest, isRecording, newsIndex) {
         return new Promise((resolve) => {
             const audioObj = new Audio(data.audioUrl);
             const source = audioCtx.createMediaElementSource(audioObj);
@@ -989,6 +974,10 @@ Script: [स्क्रिप्ट यहाँ लिखें]
             const showHead = document.getElementById('chkHeadline').checked;
             const showSub = document.getElementById('chkSubscribe').checked;
             const subTxt = document.getElementById('subscribeTxt').value;
+            
+            const showTopTicker = document.getElementById('chkTopTicker').checked;
+            const topTickerTxt = document.getElementById('topTickerTxt').value;
+            const showNewsNum = document.getElementById('chkNewsNumber').checked;
 
             function drawLoop(now) {
                 const elapsed = now - startTime;
@@ -1016,19 +1005,41 @@ Script: [स्क्रिप्ट यहाँ लिखें]
                 // --------- DRAW OVERLAYS ---------- //
                 ctx.textAlign = "left"; // Reset alignment
 
+                // Top Breaking Ticker
+                if(showTopTicker) {
+                    ctx.fillStyle = "#ef4444"; // Red
+                    ctx.fillRect(0, 0, canvas.width, 45);
+                    ctx.fillStyle = "white"; ctx.font = "bold 26px Arial";
+                    const tW = ctx.measureText(topTickerTxt).width;
+                    let tX = canvas.width - ((elapsed * 0.18) % (canvas.width + tW));
+                    ctx.fillText(topTickerTxt, tX, 32);
+                }
+
+                // Dynamic Y for Logo and Live (moves down if top ticker is shown)
+                let topYPadding = showTopTicker ? 60 : 20;
+
                 // Logo
                 if(showLogo && globalLogoImg) {
-                    ctx.drawImage(globalLogoImg, canvas.width - 140, 20, 100, 100);
+                    ctx.drawImage(globalLogoImg, canvas.width - 140, topYPadding, 100, 100);
                 }
 
                 // Live Icon
                 if(showLive && globalLiveImg) {
-                    ctx.drawImage(globalLiveImg, 40, 20, 120, 60);
+                    ctx.drawImage(globalLiveImg, 40, topYPadding, 120, 60);
                 } else if(showLive && !globalLiveImg) {
                     // Default Live Box if no image uploaded
-                    ctx.fillStyle = "red"; ctx.fillRect(40, 30, 90, 40);
+                    ctx.fillStyle = "red"; ctx.fillRect(40, topYPadding, 90, 40);
                     ctx.fillStyle = "white"; ctx.font = "bold 24px Arial";
-                    ctx.fillText("LIVE", 55, 58);
+                    ctx.fillText("LIVE", 55, topYPadding + 28);
+                }
+
+                // News Number
+                if(showNewsNum) {
+                    let numY = showLive ? (topYPadding + 70) : topYPadding;
+                    ctx.fillStyle = "#fbbf24"; // Yellow
+                    ctx.fillRect(40, numY, 130, 40);
+                    ctx.fillStyle = "black"; ctx.font = "bold 24px Arial";
+                    ctx.fillText("News #" + newsIndex, 50, numY + 28);
                 }
 
                 // Bottom Layout Heights
