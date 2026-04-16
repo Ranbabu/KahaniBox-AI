@@ -55,17 +55,21 @@ header {
 .btn-icon { background: none; border: none; color: var(--text); cursor: pointer; padding: 5px; display: flex; align-items: center; justify-content: center; }
 
 .sidebar {
-    position: fixed; top: var(--header-h); right: -320px; width: 320px; height: calc(100vh - var(--header-h));
+    position: fixed; top: var(--header-h); right: -320px; width: 340px; height: calc(100vh - var(--header-h));
     background: var(--card-bg); border-left: 1px solid var(--border); transition: right 0.3s ease;
     z-index: 90; padding: 20px; box-shadow: -5px 0 15px rgba(0,0,0,0.5); overflow-y: auto;
 }
 .sidebar.active { right: 0; }
 .sidebar h3 { margin-top: 0; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;}
-.sidebar label { font-weight: bold; margin-bottom: 8px; color: #cbd5e1; font-size: 0.9rem; display: block;}
-.sidebar input, .sidebar select { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: #fff; }
-.sidebar-btns { display: flex; gap: 10px; margin-top: 10px; }
+.sidebar label { font-weight: bold; margin-bottom: 8px; color: #cbd5e1; font-size: 0.85rem; display: block;}
+.sidebar input[type="text"], .sidebar input[type="password"], .sidebar select { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: #fff; }
+.sidebar-btns { display: flex; gap: 10px; margin-top: 10px; margin-bottom: 20px; }
 .btn-save { background: #10b981; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; flex: 1; font-weight: bold; }
 .btn-clear { background: #ef4444; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; flex: 1; font-weight: bold; }
+
+.overlay-setting { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border); }
+.overlay-setting label { margin-bottom: 5px; display: flex; align-items: center; gap: 8px; font-weight: normal;}
+.overlay-setting input[type="file"] { margin-bottom: 0; padding: 5px; font-size: 0.8rem; }
 
 .data-sidebar {
     position: fixed; top: var(--header-h); left: -320px; width: 320px; height: calc(100vh - var(--header-h));
@@ -95,7 +99,7 @@ header {
 .input-group { margin-bottom: 15px; }
 .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
 
-select, input[type="file"] {
+select, input[type="file"], input[type="text"] {
     width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border);
     background: #0f172a; color: #fff; font-size: 0.95rem; outline: none;
 }
@@ -178,6 +182,8 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     border: none; padding: 14px 20px; border-radius: 50px; font-weight: 700; display: flex; align-items: center; gap: 8px;
     cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 99;
 }
+.manual-upload-row { display: flex; gap: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed var(--border);}
+.manual-upload-row div { flex: 1; }
 </style>
 </head>
 <body>
@@ -212,6 +218,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     <select id="imgProviderSelect" onchange="toggleImageSettings()">
         <option value="hf">Hugging Face API (Free DuckDuckGo)</option>
         <option value="google">Google Custom Search</option>
+        <option value="ranimage">Custom API (Ranimage)</option>
     </select>
 
     <div id="googleSettingsBox" style="display: none; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
@@ -225,11 +232,46 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         <label>Live API URL (Hugging Face)</label>
         <input type="text" id="hfApiUrl" placeholder="Enter Hugging Face API URL" value="https://amina786-image-search-api.hf.space/api/predict">
     </div>
+
+    <div id="ranSettingsBox" style="display: none; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+        <label>Custom API URL (Ranimage)</label>
+        <input type="text" id="ranApiUrl" value="https://ranimage.onrender.com/api/search" placeholder="Enter Custom API URL">
+        <small style="color: #fbbf24;">Note: Server may take 2-3 mins to wake up initially.</small>
+    </div>
     
     <div class="sidebar-btns">
         <button class="btn-save" onclick="saveSettings()">Save</button>
         <button class="btn-clear" onclick="clearSettings()">Clear</button>
     </div>
+
+    <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+
+    <h3><span class="material-icons-round" style="vertical-align:middle;">layers</span> Video Overlays</h3>
+
+    <div class="overlay-setting">
+        <label><input type="checkbox" id="chkLogo" checked> Show Channel Logo</label>
+        <input type="file" id="logoUpload" accept="image/*" onchange="loadGlobalImage(this, 'logo')">
+    </div>
+
+    <div class="overlay-setting">
+        <label><input type="checkbox" id="chkLive" checked> Show LIVE Icon</label>
+        <input type="file" id="liveUpload" accept="image/*" onchange="loadGlobalImage(this, 'live')">
+    </div>
+
+    <div class="overlay-setting">
+        <label><input type="checkbox" id="chkChannelName" checked> Show Channel Name</label>
+        <input type="text" id="channelNameTxt" value="NEWS 24" placeholder="Enter Channel Name">
+    </div>
+
+    <div class="overlay-setting">
+        <label><input type="checkbox" id="chkHeadline" checked> Show Headline Ticker</label>
+    </div>
+
+    <div class="overlay-setting">
+        <label><input type="checkbox" id="chkSubscribe" checked> Show Subscribe Ticker (Bottom)</label>
+        <input type="text" id="subscribeTxt" value="कृपया हमारे चैनल को सब्सक्राइब करें और बेल आइकन दबाएं | पल-पल की ख़बरों के लिए जुड़े रहें |" placeholder="Enter Subscribe Text">
+    </div>
+
 </div>
 
 <div class="data-sidebar" id="dataSidebar">
@@ -357,6 +399,9 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     let cancelVideoSequence = false;
     
     let globalAudioCtx = null;
+    let globalLogoImg = null;
+    let globalLiveImg = null;
+
     function getAudioContext() {
         if (!globalAudioCtx) {
             globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -387,13 +432,13 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     
     function toggleImageSettings() {
         const provider = document.getElementById('imgProviderSelect').value;
-        if(provider === 'google') {
-            document.getElementById('googleSettingsBox').style.display = 'block';
-            document.getElementById('hfSettingsBox').style.display = 'none';
-        } else {
-            document.getElementById('googleSettingsBox').style.display = 'none';
-            document.getElementById('hfSettingsBox').style.display = 'block';
-        }
+        document.getElementById('googleSettingsBox').style.display = 'none';
+        document.getElementById('hfSettingsBox').style.display = 'none';
+        document.getElementById('ranSettingsBox').style.display = 'none';
+
+        if(provider === 'google') document.getElementById('googleSettingsBox').style.display = 'block';
+        else if(provider === 'ranimage') document.getElementById('ranSettingsBox').style.display = 'block';
+        else document.getElementById('hfSettingsBox').style.display = 'block';
     }
 
     function saveSettings() { 
@@ -405,6 +450,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         localStorage.setItem('googleApiKey', document.getElementById('gApiKey').value); 
         localStorage.setItem('googleCxId', document.getElementById('gCxId').value); 
         localStorage.setItem('hfApiUrl', document.getElementById('hfApiUrl').value);
+        localStorage.setItem('ranApiUrl', document.getElementById('ranApiUrl').value);
         
         alert('Settings Saved Successfully!'); toggleSidebar(); 
     }
@@ -418,6 +464,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         const key = localStorage.getItem('googleApiKey'); 
         const cx = localStorage.getItem('googleCxId'); 
         const hfUrl = localStorage.getItem('hfApiUrl');
+        const ranUrl = localStorage.getItem('ranApiUrl');
         
         if(aiProvider) document.getElementById('aiProviderSelect').value = aiProvider;
         if(groqKey) document.getElementById('groqApiKey').value = groqKey;
@@ -427,6 +474,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         if(key) document.getElementById('gApiKey').value = key; 
         if(cx) document.getElementById('gCxId').value = cx; 
         if(hfUrl) document.getElementById('hfApiUrl').value = hfUrl;
+        if(ranUrl) document.getElementById('ranApiUrl').value = ranUrl;
     }
     
     function clearSettings() { 
@@ -438,8 +486,22 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         document.getElementById('gApiKey').value = ''; 
         document.getElementById('gCxId').value = ''; 
         document.getElementById('hfApiUrl').value = 'https://amina786-image-search-api.hf.space/api/predict';
+        document.getElementById('ranApiUrl').value = 'https://ranimage.onrender.com/api/search';
         toggleImageSettings();
         alert('Settings Cleared!'); 
+    }
+
+    // Overlays Global Loaders
+    function loadGlobalImage(input, type) {
+        if(input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = () => { if(type === 'logo') globalLogoImg = img; else globalLiveImg = img; };
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
     }
 
     function syncAllVoices(selectedValue) {
@@ -569,6 +631,17 @@ Script: [स्क्रिप्ट यहाँ लिखें]
                 </button>
             </div>
 
+            <div class="manual-upload-row">
+                <div>
+                    <label style="color:#34d399;">Upload Manual Image</label>
+                    <input type="file" accept="image/*" onchange="uploadManualImage(this, ${id})" style="padding:8px;">
+                </div>
+                <div>
+                    <label style="color:#f472b6;">Upload Manual Audio</label>
+                    <input type="file" accept="audio/*" onchange="uploadManualAudio(this, ${id})" style="padding:8px;">
+                </div>
+            </div>
+
             <div class="image-gallery-placeholder" id="img-status-${id}">Images will load here...</div>
             <div class="image-gallery" id="gallery-${id}"></div>
 
@@ -601,6 +674,43 @@ Script: [स्क्रिप्ट यहाँ लिखें]
         checkEmpty(); return id; 
     }
 
+    // Manual Upload Functions
+    function uploadManualImage(input, segId) {
+        if(input.files && input.files[0]) {
+            const fileUrl = URL.createObjectURL(input.files[0]);
+            const gallery = document.getElementById(`gallery-${segId}`);
+            const img = document.createElement('img');
+            img.src = fileUrl;
+            gallery.appendChild(img);
+            
+            const imgObj = new Image();
+            imgObj.onload = () => { segmentsData[segId].images.push(imgObj); };
+            imgObj.src = fileUrl;
+        }
+    }
+
+    function uploadManualAudio(input, segId) {
+        if(input.files && input.files[0]) {
+            const fileUrl = URL.createObjectURL(input.files[0]);
+            const player = document.getElementById(`player-${segId}`);
+            const durLabel = document.getElementById(`duration-${segId}`);
+            const status = document.getElementById(`status-${segId}`);
+            const audioBox = document.getElementById(`audio-box-${segId}`);
+
+            player.src = fileUrl;
+            segmentsData[segId].audioUrl = fileUrl;
+
+            player.onloadedmetadata = () => {
+                segmentsData[segId].duration = player.duration;
+                durLabel.innerText = `Duration: ${player.duration.toFixed(1)}s (Manual)`;
+            };
+            status.style.display = "block";
+            status.innerText = "✅ Manual Audio Loaded!"; 
+            status.style.color = "#4ade80"; 
+            audioBox.style.display = "block";
+        }
+    }
+
     function manualImageSearch(segId) {
         const query = document.getElementById(`img-query-${segId}`).value.trim();
         const limit = document.getElementById('imageFetchCount').value;
@@ -609,7 +719,7 @@ Script: [स्क्रिप्ट यहाँ लिखें]
         fetchImagesForSegment(segId, query, limit); 
     }
 
-    // 🔥 SMART AUTO-FIX URL & MASTER IMAGE FETCH FUNCTION 🔥
+    // API Image Fetch Function (Includes new Ranimage)
     async function fetchImagesForSegment(segId, query, limit) {
         const provider = document.getElementById('imgProviderSelect').value;
         const statusBox = document.getElementById(`img-status-${segId}`);
@@ -618,18 +728,20 @@ Script: [स्क्रिप्ट यहाँ लिखें]
         gallery.innerHTML = ''; 
         segmentsData[segId].images = []; 
 
-        // --- TIMER LOGIC START ---
         let seconds = 0;
         statusBox.style.display = "block";
         statusBox.style.color = "#fbbf24"; 
-        statusBox.innerHTML = `<span class="material-icons-round spin" style="font-size:1.1rem; vertical-align:middle;">sync</span> Image Search running... (<span id="timer-${segId}">0</span>s)`;
+        
+        let loadingMsg = "Image Search running...";
+        if(provider === 'ranimage') loadingMsg = "Waking up Ranimage API & Searching... (Server sleeps, may take 2-3 mins)";
+        
+        statusBox.innerHTML = `<span class="material-icons-round spin" style="font-size:1.1rem; vertical-align:middle;">sync</span> ${loadingMsg} (<span id="timer-${segId}">0</span>s)`;
 
         const timerInterval = setInterval(() => {
             seconds++;
             const tElem = document.getElementById(`timer-${segId}`);
             if(tElem) tElem.innerText = seconds;
         }, 1000);
-        // --- TIMER LOGIC END ---
 
         try {
             if (provider === 'google') {
@@ -646,13 +758,35 @@ Script: [स्क्रिप्ट यहाँ लिखें]
 
                 processAndRenderImages(data.items.map(item => item.link), gallery, segId);
 
+            } else if (provider === 'ranimage') {
+                const rawUrl = document.getElementById('ranApiUrl').value.trim();
+                if(!rawUrl) throw new Error("Ranimage API URL not set.");
+
+                const res = await fetch(`${rawUrl}?q=${encodeURIComponent(query)}`);
+                if(!res.ok) throw new Error(`Ranimage Request Failed (Status: ${res.status})`);
+                
+                const data = await res.json();
+                let imgs = [];
+                
+                // Parse flexible JSON response from custom scrapers
+                if(Array.isArray(data)) {
+                    imgs = data.map(i => i.url || i.image || i.link || i);
+                } else if(data.results || data.data || data.images) {
+                    const arr = data.results || data.data || data.images;
+                    imgs = arr.map(i => i.url || i.image || i.link || i);
+                } else {
+                    throw new Error("Invalid response format from Ranimage.");
+                }
+
+                if(imgs.length === 0) throw new Error("No images found in Ranimage response.");
+                processAndRenderImages(imgs.slice(0, limit), gallery, segId);
+
             } else {
+                // HuggingFace
                 let rawUrl = document.getElementById('hfApiUrl').value.trim();
                 if(!rawUrl) throw new Error("Hugging Face API URL not set in settings.");
 
-                // 🔥 SMART FIX: अगर यूजर ने "https://huggingface.co/spaces/Amina786/image-search-api" डाला है तो इसे ऑटोमैटिक सही API लिंक में बदलें 🔥
                 if (rawUrl.includes('huggingface.co/spaces/')) {
-                    // यूजरनेम और स्पेसनेम अलग करें
                     let parts = rawUrl.split('huggingface.co/spaces/')[1].split('?')[0].split('/');
                     if(parts.length >= 2) {
                         let user = parts[0].toLowerCase().replace(/[_.]/g, '-');
@@ -661,12 +795,10 @@ Script: [स्क्रिप्ट यहाँ लिखें]
                     }
                 }
 
-                // अगर लिंक में 'predict' नहीं है, तो उसे जोड़ें
                 if (!rawUrl.includes('/predict')) {
                     rawUrl = rawUrl.replace(/\/$/, "") + "/api/predict"; 
                 }
 
-                // 🔥 डबल-चेक सिस्टम: अगर एक API काम न करे तो दूसरे को ट्राई करें 🔥
                 let urlsToTry = [rawUrl];
                 if (rawUrl.endsWith('/api/predict')) {
                     urlsToTry.push(rawUrl.replace('/api/predict', '/run/predict'));
@@ -678,20 +810,14 @@ Script: [स्क्रिप्ट यहाँ लिखें]
                 for (let url of urlsToTry) {
                     try {
                         response = await fetch(url, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
+                            method: "POST", headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ data: [query] })
                         });
-                        // अगर सही जवाब मिला तो इस लूप से बाहर आ जाएं
                         if (response.ok) break; 
-                    } catch (err) {
-                        console.log("Fetch failed for:", url);
-                    }
+                    } catch (err) { console.log("Fetch failed for:", url); }
                 }
 
-                if (!response || !response.ok) {
-                    throw new Error(`API request failed (Status: ${response ? response.status : 'Unknown'}). कृपया सेटिंग्स में सही लिंक डालें।`);
-                }
+                if (!response || !response.ok) throw new Error(`API request failed. कृपया सेटिंग्स में सही लिंक डालें।`);
                 
                 const result = await response.json();
                 let imageUrls = result.data[0]; 
@@ -713,11 +839,9 @@ Script: [स्क्रिप्ट यहाँ लिखें]
         }
     }
 
-    // Helper Function to Render Images
     function processAndRenderImages(urlArray, gallery, segId) {
         urlArray.forEach(url => {
             const proxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
-            
             const img = document.createElement('img');
             img.crossOrigin = "anonymous";
             img.src = proxyUrl;
@@ -857,12 +981,24 @@ Script: [स्क्रिप्ट यहाँ लिखें]
             audioObj.onended = () => { cancelAnimationFrame(animationFrameId); source.disconnect(); resolve(); };
             const startTime = performance.now();
 
+            // Overlay Options Settings
+            const showLogo = document.getElementById('chkLogo').checked;
+            const showLive = document.getElementById('chkLive').checked;
+            const showCName = document.getElementById('chkChannelName').checked;
+            const cNameTxt = document.getElementById('channelNameTxt').value;
+            const showHead = document.getElementById('chkHeadline').checked;
+            const showSub = document.getElementById('chkSubscribe').checked;
+            const subTxt = document.getElementById('subscribeTxt').value;
+
             function drawLoop(now) {
                 const elapsed = now - startTime;
                 currentImgIndex = Math.floor(elapsed / timePerImage);
                 if(currentImgIndex >= images.length) currentImgIndex = images.length - 1;
                 
+                // Draw Base Background
                 ctx.fillStyle = "#0f172a"; ctx.fillRect(0,0, canvas.width, canvas.height);
+                
+                // Draw Image
                 if(images.length > 0 && images[currentImgIndex] && images[currentImgIndex].complete && images[currentImgIndex].naturalHeight !== 0) {
                     const img = images[currentImgIndex];
                     const ratio  = Math.max(canvas.width / img.width, canvas.height / img.height); 
@@ -876,6 +1012,73 @@ Script: [स्क्रिप्ट यहाँ लिखें]
                     ctx.fillStyle = "white"; ctx.font = "30px 'Segoe UI', Arial"; 
                     wrapText(ctx, data.headline || "News Segment", canvas.width/2, canvas.height/2 + 20, canvas.width - 100, 40);
                 }
+
+                // --------- DRAW OVERLAYS ---------- //
+                ctx.textAlign = "left"; // Reset alignment
+
+                // Logo
+                if(showLogo && globalLogoImg) {
+                    ctx.drawImage(globalLogoImg, canvas.width - 140, 20, 100, 100);
+                }
+
+                // Live Icon
+                if(showLive && globalLiveImg) {
+                    ctx.drawImage(globalLiveImg, 40, 20, 120, 60);
+                } else if(showLive && !globalLiveImg) {
+                    // Default Live Box if no image uploaded
+                    ctx.fillStyle = "red"; ctx.fillRect(40, 30, 90, 40);
+                    ctx.fillStyle = "white"; ctx.font = "bold 24px Arial";
+                    ctx.fillText("LIVE", 55, 58);
+                }
+
+                // Bottom Layout Heights
+                let subHeight = showSub ? 45 : 0;
+                let headHeight = (showHead || showCName) ? 55 : 0;
+                let bottomY = canvas.height - subHeight;
+
+                // Subscribe Ticker (Absolute Bottom)
+                if(showSub) {
+                    ctx.fillStyle = "#dc2626"; // Red
+                    ctx.fillRect(0, bottomY, canvas.width, subHeight);
+                    ctx.fillStyle = "white"; ctx.font = "bold 26px Arial";
+                    const sW = ctx.measureText(subTxt).width;
+                    let sX = canvas.width - ((elapsed * 0.15) % (canvas.width + sW));
+                    ctx.fillText(subTxt, sX, canvas.height - 13);
+                }
+
+                // Headline & Channel Name Box
+                if(showHead || showCName) {
+                    let headY = bottomY - headHeight;
+                    let cWidth = showCName ? 220 : 0;
+
+                    // Headline Ticker
+                    if(showHead) {
+                        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+                        ctx.fillRect(cWidth, headY, canvas.width - cWidth, headHeight);
+                        ctx.fillStyle = "black"; ctx.font = "bold 32px Arial";
+                        const hTxt = (data.headline || "ताज़ा खबर").toUpperCase();
+                        const hW = ctx.measureText(hTxt).width;
+                        let hX = canvas.width - ((elapsed * 0.2) % (canvas.width + hW));
+                        
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.rect(cWidth, headY, canvas.width - cWidth, headHeight);
+                        ctx.clip();
+                        ctx.fillText("► " + hTxt, hX, headY + 40);
+                        ctx.restore();
+                    }
+
+                    // Channel Name (Left Side)
+                    if(showCName) {
+                        ctx.fillStyle = "#1e3a8a"; // Dark Blue
+                        ctx.fillRect(0, headY, cWidth, headHeight);
+                        ctx.fillStyle = "white"; ctx.font = "bold 28px Arial";
+                        ctx.textAlign = "center";
+                        ctx.fillText(cNameTxt, cWidth/2, headY + 38);
+                        ctx.textAlign = "left"; // Reset
+                    }
+                }
+
                 animationFrameId = requestAnimationFrame(drawLoop);
             }
             audioObj.play().then(() => { requestAnimationFrame(drawLoop); }).catch(e => { console.error("Audio Play Error:", e); resolve(); });
