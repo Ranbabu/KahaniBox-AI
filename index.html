@@ -70,6 +70,9 @@ header {
 .overlay-setting { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border); }
 .overlay-setting label { margin-bottom: 5px; display: flex; align-items: center; gap: 8px; font-weight: normal;}
 .overlay-setting input[type="file"] { margin-bottom: 0; padding: 5px; font-size: 0.8rem; }
+.overlay-setting input[type="range"] { margin-top: 5px; margin-bottom: 5px; width: 100%; }
+.overlay-setting input[type="color"] { width: 40px; height: 30px; padding: 0; border: none; border-radius: 5px; cursor: pointer; background: transparent; }
+.color-row { display: flex; align-items: center; justify-content: space-between; margin-top: 5px; font-size: 0.8rem; color: #cbd5e1;}
 
 .data-sidebar {
     position: fixed; top: var(--header-h); left: -320px; width: 320px; height: calc(100vh - var(--header-h));
@@ -166,7 +169,6 @@ textarea {
 .controls-row { display: flex; gap: 12px; margin-bottom: 15px; }
 .control-group { flex: 1; background: rgba(0,0,0,0.25); padding: 10px; border-radius: 10px; border: 1px solid #334155; }
 .control-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; }
-input[type=range] { width: 100%; accent-color: var(--primary); height: 4px; }
 
 .btn-gen { background: #0ea5e9; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
 .audio-wrapper { display: none; margin-top: 15px; background: #020617; padding: 12px; border-radius: 12px; border: 1px solid var(--border); }
@@ -240,7 +242,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
 
     <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
 
-    <h3><span class="material-icons-round" style="vertical-align:middle;">layers</span> Video Overlays</h3>
+    <h3><span class="material-icons-round" style="vertical-align:middle;">layers</span> Video Overlays & Colors</h3>
 
     <div class="overlay-setting">
         <label><input type="checkbox" id="chkLogo" checked> Show Channel Logo</label>
@@ -255,15 +257,20 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     <div class="overlay-setting">
         <label><input type="checkbox" id="chkTopTicker" checked> Show Top Breaking News</label>
         <input type="text" id="topTickerTxt" value="BREAKING NEWS - ताज़ा और बड़ी खबरें" placeholder="Enter Top Ticker Text">
+        <label style="margin-top:10px; font-size:0.75rem;">Height</label>
+        <input type="range" id="topTickerHeight" min="30" max="80" value="45">
+        <div class="color-row"><span>Background Color:</span> <input type="color" id="topTickerColor" value="#ef4444"></div>
     </div>
 
     <div class="overlay-setting">
         <label><input type="checkbox" id="chkNewsNumber" checked> Show News Number Badge</label>
+        <div class="color-row"><span>Background Color:</span> <input type="color" id="newsNumColor" value="#fbbf24"></div>
     </div>
 
     <div class="overlay-setting">
         <label><input type="checkbox" id="chkChannelName" checked> Show Channel Name</label>
-        <input type="text" id="channelNameTxt" value="NEWS 24" placeholder="Enter Channel Name">
+        <input type="text" id="channelNameTxt" value="RAN News Tek" placeholder="Enter Channel Name">
+        <div class="color-row"><span>Background Color:</span> <input type="color" id="channelNameColor" value="#b91c1c"></div>
     </div>
 
     <div class="overlay-setting">
@@ -273,6 +280,9 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     <div class="overlay-setting">
         <label><input type="checkbox" id="chkSubscribe" checked> Show Subscribe Ticker (Bottom)</label>
         <input type="text" id="subscribeTxt" value="कृपया हमारे चैनल को सब्सक्राइब करें और बेल आइकन दबाएं | पल-पल की ख़बरों के लिए जुड़े रहें |" placeholder="Enter Subscribe Text">
+        <label style="margin-top:10px; font-size:0.75rem;">Height</label>
+        <input type="range" id="bottomTickerHeight" min="30" max="80" value="45">
+        <div class="color-row"><span>Background Color:</span> <input type="color" id="bottomTickerColor" value="#dc2626"></div>
     </div>
 
 </div>
@@ -306,7 +316,13 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
             <div style="display:flex; gap:10px; align-items:center;">
                 <input type="file" id="bgmInput" accept="audio/*" style="flex:2;">
                 <label style="margin:0;">Vol:</label>
-                <input type="range" id="bgmVolume" min="0" max="1" step="0.05" value="0.1" style="flex:1;">
+                <select id="bgmVolume" style="flex:1; margin:0; padding:10px;">
+                    <option value="0.05">5%</option>
+                    <option value="0.10" selected>10%</option>
+                    <option value="0.15">15%</option>
+                    <option value="0.20">20%</option>
+                    <option value="0.30">30%</option>
+                </select>
             </div>
         </div>
 
@@ -328,6 +344,24 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
                 <span class="material-icons-round">download</span> Download Video
             </button>
         </div>
+    </div>
+
+    <!-- NEW: Advanced Quick Paste Panel -->
+    <div class="news-control-panel">
+        <div class="panel-title"><span class="material-icons-round">content_paste</span> Quick Paste & Auto-Segment</div>
+        <label>अपनी पूरी स्क्रिप्ट यहाँ पेस्ट करें। सिस्टम ऑटोमैटिकली 1, 2, 3 नंबरों से ख़बरों को पहचान कर अलग-अलग ऑडियो/इमेज बॉक्स बना देगा।</label>
+        <textarea id="quickPasteScript" placeholder="नमस्कार दोस्तों...
+
+1. नोएडा मजदूर आंदोलन...
+नोएडा में...
+
+2. सुप्रीम कोर्ट...
+सुप्रीम कोर्ट ने...
+
+दोस्तों, चैनल सब्सक्राइब करें..." style="min-height: 120px;"></textarea>
+        <button class="btn-action-green" style="margin-top:0;" onclick="createSegmentsFromAdvancedPaste()">
+            <span class="material-icons-round">auto_awesome</span> Auto-Create All Segments
+        </button>
     </div>
 
     <div class="news-control-panel">
@@ -372,7 +406,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         </div>
 
         <button class="btn-fetch" id="fetchBtn" onclick="fetchAndCreateSegments()">
-            <span class="material-icons-round">auto_awesome</span> Fetch News & Generate Segments
+            <span class="material-icons-round">smart_toy</span> Fetch Fresh AI News
         </button>
         <div class="loader-overlay" id="mainLoader"><span class="material-icons-round spin">sync</span> AI Script Generating...</div>
     </div>
@@ -390,7 +424,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     
     <div id="empty-state" style="text-align:center; color:#64748b; margin-top:40px;">
         <span class="material-icons-round" style="font-size:3rem; opacity:0.3;">format_quote</span>
-        <p>No scripts yet. Click "Fetch News" above to populate using AI.</p>
+        <p>No scripts yet. Click "Fetch Fresh AI News" or Paste Script above.</p>
     </div>
 
 </div>
@@ -515,6 +549,89 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         selects.forEach(select => { select.value = selectedValue; });
     }
 
+    // SYNC AUDIO SPEEDS
+    function syncAllSpeeds(selectedValue) {
+        const selects = document.querySelectorAll('select[id^="rate-"]');
+        selects.forEach(select => { select.value = selectedValue; });
+    }
+
+    // --- CORE SCRIPT PARSER (Manual & AI) ---
+    function parseScriptIntoSegments(rawText) {
+        let cleanText = rawText.replace(/\*\*/g, '').trim();
+        let lines = cleanText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+        let parsedSegments = [];
+        let currentMode = 'INTRO';
+        let currentHeadline = 'Intro / सारांश';
+        let currentScript = [];
+        let newsCounter = 0;
+
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i];
+            
+            // Check if line starts with a number like "1.", "1)", "2."
+            let numMatch = line.match(/^(\d+)[\.\)]\s*(.*)/);
+
+            if (numMatch) {
+                // Save previous segment
+                if (currentScript.length > 0) {
+                    parsedSegments.push({ type: currentMode, newsIndex: currentMode === 'NEWS' ? newsCounter : null, headline: currentHeadline, script: currentScript.join('\n') });
+                }
+                
+                // Start a new NEWS segment
+                newsCounter++;
+                currentMode = 'NEWS';
+                currentHeadline = numMatch[2] || `News ${newsCounter}`;
+                currentScript = [];
+            } else {
+                // Outro trigger check
+                let lowerLine = line.toLowerCase();
+                let isOutroTrigger = lowerLine.includes('सब्सक्राइब') || lowerLine.includes('धन्यवाद') || lowerLine.includes('जय हिंद') || lowerLine.includes('दोस्तों, अगर');
+                
+                if (currentMode === 'NEWS' && isOutroTrigger) {
+                    // Save current news segment
+                    if (currentScript.length > 0) {
+                        parsedSegments.push({ type: currentMode, newsIndex: newsCounter, headline: currentHeadline, script: currentScript.join('\n') });
+                    }
+                    // Start OUTRO
+                    currentMode = 'OUTRO';
+                    currentHeadline = 'Outro / चैनल अपील';
+                    currentScript = [line];
+                } else {
+                    currentScript.push(line);
+                }
+            }
+        }
+        if (currentScript.length > 0) {
+            parsedSegments.push({ type: currentMode, newsIndex: currentMode === 'NEWS' ? newsCounter : null, headline: currentHeadline, script: currentScript.join('\n') });
+        }
+        
+        return parsedSegments;
+    }
+
+    // Triggered by manual paste
+    function createSegmentsFromAdvancedPaste() {
+        const text = document.getElementById('quickPasteScript').value.trim();
+        if(!text) return alert("Please paste the script first.");
+        
+        const imageLimit = document.getElementById('imageFetchCount').value;
+        const parsedData = parseScriptIntoSegments(text);
+        
+        segmentsList.innerHTML = '';
+        checkEmpty();
+
+        parsedData.forEach((seg, index) => {
+            let preSelectVoice = (index % 2 === 0) ? 'hi-male' : 'hi-female';
+            let segId = addSegment(seg.script, preSelectVoice, seg.newsIndex, seg.headline);
+            
+            let searchKeyword = (seg.type === 'INTRO' || seg.type === 'OUTRO') ? "Breaking News Studio India" : seg.headline;
+            fetchImagesForSegment(segId, searchKeyword, imageLimit);
+        });
+        
+        document.getElementById('quickPasteScript').value = ""; 
+    }
+
+    // Triggered by AI
     async function fetchAndCreateSegments() {
         const aiProvider = document.getElementById('aiProviderSelect').value;
         const groqKey = localStorage.getItem('groqApiKey');
@@ -542,30 +659,27 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         btn.disabled = true; loader.style.display = 'block';
 
         const prompt = `आप एक प्रोफेशनल हिंदी न्यूज़ एंकर के लिए स्क्रिप्ट राइटर हैं।
-मुझे इंटरनेट की ताज़ा खबरों या जानकारी के आधार पर न्यूज़ स्क्रिप्ट चाहिए।
+मुझे इंटरनेट की ताज़ा और एकदम नई खबरों के आधार पर न्यूज़ स्क्रिप्ट चाहिए। एक ही खबर बार-बार ना दें।
 Category/Topic: ${category}
 News Count: ${count}
 Script Length (per news): ${lines}
 
-Rules:
-1. हर न्यूज़ के लिए एक स्पष्ट 'Headline' दें। (हेडलाइन बहुत बड़ी ना हो)
-2. उसके बाद 'Script' दें जो एंकर पढ़ेगा।
-3. हर न्यूज़ आइटम को ||| (three pipes) से अलग करें।
-4. सिर्फ और सिर्फ हिंदी में उत्तर दें।
-
-Format required:
-Headline: [हेडलाइन यहाँ लिखें]
-Script: [स्क्रिप्ट यहाँ लिखें]
-|||`;
+RULES (Strict Format):
+1. हर बार एकदम नई और अलग खबरें दें। 
+2. सबसे पहले एक Intro पैराग्राफ लिखें (जैसे: "नमस्कार दोस्तों, आज की ताजा खबरों में..."). इसके ऊपर कोई हेडिंग मत लिखें।
+3. उसके बाद खबरों को नंबर देकर लिखें (जैसे 1. [हेडलाइन], 2. [हेडलाइन]).
+4. हर नंबर वाली हेडलाइन के तुरंत नीचे उस खबर का विवरण (script) लिखें।
+5. सबसे अंत में एक Outro पैराग्राफ लिखें (जैसे: "दोस्तों, अगर आपको खबरें पसंद आईं तो चैनल को सब्सक्राइब करें...").
+6. आउटपुट बिल्कुल साफ टेक्स्ट में होना चाहिए, कोई ||| या कोडिंग टैग्स इस्तेमाल ना करें।`;
 
         let apiUrl = ''; let apiHeaders = { 'Content-Type': 'application/json', 'Accept': 'application/json' }; let apiBody = {};
 
         if (aiProvider === 'groq') {
             apiUrl = 'https://api.groq.com/openai/v1/chat/completions'; apiHeaders['Authorization'] = `Bearer ${groqKey}`;
-            apiBody = { model: "llama-3.3-70b-versatile", messages: [{role: "user", content: prompt}], temperature: 0.7 };
+            apiBody = { model: "llama-3.3-70b-versatile", messages: [{role: "user", content: prompt}], temperature: 0.85 };
         } else {
             apiUrl = 'https://api.mistral.ai/v1/chat/completions'; apiHeaders['Authorization'] = `Bearer ${mistralKey}`;
-            apiBody = { model: "mistral-large-latest", messages: [{role: "user", content: prompt}], temperature: 0.7 };
+            apiBody = { model: "mistral-large-latest", messages: [{role: "user", content: prompt}], temperature: 0.85 };
         }
 
         try {
@@ -580,29 +694,22 @@ Script: [स्क्रिप्ट यहाँ लिखें]
             const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
             const sourceName = aiProvider === 'groq' ? "Groq AI (Llama 3.3)" : "Mistral AI";
             document.getElementById("metaBox").innerHTML += `<div class="meta-item"><span><span class="meta-source">${sourceName}</span></span><span class="meta-time">${timeStr}</span></div>`;
+            document.getElementById("scriptBox").innerText = aiText;
 
-            let scriptParts = aiText.split("|||");
-            let validScriptCount = 0;
+            const parsedData = parseScriptIntoSegments(aiText);
+            
+            if(parsedData.length === 0) throw new Error("AI could not generate scripts in the correct format.");
 
-            for (let index = 0; index < scriptParts.length; index++) {
-                const part = scriptParts[index].trim();
-                if(part) {
-                    let headlineMatch = part.match(/Headline:\s*([^\n]+)/i);
-                    let scriptMatch = part.match(/Script:\s*([\s\S]+)/i);
-                    let extractedHeadline = headlineMatch ? headlineMatch[1].trim() : `News ${validScriptCount + 1}`;
-                    let extractedScript = scriptMatch ? scriptMatch[1].trim() : part;
+            parsedData.forEach((seg, index) => {
+                let preSelectVoice = (index % 2 === 0) ? 'hi-male' : 'hi-female';
+                let segId = addSegment(seg.script, preSelectVoice, seg.newsIndex, seg.headline);
+                
+                document.getElementById("headlineBox").innerHTML += `<div class="headline-item">${seg.headline}</div>`;
 
-                    document.getElementById("headlineBox").innerHTML += `<div class="headline-item">${extractedHeadline}</div>`;
-                    document.getElementById("scriptBox").innerHTML += `<div class="script-item"><strong>${extractedHeadline}</strong><br/> ${extractedScript}</div>`;
-                    
-                    const preSelectVoice = (validScriptCount % 2 === 0) ? 'hi-male' : 'hi-female';
-                    const segId = addSegment(extractedScript, preSelectVoice, validScriptCount + 1, extractedHeadline);
-                    
-                    fetchImagesForSegment(segId, extractedHeadline, imageLimit); 
-                    validScriptCount++;
-                }
-            }
-            if(validScriptCount === 0) throw new Error("AI could not generate scripts in the correct format.");
+                let searchKeyword = (seg.type === 'INTRO' || seg.type === 'OUTRO') ? "Breaking News Studio India" : seg.headline;
+                fetchImagesForSegment(segId, searchKeyword, imageLimit);
+            });
+
         } catch (err) {
             alert("Error generating script: " + err.message);
         } finally {
@@ -615,15 +722,21 @@ Script: [स्क्रिप्ट यहाँ लिखें]
         const id = segmentCount;
         let displayTitle = headline ? headline : text;
         if(displayTitle.length > 50) displayTitle = displayTitle.substring(0, 50) + "...";
-        const title = newsIndex ? `News #${newsIndex} : ${displayTitle}` : `Manual Segment #${id}`;
+        
+        let titleText = newsIndex ? `News #${newsIndex} : ${displayTitle}` : `${displayTitle}`;
+        
+        segmentsData[id] = { images: [], audioUrl: null, duration: 0, headline: headline, newsIndex: newsIndex };
 
-        segmentsData[id] = { images: [], audioUrl: null, duration: 0, headline: headline };
+        // Get currently synced speed from existing segments (if any)
+        let currentSyncedSpeed = "0";
+        const existingSpeedSelect = document.querySelector('select[id^="rate-"]');
+        if (existingSpeedSelect) currentSyncedSpeed = existingSpeedSelect.value;
 
         const div = document.createElement('div'); div.className = 'segment-card'; div.id = `seg-${id}`;
         
         div.innerHTML = `
             <div class="card-header">
-                <span class="card-title"><span class="material-icons-round" style="vertical-align:middle; font-size:1.1rem; color:#0ea5e9;">description</span> ${title}</span>
+                <span class="card-title"><span class="material-icons-round" style="vertical-align:middle; font-size:1.1rem; color:#0ea5e9;">description</span> ${titleText}</span>
                 <div class="header-actions">
                     <button class="btn-icon-action btn-delete" onclick="removeSegment(${id})" title="Delete"><span class="material-icons-round">close</span></button>
                 </div>
@@ -658,8 +771,17 @@ Script: [स्क्रिप्ट यहाँ लिखें]
 
             <div class="controls-row">
                 <div class="control-group">
-                    <div class="control-label"><span>Speed</span> <span id="lbl-spd-${id}">0%</span></div>
-                    <input type="range" id="rate-${id}" min="-50" max="50" value="0" oninput="updateLbl(${id})">
+                    <div class="control-label"><span>Audio Speed Settings</span></div>
+                    <select id="rate-${id}" onchange="syncAllSpeeds(this.value)" style="margin:0; padding:10px;">
+                        <option value="-20">-20% (Slower)</option>
+                        <option value="-10">-10%</option>
+                        <option value="-5">-5%</option>
+                        <option value="0" selected>0% (Normal)</option>
+                        <option value="5">+5%</option>
+                        <option value="10">+10%</option>
+                        <option value="15">+15%</option>
+                        <option value="20">+20% (Faster)</option>
+                    </select>
                 </div>
             </div>
 
@@ -677,10 +799,11 @@ Script: [स्क्रिप्ट यहाँ लिखें]
         
         segmentsList.appendChild(div);
         if(preSelectedVoice) document.getElementById(`voice-${id}`).value = preSelectedVoice;
+        document.getElementById(`rate-${id}`).value = currentSyncedSpeed;
+        
         checkEmpty(); return id; 
     }
 
-    // Manual Upload Functions
     function uploadManualImage(input, segId) {
         if(input.files && input.files[0]) {
             const fileUrl = URL.createObjectURL(input.files[0]);
@@ -725,7 +848,6 @@ Script: [स्क्रिप्ट यहाँ लिखें]
         fetchImagesForSegment(segId, query, limit); 
     }
 
-    // API Image Fetch Function (Fixed DuckDuckGo format)
     async function fetchImagesForSegment(segId, query, limit) {
         const provider = document.getElementById('imgProviderSelect').value;
         const statusBox = document.getElementById(`img-status-${segId}`);
@@ -774,23 +896,18 @@ Script: [स्क्रिप्ट यहाँ लिखें]
                 const data = await res.json();
                 let imgs = [];
                 
-                // Smart DuckDuckGo / Custom API JSON Parser
                 let arr = Array.isArray(data) ? data : (data.results || data.data || data.images || []);
                 
-                // Map out URLs, checking common DuckDuckGo keys
                 imgs = arr.map(i => {
                     if(typeof i === 'string') return i;
                     return i.image || i.url || i.src || i.thumbnail || i.link;
                 });
                 
-                // Filter out undefined/null
                 imgs = imgs.filter(url => url);
 
                 if(imgs.length === 0) throw new Error("No images found in Ranimage response. Try another keyword.");
                 
-                // Enforce the requested image limit exactly
                 processAndRenderImages(imgs.slice(0, limit), gallery, segId);
-
             }
             
             clearInterval(timerInterval);
@@ -895,17 +1012,16 @@ Script: [स्क्रिप्ट यहाँ लिखें]
         let hasTransVid = (transVid.src && transVid.src !== "" && !transVid.src.endsWith(window.location.host+"/"));
         let recorder, chunks = [];
 
-        // START BGM LOGIC
         let bgmAudio = null;
         let bgmGain = null;
         const bgmInput = document.getElementById('bgmInput');
         if(bgmInput.files && bgmInput.files.length > 0) {
             const bgmUrl = URL.createObjectURL(bgmInput.files[0]);
             bgmAudio = new Audio(bgmUrl);
-            bgmAudio.loop = true; // Auto loop
+            bgmAudio.loop = true; 
             const bgmSource = audioCtx.createMediaElementSource(bgmAudio);
             bgmGain = audioCtx.createGain();
-            bgmGain.gain.value = document.getElementById('bgmVolume').value;
+            bgmGain.gain.value = parseFloat(document.getElementById('bgmVolume').value);
             bgmSource.connect(bgmGain);
             bgmGain.connect(audioCtx.destination);
             if(isRecording) bgmGain.connect(dest);
@@ -934,13 +1050,12 @@ Script: [स्क्रिप्ट यहाँ लिखें]
 
         for(let i=0; i<validSegmentIds.length; i++) {
             if(cancelVideoSequence) break;
-            await playSegmentOnCanvas(segmentsData[validSegmentIds[i]], ctx, canvas, audioCtx, dest, isRecording, i + 1);
+            await playSegmentOnCanvas(segmentsData[validSegmentIds[i]], ctx, canvas, audioCtx, dest, isRecording);
             if(hasTransVid && i < validSegmentIds.length - 1 && !cancelVideoSequence) {
                 await playTransitionOnCanvas(transVid, ctx, canvas, audioCtx, dest, isRecording);
             }
         }
 
-        // STOP BGM
         if(bgmAudio) { bgmAudio.pause(); bgmAudio.src = ""; }
 
         if(isRecording && recorder && recorder.state !== "inactive") recorder.stop(); else resetVideoUI();
@@ -953,7 +1068,7 @@ Script: [स्क्रिप्ट यहाँ लिखें]
         }
     }
 
-    function playSegmentOnCanvas(data, ctx, canvas, audioCtx, dest, isRecording, newsIndex) {
+    function playSegmentOnCanvas(data, ctx, canvas, audioCtx, dest, isRecording) {
         return new Promise((resolve) => {
             const audioObj = new Audio(data.audioUrl);
             const source = audioCtx.createMediaElementSource(audioObj);
@@ -966,34 +1081,60 @@ Script: [स्क्रिप्ट यहाँ लिखें]
             audioObj.onended = () => { cancelAnimationFrame(animationFrameId); source.disconnect(); resolve(); };
             const startTime = performance.now();
 
-            // Overlay Options Settings
             const showLogo = document.getElementById('chkLogo').checked;
             const showLive = document.getElementById('chkLive').checked;
+            
             const showCName = document.getElementById('chkChannelName').checked;
             const cNameTxt = document.getElementById('channelNameTxt').value;
+            const cNameColor = document.getElementById('channelNameColor').value;
+            
             const showHead = document.getElementById('chkHeadline').checked;
+            
             const showSub = document.getElementById('chkSubscribe').checked;
             const subTxt = document.getElementById('subscribeTxt').value;
+            const subColor = document.getElementById('bottomTickerColor').value;
             
             const showTopTicker = document.getElementById('chkTopTicker').checked;
             const topTickerTxt = document.getElementById('topTickerTxt').value;
+            const topTickerColor = document.getElementById('topTickerColor').value;
+            
             const showNewsNum = document.getElementById('chkNewsNumber').checked;
+            const newsNumColor = document.getElementById('newsNumColor').value;
+            
+            const topHeight = parseInt(document.getElementById('topTickerHeight').value);
+            const activeSubHeight = showSub ? parseInt(document.getElementById('bottomTickerHeight').value) : 0;
+            const headHeight = showHead ? 55 : 0; 
+            const safePadding = 40; 
+
+            // Calculate Bottom Y positions
+            const bottomY = canvas.height - activeSubHeight;
+            const headY = bottomY - headHeight;
 
             function drawLoop(now) {
                 const elapsed = now - startTime;
                 currentImgIndex = Math.floor(elapsed / timePerImage);
                 if(currentImgIndex >= images.length) currentImgIndex = images.length - 1;
                 
-                // Draw Base Background
                 ctx.fillStyle = "#0f172a"; ctx.fillRect(0,0, canvas.width, canvas.height);
                 
-                // Draw Image
+                // Ken Burns Effect
                 if(images.length > 0 && images[currentImgIndex] && images[currentImgIndex].complete && images[currentImgIndex].naturalHeight !== 0) {
                     const img = images[currentImgIndex];
                     const ratio  = Math.max(canvas.width / img.width, canvas.height / img.height); 
-                    const centerShift_x = (canvas.width - img.width*ratio) / 2;
-                    const centerShift_y = (canvas.height - img.height*ratio) / 2;  
-                    ctx.drawImage(img, 0,0, img.width, img.height, centerShift_x, centerShift_y, img.width*ratio, img.height*ratio);
+                    const drawWidth = img.width * ratio;
+                    const drawHeight = img.height * ratio;
+                    
+                    let imgTimeElapsed = elapsed % timePerImage;
+                    let progress = imgTimeElapsed / timePerImage;
+                    let isZoomIn = (currentImgIndex % 2 === 0);
+                    let scale = isZoomIn ? 1.0 + (0.15 * progress) : 1.15 - (0.15 * progress);
+
+                    ctx.save();
+                    ctx.translate(canvas.width / 2, canvas.height / 2);
+                    ctx.scale(scale, scale);
+                    ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+                    ctx.restore();
+
                 } else {
                     ctx.fillStyle = "#1e293b"; ctx.fillRect(0,0,canvas.width, canvas.height);
                     ctx.fillStyle = "#0ea5e9"; ctx.font = "bold 40px 'Segoe UI', Arial"; ctx.textAlign = "center";
@@ -1002,91 +1143,109 @@ Script: [स्क्रिप्ट यहाँ लिखें]
                     wrapText(ctx, data.headline || "News Segment", canvas.width/2, canvas.height/2 + 20, canvas.width - 100, 40);
                 }
 
-                // --------- DRAW OVERLAYS ---------- //
-                ctx.textAlign = "left"; // Reset alignment
+                ctx.textAlign = "left"; 
 
-                // Top Breaking Ticker
+                // --- 1. TOP BREAKING TICKER ---
                 if(showTopTicker) {
-                    ctx.fillStyle = "#ef4444"; // Red
-                    ctx.fillRect(0, 0, canvas.width, 45);
+                    ctx.fillStyle = topTickerColor; 
+                    ctx.fillRect(0, 0, canvas.width, topHeight);
                     ctx.fillStyle = "white"; ctx.font = "bold 26px Arial";
                     const tW = ctx.measureText(topTickerTxt).width;
                     let tX = canvas.width - ((elapsed * 0.18) % (canvas.width + tW));
-                    ctx.fillText(topTickerTxt, tX, 32);
+                    ctx.fillText(topTickerTxt, tX, (topHeight / 2) + 8);
                 }
 
-                // Dynamic Y for Logo and Live (moves down if top ticker is shown)
-                let topYPadding = showTopTicker ? 60 : 20;
+                // --- 2. LOGO & LIVE ICON ---
+                let topYPadding = showTopTicker ? (topHeight + 15) : safePadding;
 
-                // Logo
                 if(showLogo && globalLogoImg) {
-                    ctx.drawImage(globalLogoImg, canvas.width - 140, topYPadding, 100, 100);
+                    ctx.drawImage(globalLogoImg, canvas.width - safePadding - 100, topYPadding, 100, 100);
                 }
 
-                // Live Icon
                 if(showLive && globalLiveImg) {
-                    ctx.drawImage(globalLiveImg, 40, topYPadding, 120, 60);
+                    ctx.drawImage(globalLiveImg, safePadding, topYPadding, 120, 60);
                 } else if(showLive && !globalLiveImg) {
-                    // Default Live Box if no image uploaded
-                    ctx.fillStyle = "red"; ctx.fillRect(40, topYPadding, 90, 40);
+                    ctx.fillStyle = "red"; ctx.fillRect(safePadding, topYPadding, 90, 40);
                     ctx.fillStyle = "white"; ctx.font = "bold 24px Arial";
-                    ctx.fillText("LIVE", 55, topYPadding + 28);
+                    ctx.fillText("LIVE", safePadding + 15, topYPadding + 28);
                 }
 
-                // News Number
-                if(showNewsNum) {
-                    let numY = showLive ? (topYPadding + 70) : topYPadding;
-                    ctx.fillStyle = "#fbbf24"; // Yellow
-                    ctx.fillRect(40, numY, 130, 40);
-                    ctx.fillStyle = "black"; ctx.font = "bold 24px Arial";
-                    ctx.fillText("News #" + newsIndex, 50, numY + 28);
+                // --- 3. HEADLINE TICKER (White Bar + Breaking News Box) ---
+                let breakingBoxWidth = 240; 
+                if(showHead) {
+                    // White Scrolling Area
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+                    ctx.fillRect(breakingBoxWidth, headY, canvas.width - breakingBoxWidth, headHeight);
+                    
+                    // Headline Text
+                    ctx.fillStyle = "black"; ctx.font = "bold 32px Arial";
+                    let safeHeadline = data.headline || "ताज़ा खबर";
+                    if(safeHeadline.toLowerCase().includes('intro')) safeHeadline = "ताज़ा और बड़ी खबरें";
+                    if(safeHeadline.toLowerCase().includes('outro')) safeHeadline = "ख़बरों का सिलसिला जारी रहेगा...";
+                    
+                    const hTxt = "► " + safeHeadline.toUpperCase();
+                    const hW = ctx.measureText(hTxt).width;
+                    let hX = canvas.width - ((elapsed * 0.2) % (canvas.width + hW));
+                    
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.rect(breakingBoxWidth, headY, canvas.width - breakingBoxWidth, headHeight);
+                    ctx.clip();
+                    ctx.fillText(hTxt, Math.max(hX, breakingBoxWidth + 15), headY + 38);
+                    ctx.restore();
+
+                    // Red BREAKING NEWS Box on the Left
+                    ctx.fillStyle = "#b91c1c"; 
+                    ctx.fillRect(0, headY, breakingBoxWidth, headHeight);
+                    ctx.fillStyle = "white"; ctx.font = "bold 24px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText("BREAKING NEWS", breakingBoxWidth/2, headY + 36);
+                    ctx.textAlign = "left"; // Reset
                 }
 
-                // Bottom Layout Heights
-                let subHeight = showSub ? 45 : 0;
-                let headHeight = (showHead || showCName) ? 55 : 0;
-                let bottomY = canvas.height - subHeight;
-
-                // Subscribe Ticker (Absolute Bottom)
-                if(showSub) {
-                    ctx.fillStyle = "#dc2626"; // Red
-                    ctx.fillRect(0, bottomY, canvas.width, subHeight);
-                    ctx.fillStyle = "white"; ctx.font = "bold 26px Arial";
-                    const sW = ctx.measureText(subTxt).width;
-                    let sX = canvas.width - ((elapsed * 0.15) % (canvas.width + sW));
-                    ctx.fillText(subTxt, sX, canvas.height - 13);
+                // --- 4. NEWS NUMBER (Square Box Above Breaking News) ---
+                if(showNewsNum && data.newsIndex) {
+                    let numHeight = 45;
+                    let numWidth = 60;
+                    let numY = showHead ? (headY - numHeight) : (bottomY - numHeight); // Place above headline
+                    
+                    ctx.fillStyle = newsNumColor; 
+                    ctx.fillRect(0, numY, numWidth, numHeight);
+                    ctx.fillStyle = "black"; ctx.font = "bold 28px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText(data.newsIndex, numWidth/2, numY + 32);
+                    ctx.textAlign = "left"; // reset
                 }
 
-                // Headline & Channel Name Box
-                if(showHead || showCName) {
-                    let headY = bottomY - headHeight;
-                    let cWidth = showCName ? 220 : 0;
+                // --- 5. BOTTOM SUBSCRIBE TICKER & CHANNEL NAME ---
+                if(showSub || showCName) {
+                    let cWidth = showCName ? 260 : 0;
 
-                    // Headline Ticker
-                    if(showHead) {
-                        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-                        ctx.fillRect(cWidth, headY, canvas.width - cWidth, headHeight);
-                        ctx.fillStyle = "black"; ctx.font = "bold 32px Arial";
-                        const hTxt = (data.headline || "ताज़ा खबर").toUpperCase();
-                        const hW = ctx.measureText(hTxt).width;
-                        let hX = canvas.width - ((elapsed * 0.2) % (canvas.width + hW));
+                    // Red Subscribe Scrolling Area
+                    if(showSub) {
+                        ctx.fillStyle = subColor; 
+                        ctx.fillRect(cWidth, bottomY, canvas.width - cWidth, activeSubHeight);
+                        
+                        ctx.fillStyle = "white"; ctx.font = "bold 26px Arial";
+                        const sW = ctx.measureText(subTxt).width;
+                        let sX = canvas.width - ((elapsed * 0.15) % (canvas.width + sW));
                         
                         ctx.save();
                         ctx.beginPath();
-                        ctx.rect(cWidth, headY, canvas.width - cWidth, headHeight);
+                        ctx.rect(cWidth, bottomY, canvas.width - cWidth, activeSubHeight);
                         ctx.clip();
-                        ctx.fillText("► " + hTxt, hX, headY + 40);
+                        ctx.fillText(subTxt, sX, canvas.height - (activeSubHeight / 2) + 8);
                         ctx.restore();
                     }
 
-                    // Channel Name (Left Side)
+                    // Channel Name Box on the Left
                     if(showCName) {
-                        ctx.fillStyle = "#1e3a8a"; // Dark Blue
-                        ctx.fillRect(0, headY, cWidth, headHeight);
-                        ctx.fillStyle = "white"; ctx.font = "bold 28px Arial";
+                        ctx.fillStyle = cNameColor; 
+                        ctx.fillRect(0, bottomY, cWidth, activeSubHeight);
+                        ctx.fillStyle = "white"; ctx.font = "bold 26px Arial";
                         ctx.textAlign = "center";
-                        ctx.fillText(cNameTxt, cWidth/2, headY + 38);
-                        ctx.textAlign = "left"; // Reset
+                        ctx.fillText(cNameTxt, cWidth/2, canvas.height - (activeSubHeight / 2) + 8);
+                        ctx.textAlign = "left"; 
                     }
                 }
 
@@ -1126,7 +1285,6 @@ Script: [स्क्रिप्ट यहाँ लिखें]
     }
 
     function removeSegment(id) { document.getElementById(`seg-${id}`).remove(); delete segmentsData[id]; checkEmpty(); }
-    function updateLbl(id) { document.getElementById(`lbl-spd-${id}`).innerText = document.getElementById(`rate-${id}`).value + "%"; }
     function checkEmpty() { emptyState.style.display = (segmentsList.children.length === 0) ? "block" : "none"; }
     function copyText(elemId) { navigator.clipboard.writeText(document.getElementById(elemId).innerText).then(()=>alert("Copied!")); }
 </script>
