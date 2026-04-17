@@ -1,3 +1,5 @@
+--- START OF FILE Paste April 17, 2026 - 7:46PM ---
+
 <!DOCTYPE html>
 <html lang="hi">
 <head>
@@ -55,7 +57,7 @@ header {
 .btn-icon { background: none; border: none; color: var(--text); cursor: pointer; padding: 5px; display: flex; align-items: center; justify-content: center; }
 
 .sidebar {
-    position: fixed; top: var(--header-h); right: -340px; width: 340px; height: calc(100vh - var(--header-h));
+    position: fixed; top: var(--header-h); right: -320px; width: 340px; height: calc(100vh - var(--header-h));
     background: var(--card-bg); border-left: 1px solid var(--border); transition: right 0.3s ease;
     z-index: 90; padding: 20px; box-shadow: -5px 0 15px rgba(0,0,0,0.5); overflow-y: auto;
 }
@@ -157,51 +159,17 @@ textarea {
     font-size: 1.05rem; outline: none; min-height: 150px; resize: vertical; line-height: 1.6; margin-bottom: 10px;
 }
 
-/* Image Gallery with Delete Button */
 .image-gallery {
     display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; border-top: 1px dashed var(--border);
-    margin-bottom: 10px; min-height: 120px; align-items: flex-start;
+    margin-bottom: 10px; min-height: 100px; align-items: center;
 }
-.gallery-item {
-    position: relative;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-}
-.gallery-item img, .gallery-item video {
+.image-gallery-item { position: relative; min-width: 120px; height: 80px; }
+.image-gallery-item img, .image-gallery-item video {
     height: 80px; width: 120px; border-radius: 6px; border: 1px solid var(--border); object-fit: cover; background: #000;
 }
-.gallery-item video {
-    height: 80px; width: 120px;
-}
-.img-delete-btn {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: #ef4444;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 14px;
-    padding: 0;
-    z-index: 5;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-}
-.img-delete-btn:hover {
-    background: #dc2626;
-}
-.gallery-item .media-label {
-    font-size: 0.65rem;
-    color: var(--text-muted);
-    text-align: center;
+.del-media-btn {
+    position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border: none; border-radius: 50%;
+    width: 20px; height: 20px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 5;
 }
 .image-gallery-placeholder { font-size: 0.8rem; color: var(--text-muted); font-style: italic; padding: 10px 0; }
 
@@ -223,8 +191,9 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     border: none; padding: 14px 20px; border-radius: 50px; font-weight: 700; display: flex; align-items: center; gap: 8px;
     cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 99;
 }
-.manual-upload-row { display: flex; gap: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed var(--border); flex-wrap: wrap;}
-.manual-upload-row > div { flex: 1; min-width: 140px; }
+.manual-upload-row { display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed var(--border);}
+.manual-upload-row > div { display: flex; gap: 10px; }
+.manual-upload-row div div { flex: 1; }
 </style>
 </head>
 <body>
@@ -385,7 +354,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         </div>
     </div>
 
-    <!-- NEW: Advanced Quick Paste Panel -->
+    <!-- Quick Paste Panel -->
     <div class="news-control-panel">
         <div class="panel-title"><span class="material-icons-round">content_paste</span> Quick Paste & Auto-Segment</div>
         <label>अपनी पूरी स्क्रिप्ट यहाँ पेस्ट करें। सिस्टम ऑटोमैटिकली 1, 2, 3 नंबरों से ख़बरों को पहचान कर अलग-अलग ऑडियो/इमेज बॉक्स बना देगा।</label>
@@ -511,7 +480,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         </optgroup>
     `;
 
-    // Sidebar & Settings
     function toggleSidebar() { document.getElementById('apiSidebar').classList.toggle('active'); document.getElementById('dataSidebar').classList.remove('active'); }
     function toggleDataSidebar() { document.getElementById('dataSidebar').classList.toggle('active'); document.getElementById('apiSidebar').classList.remove('active');}
     
@@ -519,7 +487,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         const provider = document.getElementById('imgProviderSelect').value;
         document.getElementById('googleSettingsBox').style.display = 'none';
         document.getElementById('ranSettingsBox').style.display = 'none';
-
         if(provider === 'google') document.getElementById('googleSettingsBox').style.display = 'block';
         else if(provider === 'ranimage') document.getElementById('ranSettingsBox').style.display = 'block';
     }
@@ -528,12 +495,10 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         localStorage.setItem('aiProvider', document.getElementById('aiProviderSelect').value);
         localStorage.setItem('groqApiKey', document.getElementById('groqApiKey').value);
         localStorage.setItem('mistralApiKey', document.getElementById('mistralApiKey').value);
-        
         localStorage.setItem('imageProvider', document.getElementById('imgProviderSelect').value);
         localStorage.setItem('googleApiKey', document.getElementById('gApiKey').value); 
         localStorage.setItem('googleCxId', document.getElementById('gCxId').value); 
         localStorage.setItem('ranApiUrl', document.getElementById('ranApiUrl').value);
-        
         alert('Settings Saved Successfully!'); toggleSidebar(); 
     }
     
@@ -541,16 +506,13 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         const aiProvider = localStorage.getItem('aiProvider');
         const groqKey = localStorage.getItem('groqApiKey');
         const mistralKey = localStorage.getItem('mistralApiKey');
-        
         const imgProv = localStorage.getItem('imageProvider');
         const key = localStorage.getItem('googleApiKey'); 
         const cx = localStorage.getItem('googleCxId'); 
         const ranUrl = localStorage.getItem('ranApiUrl');
-        
         if(aiProvider) document.getElementById('aiProviderSelect').value = aiProvider;
         if(groqKey) document.getElementById('groqApiKey').value = groqKey;
         if(mistralKey) document.getElementById('mistralApiKey').value = mistralKey;
-        
         if(imgProv) document.getElementById('imgProviderSelect').value = imgProv;
         if(key) document.getElementById('gApiKey').value = key; 
         if(cx) document.getElementById('gCxId').value = cx; 
@@ -570,7 +532,6 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         alert('Settings Cleared!'); 
     }
 
-    // Overlays Global Loaders
     function loadGlobalImage(input, type) {
         if(input.files && input.files[0]) {
             const reader = new FileReader();
@@ -588,17 +549,15 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         selects.forEach(select => { select.value = selectedValue; });
     }
 
-    // SYNC AUDIO SPEEDS
     function syncAllSpeeds(selectedValue) {
         const selects = document.querySelectorAll('select[id^="rate-"]');
         selects.forEach(select => { select.value = selectedValue; });
     }
 
-    // --- CORE SCRIPT PARSER (Manual & AI) ---
+    // --- SCRIPT PARSER ---
     function parseScriptIntoSegments(rawText) {
         let cleanText = rawText.replace(/\*\*/g, '').trim();
         let lines = cleanText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-
         let parsedSegments = [];
         let currentMode = 'INTRO';
         let currentHeadline = 'Intro / सारांश';
@@ -607,32 +566,22 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
 
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
-            
-            // Check if line starts with a number like "1.", "1)", "2."
             let numMatch = line.match(/^(\d+)[\.\)]\s*(.*)/);
-
             if (numMatch) {
-                // Save previous segment
                 if (currentScript.length > 0) {
                     parsedSegments.push({ type: currentMode, newsIndex: currentMode === 'NEWS' ? newsCounter : null, headline: currentHeadline, script: currentScript.join('\n') });
                 }
-                
-                // Start a new NEWS segment
                 newsCounter++;
                 currentMode = 'NEWS';
                 currentHeadline = numMatch[2] || `News ${newsCounter}`;
                 currentScript = [];
             } else {
-                // Outro trigger check
                 let lowerLine = line.toLowerCase();
                 let isOutroTrigger = lowerLine.includes('सब्सक्राइब') || lowerLine.includes('धन्यवाद') || lowerLine.includes('जय हिंद') || lowerLine.includes('दोस्तों, अगर');
-                
                 if (currentMode === 'NEWS' && isOutroTrigger) {
-                    // Save current news segment
                     if (currentScript.length > 0) {
                         parsedSegments.push({ type: currentMode, newsIndex: newsCounter, headline: currentHeadline, script: currentScript.join('\n') });
                     }
-                    // Start OUTRO
                     currentMode = 'OUTRO';
                     currentHeadline = 'Outro / चैनल अपील';
                     currentScript = [line];
@@ -644,50 +593,36 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         if (currentScript.length > 0) {
             parsedSegments.push({ type: currentMode, newsIndex: currentMode === 'NEWS' ? newsCounter : null, headline: currentHeadline, script: currentScript.join('\n') });
         }
-        
         return parsedSegments;
     }
 
-    // Triggered by manual paste
     function createSegmentsFromAdvancedPaste() {
         const text = document.getElementById('quickPasteScript').value.trim();
         if(!text) return alert("Please paste the script first.");
-        
         const imageLimit = document.getElementById('imageFetchCount').value;
         const parsedData = parseScriptIntoSegments(text);
-        
         segmentsList.innerHTML = '';
         checkEmpty();
-
         parsedData.forEach((seg, index) => {
             let preSelectVoice = (index % 2 === 0) ? 'hi-male' : 'hi-female';
             let segId = addSegment(seg.script, preSelectVoice, seg.newsIndex, seg.headline);
-            
             let searchKeyword = (seg.type === 'INTRO' || seg.type === 'OUTRO') ? "Breaking News Studio India" : seg.headline;
             fetchImagesForSegment(segId, searchKeyword, imageLimit);
         });
-        
         document.getElementById('quickPasteScript').value = ""; 
     }
 
-    // Triggered by AI
     async function fetchAndCreateSegments() {
         const aiProvider = document.getElementById('aiProviderSelect').value;
         const groqKey = localStorage.getItem('groqApiKey');
         const mistralKey = localStorage.getItem('mistralApiKey');
-        
-        if(aiProvider === 'groq' && !groqKey) {
-            alert("कृपया सेटिंग्स में जाकर पहले Groq API Key सेव करें!"); toggleSidebar(); return;
-        }
-        if(aiProvider === 'mistral' && !mistralKey) {
-            alert("कृपया सेटिंग्स में जाकर पहले Mistral API Key सेव करें!"); toggleSidebar(); return;
-        }
+        if(aiProvider === 'groq' && !groqKey) { alert("कृपया सेटिंग्स में जाकर पहले Groq API Key सेव करें!"); toggleSidebar(); return; }
+        if(aiProvider === 'mistral' && !mistralKey) { alert("कृपया सेटिंग्स में जाकर पहले Mistral API Key सेव करें!"); toggleSidebar(); return; }
 
         const count = document.getElementById('newsCount').value;
         const lines = document.getElementById('lineCount').value;
         const category = document.getElementById('newsCategory').value; 
         const imageLimit = document.getElementById('imageFetchCount').value;
-        
         const btn = document.getElementById('fetchBtn');
         const loader = document.getElementById('mainLoader');
 
@@ -696,23 +631,9 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         checkEmpty();
         
         btn.disabled = true; loader.style.display = 'block';
+        const prompt = `आप एक प्रोफेशनल हिंदी न्यूज़ एंकर के लिए स्क्रिप्ट राइटर हैं। इंटरनेट की ताज़ा खबरों के आधार पर न्यूज़ स्क्रिप्ट लिखें। Category: ${category}, Count: ${count}, Length: ${lines}. Strict Format: Intro, then numbered News with headline and script, then Outro. No code blocks.`;
 
-        const prompt = `आप एक प्रोफेशनल हिंदी न्यूज़ एंकर के लिए स्क्रिप्ट राइटर हैं।
-मुझे इंटरनेट की ताज़ा और एकदम नई खबरों के आधार पर न्यूज़ स्क्रिप्ट चाहिए। एक ही खबर बार-बार ना दें।
-Category/Topic: ${category}
-News Count: ${count}
-Script Length (per news): ${lines}
-
-RULES (Strict Format):
-1. हर बार एकदम नई और अलग खबरें दें। 
-2. सबसे पहले एक Intro पैराग्राफ लिखें (जैसे: "नमस्कार दोस्तों, आज की ताजा खबरों में..."). इसके ऊपर कोई हेडिंग मत लिखें।
-3. उसके बाद खबरों को नंबर देकर लिखें (जैसे 1. [हेडलाइन], 2. [हेडलाइन]).
-4. हर नंबर वाली हेडलाइन के तुरंत नीचे उस खबर का विवरण (script) लिखें।
-5. सबसे अंत में एक Outro पैराग्राफ लिखें (जैसे: "दोस्तों, अगर आपको खबरें पसंद आईं तो चैनल को सब्सक्राइब करें...").
-6. आउटपुट बिल्कुल साफ टेक्स्ट में होना चाहिए, कोई ||| या कोडिंग टैग्स इस्तेमाल ना करें।`;
-
-        let apiUrl = ''; let apiHeaders = { 'Content-Type': 'application/json', 'Accept': 'application/json' }; let apiBody = {};
-
+        let apiUrl = ''; let apiHeaders = { 'Content-Type': 'application/json' }; let apiBody = {};
         if (aiProvider === 'groq') {
             apiUrl = 'https://api.groq.com/openai/v1/chat/completions'; apiHeaders['Authorization'] = `Bearer ${groqKey}`;
             apiBody = { model: "llama-3.3-70b-versatile", messages: [{role: "user", content: prompt}], temperature: 0.85 };
@@ -724,36 +645,20 @@ RULES (Strict Format):
         try {
             const response = await fetch(apiUrl, { method: 'POST', headers: apiHeaders, body: JSON.stringify(apiBody) });
             const data = await response.json();
-            
-            if (!response.ok || data.error) throw new Error(data.error ? data.error.message : response.statusText);
-
+            if (!response.ok) throw new Error(data.error ? data.error.message : response.statusText);
             const aiText = data.choices[0].message.content;
             document.getElementById('dataSidebar').classList.add('active');
-
-            const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-            const sourceName = aiProvider === 'groq' ? "Groq AI (Llama 3.3)" : "Mistral AI";
-            document.getElementById("metaBox").innerHTML += `<div class="meta-item"><span><span class="meta-source">${sourceName}</span></span><span class="meta-time">${timeStr}</span></div>`;
+            document.getElementById("metaBox").innerHTML = `<div class="meta-item"><span class="meta-source">${aiProvider.toUpperCase()} AI</span></div>`;
             document.getElementById("scriptBox").innerText = aiText;
-
             const parsedData = parseScriptIntoSegments(aiText);
-            
-            if(parsedData.length === 0) throw new Error("AI could not generate scripts in the correct format.");
-
             parsedData.forEach((seg, index) => {
                 let preSelectVoice = (index % 2 === 0) ? 'hi-male' : 'hi-female';
                 let segId = addSegment(seg.script, preSelectVoice, seg.newsIndex, seg.headline);
-                
                 document.getElementById("headlineBox").innerHTML += `<div class="headline-item">${seg.headline}</div>`;
-
                 let searchKeyword = (seg.type === 'INTRO' || seg.type === 'OUTRO') ? "Breaking News Studio India" : seg.headline;
                 fetchImagesForSegment(segId, searchKeyword, imageLimit);
             });
-
-        } catch (err) {
-            alert("Error generating script: " + err.message);
-        } finally {
-            btn.disabled = false; loader.style.display = 'none';
-        }
+        } catch (err) { alert("Error: " + err.message); } finally { btn.disabled = false; loader.style.display = 'none'; }
     }
 
     function addSegment(text = "", preSelectedVoice = "hi-male", newsIndex = null, headline = "") {
@@ -761,18 +666,11 @@ RULES (Strict Format):
         const id = segmentCount;
         let displayTitle = headline ? headline : text;
         if(displayTitle.length > 50) displayTitle = displayTitle.substring(0, 50) + "...";
-        
         let titleText = newsIndex ? `News #${newsIndex} : ${displayTitle}` : `${displayTitle}`;
         
-        segmentsData[id] = { images: [], videos: [], audioUrl: null, duration: 0, headline: headline, newsIndex: newsIndex };
-
-        // Get currently synced speed from existing segments (if any)
-        let currentSyncedSpeed = "0";
-        const existingSpeedSelect = document.querySelector('select[id^="rate-"]');
-        if (existingSpeedSelect) currentSyncedSpeed = existingSpeedSelect.value;
+        segmentsData[id] = { media: [], audioUrl: null, duration: 0, headline: headline, newsIndex: newsIndex };
 
         const div = document.createElement('div'); div.className = 'segment-card'; div.id = `seg-${id}`;
-        
         div.innerHTML = `
             <div class="card-header">
                 <span class="card-title"><span class="material-icons-round" style="vertical-align:middle; font-size:1.1rem; color:#0ea5e9;">description</span> ${titleText}</span>
@@ -781,287 +679,131 @@ RULES (Strict Format):
                 </div>
             </div>
 
-            <label style="color:#a78bfa;">Image Search Query (Shorten if no results):</label>
+            <label style="color:#a78bfa;">Image Search Query:</label>
             <div style="display:flex; gap:10px; margin-bottom:10px;">
-                <input type="text" id="img-query-${id}" value="${headline || text.substring(0, 30)}" style="margin:0; flex:1;" placeholder="Enter keywords to search image...">
-                <button class="btn-action-green" style="margin:0; width:auto; padding:10px 15px; border-radius:8px;" onclick="manualImageSearch(${id})">
-                    <span class="material-icons-round">search</span> Search
-                </button>
+                <input type="text" id="img-query-${id}" value="${headline || text.substring(0, 30)}" style="margin:0; flex:1;">
+                <button class="btn-action-green" style="margin:0; width:auto; padding:10px 15px; border-radius:8px;" onclick="manualImageSearch(${id})">Search</button>
             </div>
 
             <div class="manual-upload-row">
                 <div>
-                    <label style="color:#34d399;">📷 Upload Image</label>
-                    <input type="file" accept="image/*" onchange="uploadManualImage(this, ${id})" style="padding:8px;">
+                    <div><label style="color:#34d399;">+ Image</label><input type="file" accept="image/*" onchange="uploadManualMedia(this, ${id}, 'image')"></div>
+                    <div><label style="color:#f472b6;">+ Video Clip</label><input type="file" accept="video/mp4,video/webm" onchange="uploadManualMedia(this, ${id}, 'video')"></div>
                 </div>
                 <div>
-                    <label style="color:#f472b6;">🎵 Upload Audio</label>
-                    <input type="file" accept="audio/*" onchange="uploadManualAudio(this, ${id})" style="padding:8px;">
-                </div>
-                <div>
-                    <label style="color:#a78bfa;">🎬 Upload Video Clip</label>
-                    <input type="file" accept="video/mp4,video/webm" onchange="uploadManualVideo(this, ${id})" style="padding:8px;">
+                    <div><label style="color:#60a5fa;">+ Audio Script</label><input type="file" accept="audio/*" onchange="uploadManualAudio(this, ${id})"></div>
                 </div>
             </div>
 
-            <div class="image-gallery-placeholder" id="img-status-${id}">Images will load here...</div>
+            <div class="image-gallery-placeholder" id="img-status-${id}">Media will load here...</div>
             <div class="image-gallery" id="gallery-${id}"></div>
 
             <label>Select Anchor Voice</label>
             <select id="voice-${id}" onchange="syncAllVoices(this.value)">${voiceOptions}</select>
-
-            <textarea id="text-${id}" placeholder="Script will appear here...">${text}</textarea>
+            <textarea id="text-${id}">${text}</textarea>
 
             <div class="controls-row">
                 <div class="control-group">
-                    <div class="control-label"><span>Audio Speed Settings</span></div>
-                    <select id="rate-${id}" onchange="syncAllSpeeds(this.value)" style="margin:0; padding:10px;">
-                        <option value="-20">-20% (Slower)</option>
-                        <option value="-10">-10%</option>
-                        <option value="-5">-5%</option>
-                        <option value="0" selected>0% (Normal)</option>
-                        <option value="5">+5%</option>
-                        <option value="10">+10%</option>
-                        <option value="15">+15%</option>
-                        <option value="20">+20% (Faster)</option>
+                    <div class="control-label"><span>Audio Speed</span></div>
+                    <select id="rate-${id}" onchange="syncAllSpeeds(this.value)">
+                        <option value="-20">-20%</option><option value="0" selected>0% (Normal)</option><option value="20">+20%</option>
                     </select>
                 </div>
             </div>
 
-            <button class="btn-gen" id="btn-gen-${id}" onclick="generateAudio(${id})">
-                <span class="material-icons-round">graphic_eq</span> Generate Audio
-            </button>
-            
+            <button class="btn-gen" id="btn-gen-${id}" onclick="generateAudio(${id})">Generate Audio</button>
             <div id="status-${id}" style="text-align:center; font-size:0.85rem; margin-top:8px; display:none;"></div>
-
-            <div class="audio-wrapper" id="audio-box-${id}">
-                <audio id="player-${id}" controls controlsList="nodownload"></audio>
-                <div class="audio-duration" id="duration-${id}">Duration: 0s</div>
-            </div>
+            <div class="audio-wrapper" id="audio-box-${id}"><audio id="player-${id}" controls></audio><div class="audio-duration" id="duration-${id}"></div></div>
         `;
-        
         segmentsList.appendChild(div);
         if(preSelectedVoice) document.getElementById(`voice-${id}`).value = preSelectedVoice;
-        document.getElementById(`rate-${id}`).value = currentSyncedSpeed;
-        
         checkEmpty(); return id; 
     }
 
-    // Upload Manual Image with Delete Button
-    function uploadManualImage(input, segId) {
+    function uploadManualMedia(input, segId, type) {
         if(input.files && input.files[0]) {
             const fileUrl = URL.createObjectURL(input.files[0]);
-            const gallery = document.getElementById(`gallery-${segId}`);
+            const mediaObj = { type: type, url: fileUrl, element: null };
             
-            // Create gallery item wrapper
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'gallery-item';
-            
-            const img = document.createElement('img');
-            img.src = fileUrl;
-            
-            // Delete button
-            const delBtn = document.createElement('button');
-            delBtn.className = 'img-delete-btn';
-            delBtn.innerHTML = '<span class="material-icons-round" style="font-size:14px;">close</span>';
-            delBtn.title = 'Delete Image';
-            delBtn.onclick = function() {
-                itemDiv.remove();
-                // Remove from segmentsData
-                const idx = segmentsData[segId].images.findIndex(i => i.src === fileUrl);
-                if(idx > -1) segmentsData[segId].images.splice(idx, 1);
-            };
-            
-            itemDiv.appendChild(img);
-            itemDiv.appendChild(delBtn);
-            gallery.appendChild(itemDiv);
-            
-            const imgObj = new Image();
-            imgObj.onload = () => { segmentsData[segId].images.push(imgObj); };
-            imgObj.src = fileUrl;
+            if(type === 'image') {
+                const img = new Image(); img.crossOrigin = "anonymous";
+                img.onload = () => { mediaObj.element = img; segmentsData[segId].media.push(mediaObj); renderGallery(segId); };
+                img.src = fileUrl;
+            } else {
+                const vid = document.createElement('video'); vid.src = fileUrl; vid.muted = true;
+                vid.onloadeddata = () => { mediaObj.element = vid; segmentsData[segId].media.push(mediaObj); renderGallery(segId); };
+            }
         }
     }
 
-    // Upload Manual Video with Delete Button
-    function uploadManualVideo(input, segId) {
-        if(input.files && input.files[0]) {
-            const fileUrl = URL.createObjectURL(input.files[0]);
-            const gallery = document.getElementById(`gallery-${segId}`);
+    function removeMedia(segId, index) {
+        segmentsData[segId].media.splice(index, 1);
+        renderGallery(segId);
+    }
+
+    function renderGallery(segId) {
+        const gallery = document.getElementById(`gallery-${segId}`);
+        gallery.innerHTML = '';
+        segmentsData[segId].media.forEach((item, index) => {
+            const div = document.createElement('div'); div.className = 'image-gallery-item';
+            const btn = document.createElement('button'); btn.className = 'del-media-btn'; btn.innerHTML = '×';
+            btn.onclick = () => removeMedia(segId, index);
             
-            // Create gallery item wrapper
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'gallery-item';
+            let el;
+            if(item.type === 'image') { el = document.createElement('img'); el.src = item.url; }
+            else { el = document.createElement('video'); el.src = item.url; }
             
-            const video = document.createElement('video');
-            video.src = fileUrl;
-            video.controls = true;
-            video.preload = 'metadata';
-            
-            // Delete button
-            const delBtn = document.createElement('button');
-            delBtn.className = 'img-delete-btn';
-            delBtn.innerHTML = '<span class="material-icons-round" style="font-size:14px;">close</span>';
-            delBtn.title = 'Delete Video';
-            delBtn.onclick = function() {
-                itemDiv.remove();
-                // Remove from segmentsData
-                const idx = segmentsData[segId].videos.findIndex(v => v.src === fileUrl);
-                if(idx > -1) segmentsData[segId].videos.splice(idx, 1);
-            };
-            
-            // Label
-            const label = document.createElement('span');
-            label.className = 'media-label';
-            label.innerText = '🎬 Video';
-            
-            itemDiv.appendChild(video);
-            itemDiv.appendChild(delBtn);
-            itemDiv.appendChild(label);
-            gallery.appendChild(itemDiv);
-            
-            // Store video element
-            segmentsData[segId].videos.push(video);
-        }
+            div.appendChild(el); div.appendChild(btn);
+            gallery.appendChild(div);
+        });
     }
 
     function uploadManualAudio(input, segId) {
         if(input.files && input.files[0]) {
             const fileUrl = URL.createObjectURL(input.files[0]);
             const player = document.getElementById(`player-${segId}`);
-            const durLabel = document.getElementById(`duration-${segId}`);
-            const status = document.getElementById(`status-${segId}`);
-            const audioBox = document.getElementById(`audio-box-${segId}`);
-
             player.src = fileUrl;
             segmentsData[segId].audioUrl = fileUrl;
-
-            player.onloadedmetadata = () => {
-                segmentsData[segId].duration = player.duration;
-                durLabel.innerText = `Duration: ${player.duration.toFixed(1)}s (Manual)`;
-            };
-            status.style.display = "block";
-            status.innerText = "✅ Manual Audio Loaded!"; 
-            status.style.color = "#4ade80"; 
-            audioBox.style.display = "block";
+            player.onloadedmetadata = () => { segmentsData[segId].duration = player.duration; document.getElementById(`duration-${segId}`).innerText = player.duration.toFixed(1) + "s"; };
+            document.getElementById(`status-${segId}`).style.display = "block";
+            document.getElementById(`audio-box-${segId}`).style.display = "block";
         }
     }
 
     function manualImageSearch(segId) {
         const query = document.getElementById(`img-query-${segId}`).value.trim();
         const limit = document.getElementById('imageFetchCount').value;
-        if(!query) return alert("Please enter a search query!");
-        segmentsData[segId].headline = query;
+        if(!query) return alert("Please enter a query!");
         fetchImagesForSegment(segId, query, limit); 
     }
 
     async function fetchImagesForSegment(segId, query, limit) {
         const provider = document.getElementById('imgProviderSelect').value;
         const statusBox = document.getElementById(`img-status-${segId}`);
-        const gallery = document.getElementById(`gallery-${segId}`);
-
-        gallery.innerHTML = ''; 
-        segmentsData[segId].images = []; 
-
-        let seconds = 0;
-        statusBox.style.display = "block";
-        statusBox.style.color = "#fbbf24"; 
-        
-        let loadingMsg = "Image Search running...";
-        if(provider === 'ranimage') loadingMsg = "Waking up Ranimage API & Searching... (Server sleeps, may take 2-3 mins)";
-        
-        statusBox.innerHTML = `<span class="material-icons-round spin" style="font-size:1.1rem; vertical-align:middle;">sync</span> ${loadingMsg} (<span id="timer-${segId}">0</span>s)`;
-
-        const timerInterval = setInterval(() => {
-            seconds++;
-            const tElem = document.getElementById(`timer-${segId}`);
-            if(tElem) tElem.innerText = seconds;
-        }, 1000);
-
+        statusBox.innerText = "Searching Images...";
         try {
+            let urls = [];
             if (provider === 'google') {
-                const apiKey = document.getElementById('gApiKey').value;
-                const cx = document.getElementById('gCxId').value;
-                if(!apiKey || !cx) throw new Error("Google API Key or CX not set in settings.");
-
-                const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}&searchType=image&num=${limit}`;
-                const res = await fetch(url);
+                const key = localStorage.getItem('googleApiKey'); const cx = localStorage.getItem('googleCxId');
+                const res = await fetch(`https://www.googleapis.com/customsearch/v1?key=${key}&cx=${cx}&q=${encodeURIComponent(query)}&searchType=image&num=${limit}`);
                 const data = await res.json();
-
-                if(data.error) throw new Error(data.error.message);
-                if(!data.items || data.items.length === 0) throw new Error("No images found.");
-
-                processAndRenderImages(data.items.map(item => item.link), gallery, segId);
-
-            } else if (provider === 'ranimage') {
-                const rawUrl = document.getElementById('ranApiUrl').value.trim();
-                if(!rawUrl) throw new Error("Ranimage API URL not set.");
-
-                const res = await fetch(`${rawUrl}?q=${encodeURIComponent(query)}`);
-                if(!res.ok) throw new Error(`Ranimage Request Failed (Status: ${res.status})`);
-                
+                urls = data.items.map(i => i.link);
+            } else {
+                const ranUrl = localStorage.getItem('ranApiUrl');
+                const res = await fetch(`${ranUrl}?q=${encodeURIComponent(query)}`);
                 const data = await res.json();
-                let imgs = [];
-                
-                let arr = Array.isArray(data) ? data : (data.results || data.data || data.images || []);
-                
-                imgs = arr.map(i => {
-                    if(typeof i === 'string') return i;
-                    return i.image || i.url || i.src || i.thumbnail || i.link;
-                });
-                
-                imgs = imgs.filter(url => url);
-
-                if(imgs.length === 0) throw new Error("No images found in Ranimage response. Try another keyword.");
-                
-                processAndRenderImages(imgs.slice(0, limit), gallery, segId);
+                let arr = Array.isArray(data) ? data : (data.results || []);
+                urls = arr.map(i => typeof i === 'string' ? i : (i.image || i.url)).filter(u => u);
             }
             
-            clearInterval(timerInterval);
+            urls.slice(0, limit).forEach(url => {
+                const proxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
+                const img = new Image(); img.crossOrigin = "anonymous";
+                img.onload = () => { segmentsData[segId].media.push({type: 'image', url: proxyUrl, element: img}); renderGallery(segId); };
+                img.src = proxyUrl;
+            });
             statusBox.style.display = "none";
-            
-        } catch(e) {
-            clearInterval(timerInterval);
-            statusBox.style.display = "block";
-            statusBox.innerHTML = `❌ Image Search Failed: ${e.message}`;
-            statusBox.style.color = "#ef4444"; 
-        }
-    }
-
-    // Process and Render Images with Delete Button
-    function processAndRenderImages(urlArray, gallery, segId) {
-        urlArray.forEach(url => {
-            const proxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
-            
-            // Create gallery item wrapper
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'gallery-item';
-            
-            const img = document.createElement('img');
-            img.crossOrigin = "anonymous";
-            img.src = proxyUrl;
-            img.onerror = function() { itemDiv.style.display = 'none'; };
-            
-            // Delete button
-            const delBtn = document.createElement('button');
-            delBtn.className = 'img-delete-btn';
-            delBtn.innerHTML = '<span class="material-icons-round" style="font-size:14px;">close</span>';
-            delBtn.title = 'Delete Image';
-            delBtn.onclick = function() {
-                itemDiv.remove();
-                // Remove from segmentsData
-                const idx = segmentsData[segId].images.findIndex(i => i.src === proxyUrl);
-                if(idx > -1) segmentsData[segId].images.splice(idx, 1);
-            };
-            
-            itemDiv.appendChild(img);
-            itemDiv.appendChild(delBtn);
-            gallery.appendChild(itemDiv);
-            
-            const imgObj = new Image();
-            imgObj.crossOrigin = "anonymous";
-            imgObj.onload = () => { segmentsData[segId].images.push(imgObj); };
-            imgObj.src = proxyUrl;
-        });
+        } catch(e) { statusBox.innerText = "Search Error"; }
     }
 
     async function generateAudio(id) {
@@ -1070,129 +812,83 @@ RULES (Strict Format):
         const rate = document.getElementById(`rate-${id}`).value;
         const btn = document.getElementById(`btn-gen-${id}`);
         const status = document.getElementById(`status-${id}`);
-        const audioBox = document.getElementById(`audio-box-${id}`);
         const player = document.getElementById(`player-${id}`);
-        const durLabel = document.getElementById(`duration-${id}`);
-
         if(!text) return alert("Script is empty!");
 
-        btn.disabled = true; btn.innerHTML = '<span class="spin material-icons-round">sync</span> Generating...';
-        status.style.display = "block"; status.innerText = "Generating Audio..."; status.style.color = "#fbbf24";
-        audioBox.style.display = "none";
-        
+        btn.disabled = true; status.style.display = "block"; status.innerText = "Generating Audio...";
         try {
             const res = await fetch(globalApiUrl.value.replace(/\/$/, "") + "/tts", {
                 method: "POST", headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({ text, voice, rate, pitch: 0 })
             });
-            if(!res.ok) throw new Error("Server Error");
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
             player.src = url;
             segmentsData[id].audioUrl = url;
-
-            player.onloadedmetadata = () => {
-                segmentsData[id].duration = player.duration;
-                durLabel.innerText = `Duration: ${player.duration.toFixed(1)}s`;
-            };
-            status.innerText = "✅ Audio Ready!"; status.style.color = "#4ade80"; audioBox.style.display = "block";
-        } catch(e) {
-            status.innerText = "❌ Error: " + e.message; status.style.color = "#ef4444";
-        } finally {
-            btn.disabled = false; btn.innerHTML = '<span class="material-icons-round">graphic_eq</span> Generate Audio';
-        }
+            player.onloadedmetadata = () => { segmentsData[id].duration = player.duration; document.getElementById(`duration-${id}`).innerText = player.duration.toFixed(1) + "s"; };
+            status.innerText = "✅ Ready!"; document.getElementById(`audio-box-${id}`).style.display = "block";
+        } catch(e) { status.innerText = "❌ Error"; } finally { btn.disabled = false; }
     }
 
     async function playAllAudioSequence() {
         const validIds = Object.keys(segmentsData).filter(id => segmentsData[id].audioUrl);
-        if(validIds.length === 0) return alert("Please generate audio first!");
         for(let id of validIds) {
             const player = document.getElementById(`player-${id}`);
-            if(player) {
-                player.scrollIntoView({behavior: "smooth", block: "center"});
-                await new Promise(resolve => { player.onended = resolve; player.play(); });
-            }
+            await new Promise(resolve => { player.onended = resolve; player.play(); });
         }
     }
 
     function loadTransitionVideo(input) {
-        if(input.files && input.files.length > 0) {
-            const transVid = document.getElementById("hiddenTransVideo");
-            transVid.src = URL.createObjectURL(input.files[0]);
-            transVid.load(); 
-        }
+        if(input.files && input.files[0]) { document.getElementById("hiddenTransVideo").src = URL.createObjectURL(input.files[0]); }
     }
 
     async function runVideoSequence(isRecording = false) {
-        if(isVideoEngineRunning) return alert("Please wait for current process to finish.");
-        
-        const validSegmentIds = Object.keys(segmentsData).filter(id => segmentsData[id].audioUrl);
-        if(validSegmentIds.length === 0) return alert("No audio generated. Please generate audio first.");
+        if(isVideoEngineRunning) return;
+        const validIds = Object.keys(segmentsData).filter(id => segmentsData[id].audioUrl);
+        if(validIds.length === 0) return alert("Generate audio first!");
 
-        isVideoEngineRunning = true; cancelVideoSequence = false;
+        isVideoEngineRunning = true;
         const canvas = document.getElementById("liveCanvas"); const ctx = canvas.getContext("2d");
-        const btnPreview = document.getElementById("btnPreview"); const btnDownload = document.getElementById("btnDownload");
         const recIndicator = document.getElementById("recIndicator");
-        
         const audioCtx = getAudioContext(); const dest = audioCtx.createMediaStreamDestination();
         const transVid = document.getElementById("hiddenTransVideo");
-        let hasTransVid = (transVid.src && transVid.src !== "" && !transVid.src.endsWith(window.location.host+"/"));
+        let hasTransVid = (transVid.src && transVid.src !== "" && !transVid.src.includes(window.location.host));
         let recorder, chunks = [];
 
+        // BGM Setup
         let bgmAudio = null;
-        let bgmGain = null;
         const bgmInput = document.getElementById('bgmInput');
-        if(bgmInput.files && bgmInput.files.length > 0) {
-            const bgmUrl = URL.createObjectURL(bgmInput.files[0]);
-            bgmAudio = new Audio(bgmUrl);
-            bgmAudio.loop = true; 
-            const bgmSource = audioCtx.createMediaElementSource(bgmAudio);
-            bgmGain = audioCtx.createGain();
-            bgmGain.gain.value = parseFloat(document.getElementById('bgmVolume').value);
-            bgmSource.connect(bgmGain);
-            bgmGain.connect(audioCtx.destination);
-            if(isRecording) bgmGain.connect(dest);
-            bgmAudio.play().catch(e => console.error("BGM Play Error:", e));
+        if(bgmInput.files && bgmInput.files[0]) {
+            bgmAudio = new Audio(URL.createObjectURL(bgmInput.files[0])); bgmAudio.loop = true;
+            const bgmSrc = audioCtx.createMediaElementSource(bgmAudio);
+            const bgmGain = audioCtx.createGain(); bgmGain.gain.value = parseFloat(document.getElementById('bgmVolume').value);
+            bgmSrc.connect(bgmGain); bgmGain.connect(audioCtx.destination); if(isRecording) bgmGain.connect(dest);
+            bgmAudio.play();
         }
 
         if(isRecording) {
-            btnDownload.disabled = true; btnDownload.innerHTML = '<span class="spin material-icons-round">sync</span> Recording...';
-            btnPreview.disabled = true; recIndicator.style.display = "block";
+            recIndicator.style.display = "block";
             const stream = canvas.captureStream(30);
-            const combinedStream = new MediaStream([...stream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
-            recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm; codecs=vp8,opus' });
+            const combined = new MediaStream([...stream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
+            recorder = new MediaRecorder(combined, { mimeType: 'video/webm' });
             recorder.ondataavailable = e => chunks.push(e.data);
             recorder.onstop = () => {
-                const finalBlob = new Blob(chunks, { type: 'video/webm' });
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(finalBlob); a.download = "News_Studio_Output.webm";
-                document.body.appendChild(a); a.click(); document.body.removeChild(a); resetVideoUI();
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "News_Pro_Output.webm"; a.click();
+                recIndicator.style.display = "none";
             };
             recorder.start();
-        } else {
-            btnPreview.disabled = true; btnPreview.innerHTML = '<span class="spin material-icons-round">sync</span> Playing...'; btnDownload.disabled = true;
         }
 
-        canvas.scrollIntoView({behavior: 'smooth', block: 'center'});
-
-        for(let i=0; i<validSegmentIds.length; i++) {
-            if(cancelVideoSequence) break;
-            await playSegmentOnCanvas(segmentsData[validSegmentIds[i]], ctx, canvas, audioCtx, dest, isRecording);
-            if(hasTransVid && i < validSegmentIds.length - 1 && !cancelVideoSequence) {
-                await playTransitionOnCanvas(transVid, ctx, canvas, audioCtx, dest, isRecording);
-            }
+        for(let i=0; i<validIds.length; i++) {
+            await playSegmentOnCanvas(segmentsData[validIds[i]], ctx, canvas, audioCtx, dest, isRecording);
+            if(hasTransVid && i < validIds.length - 1) await playTransitionOnCanvas(transVid, ctx, canvas, audioCtx, dest, isRecording);
         }
 
-        if(bgmAudio) { bgmAudio.pause(); bgmAudio.src = ""; }
-
-        if(isRecording && recorder && recorder.state !== "inactive") recorder.stop(); else resetVideoUI();
-        ctx.fillStyle = "black"; ctx.fillRect(0, 0, canvas.width, canvas.height); isVideoEngineRunning = false;
-
-        function resetVideoUI() {
-            btnPreview.disabled = false; btnPreview.innerHTML = '<span class="material-icons-round">play_arrow</span> Preview Video';
-            btnDownload.disabled = false; btnDownload.innerHTML = '<span class="material-icons-round">download</span> Download Video';
-            recIndicator.style.display = "none";
-        }
+        if(bgmAudio) bgmAudio.pause();
+        if(isRecording) recorder.stop();
+        isVideoEngineRunning = false;
+        ctx.fillStyle = "black"; ctx.fillRect(0,0,canvas.width,canvas.height);
     }
 
     function playSegmentOnCanvas(data, ctx, canvas, audioCtx, dest, isRecording) {
@@ -1201,237 +897,131 @@ RULES (Strict Format):
             const source = audioCtx.createMediaElementSource(audioObj);
             source.connect(audioCtx.destination); if(isRecording) source.connect(dest); 
             
-            const images = data.images; const duration = data.duration * 1000; 
-            const imgCount = images.length > 0 ? images.length : 1; const timePerImage = duration / imgCount;
-            let currentImgIndex = 0; let animationFrameId;
+            const mediaList = data.media; const duration = data.duration * 1000; 
+            const timePerMedia = mediaList.length > 0 ? duration / mediaList.length : duration;
+            let currentIdx = 0; let animationFrameId;
 
             audioObj.onended = () => { cancelAnimationFrame(animationFrameId); source.disconnect(); resolve(); };
             const startTime = performance.now();
 
+            // Overlay Settings
             const showLogo = document.getElementById('chkLogo').checked;
             const showLive = document.getElementById('chkLive').checked;
-            
-            const showCName = document.getElementById('chkChannelName').checked;
-            const cNameTxt = document.getElementById('channelNameTxt').value;
-            const cNameColor = document.getElementById('channelNameColor').value;
-            
             const showHead = document.getElementById('chkHeadline').checked;
-            
             const showSub = document.getElementById('chkSubscribe').checked;
-            const subTxt = document.getElementById('subscribeTxt').value;
-            const subColor = document.getElementById('bottomTickerColor').value;
-            
-            const showTopTicker = document.getElementById('chkTopTicker').checked;
-            const topTickerTxt = document.getElementById('topTickerTxt').value;
-            const topTickerColor = document.getElementById('topTickerColor').value;
-            
-            const showNewsNum = document.getElementById('chkNewsNumber').checked;
-            const newsNumColor = document.getElementById('newsNumColor').value;
-            
-            const topHeight = parseInt(document.getElementById('topTickerHeight').value);
-            const activeSubHeight = showSub ? parseInt(document.getElementById('bottomTickerHeight').value) : 0;
-            const headHeight = showHead ? 55 : 0; 
-            const breakHeight = 45; // BREAKING NEWS box height
-            const numHeight = 45;   // News number height
-            const numBreakGap = 8;  // GAP between number and BREAKING NEWS
-            const safePadding = 40; 
+            const showTop = document.getElementById('chkTopTicker').checked;
+            const showNum = document.getElementById('chkNewsNumber').checked;
 
-            // Calculate Y positions from BOTTOM to TOP
-            // 1. Bottom Subscribe Ticker
-            const bottomY = canvas.height - activeSubHeight;
-            // 2. Headline Ticker (above subscribe)
-            const headY = bottomY - headHeight;
-            // 3. BREAKING NEWS box (above headline)
-            const breakY = headY - breakHeight;
-            // 4. News Number (above breaking news, with gap)
-            const numY = breakY - numHeight - numBreakGap;
+            const topH = parseInt(document.getElementById('topTickerHeight').value);
+            const subH = showSub ? parseInt(document.getElementById('bottomTickerHeight').value) : 0;
+            const headH = showHead ? 55 : 0;
+            const bottomY = canvas.height - subH;
+            const headY = bottomY - headH;
 
             function drawLoop(now) {
                 const elapsed = now - startTime;
-                currentImgIndex = Math.floor(elapsed / timePerImage);
-                if(currentImgIndex >= images.length) currentImgIndex = images.length - 1;
+                currentIdx = Math.floor(elapsed / timePerMedia);
+                if(currentIdx >= mediaList.length) currentIdx = mediaList.length - 1;
                 
-                ctx.fillStyle = "#0f172a"; ctx.fillRect(0,0, canvas.width, canvas.height);
+                ctx.fillStyle = "#000"; ctx.fillRect(0,0, canvas.width, canvas.height);
                 
-                // Ken Burns Effect
-                if(images.length > 0 && images[currentImgIndex] && images[currentImgIndex].complete && images[currentImgIndex].naturalHeight !== 0) {
-                    const img = images[currentImgIndex];
-                    const ratio  = Math.max(canvas.width / img.width, canvas.height / img.height); 
-                    const drawWidth = img.width * ratio;
-                    const drawHeight = img.height * ratio;
-                    
-                    let imgTimeElapsed = elapsed % timePerImage;
-                    let progress = imgTimeElapsed / timePerImage;
-                    let isZoomIn = (currentImgIndex % 2 === 0);
-                    let scale = isZoomIn ? 1.0 + (0.15 * progress) : 1.15 - (0.15 * progress);
-
-                    ctx.save();
-                    ctx.translate(canvas.width / 2, canvas.height / 2);
-                    ctx.scale(scale, scale);
-                    ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
-                    ctx.restore();
-
-                } else {
-                    ctx.fillStyle = "#1e293b"; ctx.fillRect(0,0,canvas.width, canvas.height);
-                    ctx.fillStyle = "#0ea5e9"; ctx.font = "bold 40px 'Segoe UI', Arial"; ctx.textAlign = "center";
-                    ctx.fillText("Breaking News", canvas.width/2, canvas.height/2 - 40);
-                    ctx.fillStyle = "white"; ctx.font = "30px 'Segoe UI', Arial"; 
-                    wrapText(ctx, data.headline || "News Segment", canvas.width/2, canvas.height/2 + 20, canvas.width - 100, 40);
-                }
-
-                ctx.textAlign = "left"; 
-
-                // --- 1. TOP BREAKING TICKER (at very top) ---
-                if(showTopTicker) {
-                    ctx.fillStyle = topTickerColor; 
-                    ctx.fillRect(0, 0, canvas.width, topHeight);
-                    ctx.fillStyle = "white"; ctx.font = "bold 26px Arial";
-                    const tW = ctx.measureText(topTickerTxt).width;
-                    let tX = canvas.width - ((elapsed * 0.18) % (canvas.width + tW));
-                    ctx.fillText(topTickerTxt, tX, (topHeight / 2) + 8);
-                }
-
-                // --- 2. LOGO & LIVE ICON ---
-                let topYPadding = showTopTicker ? (topHeight + 15) : safePadding;
-
-                if(showLogo && globalLogoImg) {
-                    ctx.drawImage(globalLogoImg, canvas.width - safePadding - 100, topYPadding, 100, 100);
-                }
-
-                if(showLive && globalLiveImg) {
-                    ctx.drawImage(globalLiveImg, safePadding, topYPadding, 120, 60);
-                } else if(showLive && !globalLiveImg) {
-                    ctx.fillStyle = "red"; ctx.fillRect(safePadding, topYPadding, 90, 40);
-                    ctx.fillStyle = "white"; ctx.font = "bold 24px Arial";
-                    ctx.fillText("LIVE", safePadding + 15, topYPadding + 28);
-                }
-
-                // --- 3. NEWS NUMBER (Square Box - ABOVE BREAKING NEWS with GAP) ---
-                if(showNewsNum && data.newsIndex) {
-                    let numWidth = 60;
-                    
-                    // Ensure number stays in safe zone (not cut off)
-                    let actualNumY = Math.max(numY, topHeight + 10);
-                    
-                    ctx.fillStyle = newsNumColor; 
-                    ctx.fillRect(0, actualNumY, numWidth, numHeight);
-                    ctx.fillStyle = "black"; ctx.font = "bold 28px Arial";
-                    ctx.textAlign = "center";
-                    ctx.fillText(data.newsIndex, numWidth/2, actualNumY + 32);
-                    ctx.textAlign = "left"; // reset
-                }
-
-                // --- 4. BREAKING NEWS Red Box (between Number and Headline) ---
-                if(showHead) {
-                    let breakWidth = 240;
-                    
-                    // Ensure BREAKING NEWS stays in safe zone
-                    let actualBreakY = Math.max(breakY, numY + numHeight + numBreakGap);
-                    
-                    ctx.fillStyle = "#b91c1c"; 
-                    ctx.fillRect(0, actualBreakY, breakWidth, breakHeight);
-                    ctx.fillStyle = "white"; ctx.font = "bold 24px Arial";
-                    ctx.textAlign = "center";
-                    ctx.fillText("BREAKING NEWS", breakWidth/2, actualBreakY + 32);
-                    ctx.textAlign = "left"; // Reset
-                }
-
-                // --- 5. HEADLINE TICKER (White Bar - Full Width) ---
-                if(showHead) {
-                    let breakWidth = 240;
-                    
-                    // White Scrolling Area - Full width
-                    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-                    ctx.fillRect(breakWidth, headY, canvas.width - breakWidth, headHeight);
-                    
-                    // Headline Text
-                    ctx.fillStyle = "black"; ctx.font = "bold 32px Arial";
-                    let safeHeadline = data.headline || "ताज़ा खबर";
-                    if(safeHeadline.toLowerCase().includes('intro')) safeHeadline = "ताज़ा और बड़ी खबरें";
-                    if(safeHeadline.toLowerCase().includes('outro')) safeHeadline = "ख़बरों का सिलसिला जारी रहेगा...";
-                    
-                    const hTxt = "► " + safeHeadline.toUpperCase();
-                    const hW = ctx.measureText(hTxt).width;
-                    let hX = canvas.width - ((elapsed * 0.2) % (canvas.width + hW));
-                    
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.rect(breakWidth, headY, canvas.width - breakWidth, headHeight);
-                    ctx.clip();
-                    ctx.fillText(hTxt, Math.max(hX, breakWidth + 15), headY + 38);
-                    ctx.restore();
-                }
-
-                // --- 6. BOTTOM SUBSCRIBE TICKER & CHANNEL NAME ---
-                if(showSub || showCName) {
-                    let cWidth = showCName ? 260 : 0;
-
-                    // Red Subscribe Scrolling Area
-                    if(showSub) {
-                        ctx.fillStyle = subColor; 
-                        ctx.fillRect(cWidth, bottomY, canvas.width - cWidth, activeSubHeight);
-                        
-                        ctx.fillStyle = "white"; ctx.font = "bold 26px Arial";
-                        const sW = ctx.measureText(subTxt).width;
-                        let sX = canvas.width - ((elapsed * 0.15) % (canvas.width + sW));
-                        
-                        ctx.save();
-                        ctx.beginPath();
-                        ctx.rect(cWidth, bottomY, canvas.width - cWidth, activeSubHeight);
-                        ctx.clip();
-                        ctx.fillText(subTxt, sX, canvas.height - (activeSubHeight / 2) + 8);
-                        ctx.restore();
+                if(mediaList.length > 0) {
+                    const item = mediaList[currentIdx];
+                    if(item.type === 'image') {
+                        const img = item.element;
+                        const ratio = Math.max(canvas.width/img.width, canvas.height/img.height);
+                        const dw = img.width*ratio, dh = img.height*ratio;
+                        let scale = 1.0 + (0.1 * ((elapsed % timePerMedia)/timePerMedia));
+                        ctx.save(); ctx.translate(canvas.width/2, canvas.height/2); ctx.scale(scale, scale);
+                        ctx.drawImage(img, -dw/2, -dh/2, dw, dh); ctx.restore();
+                    } else {
+                        const vid = item.element; if(vid.paused) vid.play();
+                        ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
                     }
+                }
 
-                    // Channel Name Box on the Left
-                    if(showCName) {
-                        ctx.fillStyle = cNameColor; 
-                        ctx.fillRect(0, bottomY, cWidth, activeSubHeight);
-                        ctx.fillStyle = "white"; ctx.font = "bold 26px Arial";
-                        ctx.textAlign = "center";
-                        ctx.fillText(cNameTxt, cWidth/2, canvas.height - (activeSubHeight / 2) + 8);
-                        ctx.textAlign = "left"; 
-                    }
+                // --- TOP TICKER ---
+                if(showTop) {
+                    ctx.fillStyle = document.getElementById('topTickerColor').value;
+                    ctx.fillRect(0, 0, canvas.width, topH);
+                    ctx.fillStyle = "white"; ctx.font = "bold 24px Arial";
+                    let txt = document.getElementById('topTickerTxt').value;
+                    let tx = canvas.width - ((elapsed * 0.15) % (canvas.width + ctx.measureText(txt).width));
+                    ctx.fillText(txt, tx, topH/2 + 8);
+                }
+
+                // --- LOGO & LIVE ---
+                let ty = showTop ? topH + 20 : 30;
+                if(showLogo && globalLogoImg) ctx.drawImage(globalLogoImg, canvas.width-120, ty, 100, 100);
+                if(showLive) {
+                    if(globalLiveImg) ctx.drawImage(globalLiveImg, 20, ty, 120, 60);
+                    else { ctx.fillStyle="red"; ctx.fillRect(20, ty, 80, 40); ctx.fillStyle="white"; ctx.font="bold 20px Arial"; ctx.fillText("LIVE", 35, ty+28); }
+                }
+
+                // --- HEADLINE TICKER (SAFE ZONE) ---
+                let breakWidth = 260;
+                if(showHead) {
+                    ctx.fillStyle = "white"; ctx.fillRect(breakWidth, headY, canvas.width-breakWidth, headH);
+                    ctx.fillStyle = "black"; ctx.font = "bold 30px Arial";
+                    let hTxt = "► " + (data.headline || "BREAKING NEWS UPDATE");
+                    let hx = canvas.width - ((elapsed * 0.2) % (canvas.width + ctx.measureText(hTxt).width));
+                    ctx.save(); ctx.beginPath(); ctx.rect(breakWidth, headY, canvas.width-breakWidth, headH); ctx.clip();
+                    ctx.fillText(hTxt, Math.max(hx, breakWidth+20), headY+38); ctx.restore();
+
+                    // Breaking News Box
+                    ctx.fillStyle = "#b91c1c"; ctx.fillRect(0, headY, breakWidth, headH);
+                    ctx.fillStyle = "white"; ctx.font = "bold 24px Arial"; ctx.textAlign="center";
+                    ctx.fillText("BREAKING NEWS", breakWidth/2, headY+36); ctx.textAlign="left";
+                }
+
+                // --- NEWS NUMBER (ABOVE BREAKING NEWS WITH GAP) ---
+                if(showNum && data.newsIndex) {
+                    let numW = 70, numH = 50, gap = 15;
+                    let numY = headY - numH - gap;
+                    ctx.fillStyle = document.getElementById('newsNumColor').value;
+                    ctx.fillRect(0, numY, numW, numH);
+                    ctx.fillStyle = "black"; ctx.font = "bold 30px Arial"; ctx.textAlign="center";
+                    ctx.fillText(data.newsIndex, numW/2, numY+35); ctx.textAlign="left";
+                }
+
+                // --- BOTTOM SUBSCRIBE & CHANNEL ---
+                let cw = document.getElementById('chkChannelName').checked ? 250 : 0;
+                if(showSub) {
+                    ctx.fillStyle = document.getElementById('bottomTickerColor').value;
+                    ctx.fillRect(cw, bottomY, canvas.width-cw, subH);
+                    ctx.fillStyle = "white"; ctx.font = "bold 24px Arial";
+                    let st = document.getElementById('subscribeTxt').value;
+                    let sx = canvas.width - ((elapsed * 0.12) % (canvas.width + ctx.measureText(st).width));
+                    ctx.save(); ctx.beginPath(); ctx.rect(cw, bottomY, canvas.width-cw, subH); ctx.clip();
+                    ctx.fillText(st, sx, bottomY + subH/2 + 8); ctx.restore();
+                }
+                if(cw > 0) {
+                    ctx.fillStyle = document.getElementById('channelNameColor').value;
+                    ctx.fillRect(0, bottomY, cw, subH);
+                    ctx.fillStyle = "white"; ctx.font = "bold 24px Arial"; ctx.textAlign="center";
+                    ctx.fillText(document.getElementById('channelNameTxt').value, cw/2, bottomY + subH/2 + 8); ctx.textAlign="left";
                 }
 
                 animationFrameId = requestAnimationFrame(drawLoop);
             }
-            audioObj.play().then(() => { requestAnimationFrame(drawLoop); }).catch(e => { console.error("Audio Play Error:", e); resolve(); });
+            audioObj.play().then(() => requestAnimationFrame(drawLoop));
         });
     }
 
-    function playTransitionOnCanvas(videoEle, ctx, canvas, audioCtx, dest, isRecording) {
+    function playTransitionOnCanvas(vid, ctx, canvas, audioCtx, dest, isRecording) {
         return new Promise((resolve) => {
-            let source;
-            if(!videoEle.mediaSource) { source = audioCtx.createMediaElementSource(videoEle); videoEle.mediaSource = source; } 
-            else { source = videoEle.mediaSource; }
-            source.connect(audioCtx.destination); if(isRecording) source.connect(dest);
-            
-            videoEle.currentTime = 0; let animationFrameId;
-            videoEle.onended = () => { cancelAnimationFrame(animationFrameId); source.disconnect(audioCtx.destination); if(isRecording) source.disconnect(dest); resolve(); };
-
-            function drawLoop() {
-                if(!videoEle.paused && !videoEle.ended) ctx.drawImage(videoEle, 0, 0, canvas.width, canvas.height);
-                animationFrameId = requestAnimationFrame(drawLoop);
-            }
-            videoEle.play().then(() => { requestAnimationFrame(drawLoop); }).catch(e => { console.error("Transition Video Play Error:", e); resolve(); });
+            let src = vid.mediaSource || audioCtx.createMediaElementSource(vid); vid.mediaSource = src;
+            src.connect(audioCtx.destination); if(isRecording) src.connect(dest);
+            vid.currentTime = 0;
+            vid.onended = () => { src.disconnect(); resolve(); };
+            function draw() { if(!vid.ended) { ctx.drawImage(vid, 0, 0, canvas.width, canvas.height); requestAnimationFrame(draw); } }
+            vid.play().then(draw);
         });
-    }
-
-    function wrapText(context, text, x, y, maxWidth, lineHeight) {
-        var words = text.split(' '), line = '';
-        for(var n = 0; n < words.length; n++) {
-            var testLine = line + words[n] + ' ';
-            var metrics = context.measureText(testLine);
-            if (metrics.width > maxWidth && n > 0) { context.fillText(line, x, y); line = words[n] + ' '; y += lineHeight; } 
-            else { line = testLine; }
-        }
-        context.fillText(line, x, y);
     }
 
     function removeSegment(id) { document.getElementById(`seg-${id}`).remove(); delete segmentsData[id]; checkEmpty(); }
     function checkEmpty() { emptyState.style.display = (segmentsList.children.length === 0) ? "block" : "none"; }
-    function copyText(elemId) { navigator.clipboard.writeText(document.getElementById(elemId).innerText).then(()=>alert("Copied!")); }
+    function copyText(id) { navigator.clipboard.writeText(document.getElementById(id).innerText).then(()=>alert("Copied!")); }
 </script>
 
 </body>
