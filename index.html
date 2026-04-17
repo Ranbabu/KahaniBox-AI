@@ -55,7 +55,7 @@ header {
 .btn-icon { background: none; border: none; color: var(--text); cursor: pointer; padding: 5px; display: flex; align-items: center; justify-content: center; }
 
 .sidebar {
-    position: fixed; top: var(--header-h); right: -320px; width: 340px; height: calc(100vh - var(--header-h));
+    position: fixed; top: var(--header-h); right: -340px; width: 340px; height: calc(100vh - var(--header-h));
     background: var(--card-bg); border-left: 1px solid var(--border); transition: right 0.3s ease;
     z-index: 90; padding: 20px; box-shadow: -5px 0 15px rgba(0,0,0,0.5); overflow-y: auto;
 }
@@ -157,12 +157,51 @@ textarea {
     font-size: 1.05rem; outline: none; min-height: 150px; resize: vertical; line-height: 1.6; margin-bottom: 10px;
 }
 
+/* Image Gallery with Delete Button */
 .image-gallery {
     display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; border-top: 1px dashed var(--border);
-    margin-bottom: 10px; min-height: 100px; align-items: center;
+    margin-bottom: 10px; min-height: 120px; align-items: flex-start;
 }
-.image-gallery img {
+.gallery-item {
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+.gallery-item img, .gallery-item video {
     height: 80px; width: 120px; border-radius: 6px; border: 1px solid var(--border); object-fit: cover; background: #000;
+}
+.gallery-item video {
+    height: 80px; width: 120px;
+}
+.img-delete-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0;
+    z-index: 5;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+.img-delete-btn:hover {
+    background: #dc2626;
+}
+.gallery-item .media-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-align: center;
 }
 .image-gallery-placeholder { font-size: 0.8rem; color: var(--text-muted); font-style: italic; padding: 10px 0; }
 
@@ -184,8 +223,8 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     border: none; padding: 14px 20px; border-radius: 50px; font-weight: 700; display: flex; align-items: center; gap: 8px;
     cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 99;
 }
-.manual-upload-row { display: flex; gap: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed var(--border);}
-.manual-upload-row div { flex: 1; }
+.manual-upload-row { display: flex; gap: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed var(--border); flex-wrap: wrap;}
+.manual-upload-row > div { flex: 1; min-width: 140px; }
 </style>
 </head>
 <body>
@@ -218,8 +257,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     
     <label>Select Image Provider</label>
     <select id="imgProviderSelect" onchange="toggleImageSettings()">
-        <!-- यहाँ मैंने Ranimage को बदलकर आपका Vercel वाला नाम दे दिया है -->
-        <option value="ranimage">Aryan News API (Bing / Vercel)</option>
+        <option value="ranimage">Custom API (Ranimage / DuckDuckGo)</option>
         <option value="google">Google Custom Search</option>
     </select>
 
@@ -231,10 +269,9 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
     </div>
 
     <div id="ranSettingsBox" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-        <label>Aryan News API URL</label>
-        <!-- यहाँ मैंने आपका लाइव Vercel URL डाल दिया है -->
-        <input type="text" id="ranApiUrl" value="https://image-tool.vercel.app/api/search" placeholder="Enter Aryan API URL">
-        <small style="color: #fbbf24;">नोट: यह आपका खुद का बनाया API है जो बिल्कुल सटीक इमेजेस देता है।</small>
+        <label>Custom API URL (Ranimage)</label>
+        <input type="text" id="ranApiUrl" value="https://ranimage.onrender.com/api/search" placeholder="Enter Custom API URL">
+        <small style="color: #fbbf24;">Note: Server may take 2-3 mins to wake up initially.</small>
     </div>
     
     <div class="sidebar-btns">
@@ -348,6 +385,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         </div>
     </div>
 
+    <!-- NEW: Advanced Quick Paste Panel -->
     <div class="news-control-panel">
         <div class="panel-title"><span class="material-icons-round">content_paste</span> Quick Paste & Auto-Segment</div>
         <label>अपनी पूरी स्क्रिप्ट यहाँ पेस्ट करें। सिस्टम ऑटोमैटिकली 1, 2, 3 नंबरों से ख़बरों को पहचान कर अलग-अलग ऑडियो/इमेज बॉक्स बना देगा।</label>
@@ -527,8 +565,7 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         document.getElementById('imgProviderSelect').value = 'ranimage';
         document.getElementById('gApiKey').value = ''; 
         document.getElementById('gCxId').value = ''; 
-        // यहाँ भी मैंने आपका URL बदल दिया है
-        document.getElementById('ranApiUrl').value = 'https://image-tool.vercel.app/api/search';
+        document.getElementById('ranApiUrl').value = 'https://ranimage.onrender.com/api/search';
         toggleImageSettings();
         alert('Settings Cleared!'); 
     }
@@ -571,25 +608,31 @@ audio { width: 100%; height: 40px; border-radius: 20px; margin-bottom: 5px;}
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
             
+            // Check if line starts with a number like "1.", "1)", "2."
             let numMatch = line.match(/^(\d+)[\.\)]\s*(.*)/);
 
             if (numMatch) {
+                // Save previous segment
                 if (currentScript.length > 0) {
                     parsedSegments.push({ type: currentMode, newsIndex: currentMode === 'NEWS' ? newsCounter : null, headline: currentHeadline, script: currentScript.join('\n') });
                 }
                 
+                // Start a new NEWS segment
                 newsCounter++;
                 currentMode = 'NEWS';
                 currentHeadline = numMatch[2] || `News ${newsCounter}`;
                 currentScript = [];
             } else {
+                // Outro trigger check
                 let lowerLine = line.toLowerCase();
                 let isOutroTrigger = lowerLine.includes('सब्सक्राइब') || lowerLine.includes('धन्यवाद') || lowerLine.includes('जय हिंद') || lowerLine.includes('दोस्तों, अगर');
                 
                 if (currentMode === 'NEWS' && isOutroTrigger) {
+                    // Save current news segment
                     if (currentScript.length > 0) {
                         parsedSegments.push({ type: currentMode, newsIndex: newsCounter, headline: currentHeadline, script: currentScript.join('\n') });
                     }
+                    // Start OUTRO
                     currentMode = 'OUTRO';
                     currentHeadline = 'Outro / चैनल अपील';
                     currentScript = [line];
@@ -721,8 +764,9 @@ RULES (Strict Format):
         
         let titleText = newsIndex ? `News #${newsIndex} : ${displayTitle}` : `${displayTitle}`;
         
-        segmentsData[id] = { images: [], audioUrl: null, duration: 0, headline: headline, newsIndex: newsIndex };
+        segmentsData[id] = { images: [], videos: [], audioUrl: null, duration: 0, headline: headline, newsIndex: newsIndex };
 
+        // Get currently synced speed from existing segments (if any)
         let currentSyncedSpeed = "0";
         const existingSpeedSelect = document.querySelector('select[id^="rate-"]');
         if (existingSpeedSelect) currentSyncedSpeed = existingSpeedSelect.value;
@@ -747,12 +791,16 @@ RULES (Strict Format):
 
             <div class="manual-upload-row">
                 <div>
-                    <label style="color:#34d399;">Upload Manual Image</label>
+                    <label style="color:#34d399;">📷 Upload Image</label>
                     <input type="file" accept="image/*" onchange="uploadManualImage(this, ${id})" style="padding:8px;">
                 </div>
                 <div>
-                    <label style="color:#f472b6;">Upload Manual Audio</label>
+                    <label style="color:#f472b6;">🎵 Upload Audio</label>
                     <input type="file" accept="audio/*" onchange="uploadManualAudio(this, ${id})" style="padding:8px;">
+                </div>
+                <div>
+                    <label style="color:#a78bfa;">🎬 Upload Video Clip</label>
+                    <input type="file" accept="video/mp4,video/webm" onchange="uploadManualVideo(this, ${id})" style="padding:8px;">
                 </div>
             </div>
 
@@ -799,17 +847,80 @@ RULES (Strict Format):
         checkEmpty(); return id; 
     }
 
+    // Upload Manual Image with Delete Button
     function uploadManualImage(input, segId) {
         if(input.files && input.files[0]) {
             const fileUrl = URL.createObjectURL(input.files[0]);
             const gallery = document.getElementById(`gallery-${segId}`);
+            
+            // Create gallery item wrapper
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'gallery-item';
+            
             const img = document.createElement('img');
             img.src = fileUrl;
-            gallery.appendChild(img);
+            
+            // Delete button
+            const delBtn = document.createElement('button');
+            delBtn.className = 'img-delete-btn';
+            delBtn.innerHTML = '<span class="material-icons-round" style="font-size:14px;">close</span>';
+            delBtn.title = 'Delete Image';
+            delBtn.onclick = function() {
+                itemDiv.remove();
+                // Remove from segmentsData
+                const idx = segmentsData[segId].images.findIndex(i => i.src === fileUrl);
+                if(idx > -1) segmentsData[segId].images.splice(idx, 1);
+            };
+            
+            itemDiv.appendChild(img);
+            itemDiv.appendChild(delBtn);
+            gallery.appendChild(itemDiv);
             
             const imgObj = new Image();
             imgObj.onload = () => { segmentsData[segId].images.push(imgObj); };
             imgObj.src = fileUrl;
+        }
+    }
+
+    // Upload Manual Video with Delete Button
+    function uploadManualVideo(input, segId) {
+        if(input.files && input.files[0]) {
+            const fileUrl = URL.createObjectURL(input.files[0]);
+            const gallery = document.getElementById(`gallery-${segId}`);
+            
+            // Create gallery item wrapper
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'gallery-item';
+            
+            const video = document.createElement('video');
+            video.src = fileUrl;
+            video.controls = true;
+            video.preload = 'metadata';
+            
+            // Delete button
+            const delBtn = document.createElement('button');
+            delBtn.className = 'img-delete-btn';
+            delBtn.innerHTML = '<span class="material-icons-round" style="font-size:14px;">close</span>';
+            delBtn.title = 'Delete Video';
+            delBtn.onclick = function() {
+                itemDiv.remove();
+                // Remove from segmentsData
+                const idx = segmentsData[segId].videos.findIndex(v => v.src === fileUrl);
+                if(idx > -1) segmentsData[segId].videos.splice(idx, 1);
+            };
+            
+            // Label
+            const label = document.createElement('span');
+            label.className = 'media-label';
+            label.innerText = '🎬 Video';
+            
+            itemDiv.appendChild(video);
+            itemDiv.appendChild(delBtn);
+            itemDiv.appendChild(label);
+            gallery.appendChild(itemDiv);
+            
+            // Store video element
+            segmentsData[segId].videos.push(video);
         }
     }
 
@@ -843,7 +954,6 @@ RULES (Strict Format):
         fetchImagesForSegment(segId, query, limit); 
     }
 
-    // --- इस फंक्शन में मैंने आपके Vercel API को कनेक्ट कर दिया है ---
     async function fetchImagesForSegment(segId, query, limit) {
         const provider = document.getElementById('imgProviderSelect').value;
         const statusBox = document.getElementById(`img-status-${segId}`);
@@ -857,7 +967,7 @@ RULES (Strict Format):
         statusBox.style.color = "#fbbf24"; 
         
         let loadingMsg = "Image Search running...";
-        if(provider === 'ranimage') loadingMsg = "Aryan API से इमेजेस निकाली जा रही हैं...";
+        if(provider === 'ranimage') loadingMsg = "Waking up Ranimage API & Searching... (Server sleeps, may take 2-3 mins)";
         
         statusBox.innerHTML = `<span class="material-icons-round spin" style="font-size:1.1rem; vertical-align:middle;">sync</span> ${loadingMsg} (<span id="timer-${segId}">0</span>s)`;
 
@@ -884,16 +994,14 @@ RULES (Strict Format):
 
             } else if (provider === 'ranimage') {
                 const rawUrl = document.getElementById('ranApiUrl').value.trim();
-                if(!rawUrl) throw new Error("API URL not set.");
+                if(!rawUrl) throw new Error("Ranimage API URL not set.");
 
-                // आपके नए API से रिक्वेस्ट की जा रही है
                 const res = await fetch(`${rawUrl}?q=${encodeURIComponent(query)}`);
+                if(!res.ok) throw new Error(`Ranimage Request Failed (Status: ${res.status})`);
+                
                 const data = await res.json();
-                
-                // अगर API ब्लॉक होने से बचाने के लिए 429 एरर या कोई और एरर देता है
-                if(!res.ok || data.error) throw new Error(data.error || `Request Failed (Status: ${res.status})`);
-                
                 let imgs = [];
+                
                 let arr = Array.isArray(data) ? data : (data.results || data.data || data.images || []);
                 
                 imgs = arr.map(i => {
@@ -903,7 +1011,7 @@ RULES (Strict Format):
                 
                 imgs = imgs.filter(url => url);
 
-                if(imgs.length === 0) throw new Error("इस हेडलाइन से जुड़ी कोई इमेज नहीं मिली। दूसरा कीवर्ड ट्राई करें।");
+                if(imgs.length === 0) throw new Error("No images found in Ranimage response. Try another keyword.");
                 
                 processAndRenderImages(imgs.slice(0, limit), gallery, segId);
             }
@@ -919,14 +1027,35 @@ RULES (Strict Format):
         }
     }
 
+    // Process and Render Images with Delete Button
     function processAndRenderImages(urlArray, gallery, segId) {
         urlArray.forEach(url => {
             const proxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
+            
+            // Create gallery item wrapper
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'gallery-item';
+            
             const img = document.createElement('img');
             img.crossOrigin = "anonymous";
             img.src = proxyUrl;
-            img.onerror = function() { this.style.display = 'none'; };
-            gallery.appendChild(img);
+            img.onerror = function() { itemDiv.style.display = 'none'; };
+            
+            // Delete button
+            const delBtn = document.createElement('button');
+            delBtn.className = 'img-delete-btn';
+            delBtn.innerHTML = '<span class="material-icons-round" style="font-size:14px;">close</span>';
+            delBtn.title = 'Delete Image';
+            delBtn.onclick = function() {
+                itemDiv.remove();
+                // Remove from segmentsData
+                const idx = segmentsData[segId].images.findIndex(i => i.src === proxyUrl);
+                if(idx > -1) segmentsData[segId].images.splice(idx, 1);
+            };
+            
+            itemDiv.appendChild(img);
+            itemDiv.appendChild(delBtn);
+            gallery.appendChild(itemDiv);
             
             const imgObj = new Image();
             imgObj.crossOrigin = "anonymous";
@@ -1102,10 +1231,20 @@ RULES (Strict Format):
             const topHeight = parseInt(document.getElementById('topTickerHeight').value);
             const activeSubHeight = showSub ? parseInt(document.getElementById('bottomTickerHeight').value) : 0;
             const headHeight = showHead ? 55 : 0; 
+            const breakHeight = 45; // BREAKING NEWS box height
+            const numHeight = 45;   // News number height
+            const numBreakGap = 8;  // GAP between number and BREAKING NEWS
             const safePadding = 40; 
 
+            // Calculate Y positions from BOTTOM to TOP
+            // 1. Bottom Subscribe Ticker
             const bottomY = canvas.height - activeSubHeight;
+            // 2. Headline Ticker (above subscribe)
             const headY = bottomY - headHeight;
+            // 3. BREAKING NEWS box (above headline)
+            const breakY = headY - breakHeight;
+            // 4. News Number (above breaking news, with gap)
+            const numY = breakY - numHeight - numBreakGap;
 
             function drawLoop(now) {
                 const elapsed = now - startTime;
@@ -1114,6 +1253,7 @@ RULES (Strict Format):
                 
                 ctx.fillStyle = "#0f172a"; ctx.fillRect(0,0, canvas.width, canvas.height);
                 
+                // Ken Burns Effect
                 if(images.length > 0 && images[currentImgIndex] && images[currentImgIndex].complete && images[currentImgIndex].naturalHeight !== 0) {
                     const img = images[currentImgIndex];
                     const ratio  = Math.max(canvas.width / img.width, canvas.height / img.height); 
@@ -1141,6 +1281,7 @@ RULES (Strict Format):
 
                 ctx.textAlign = "left"; 
 
+                // --- 1. TOP BREAKING TICKER (at very top) ---
                 if(showTopTicker) {
                     ctx.fillStyle = topTickerColor; 
                     ctx.fillRect(0, 0, canvas.width, topHeight);
@@ -1150,6 +1291,7 @@ RULES (Strict Format):
                     ctx.fillText(topTickerTxt, tX, (topHeight / 2) + 8);
                 }
 
+                // --- 2. LOGO & LIVE ICON ---
                 let topYPadding = showTopTicker ? (topHeight + 15) : safePadding;
 
                 if(showLogo && globalLogoImg) {
@@ -1164,11 +1306,45 @@ RULES (Strict Format):
                     ctx.fillText("LIVE", safePadding + 15, topYPadding + 28);
                 }
 
-                let breakingBoxWidth = 240; 
-                if(showHead) {
-                    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-                    ctx.fillRect(breakingBoxWidth, headY, canvas.width - breakingBoxWidth, headHeight);
+                // --- 3. NEWS NUMBER (Square Box - ABOVE BREAKING NEWS with GAP) ---
+                if(showNewsNum && data.newsIndex) {
+                    let numWidth = 60;
                     
+                    // Ensure number stays in safe zone (not cut off)
+                    let actualNumY = Math.max(numY, topHeight + 10);
+                    
+                    ctx.fillStyle = newsNumColor; 
+                    ctx.fillRect(0, actualNumY, numWidth, numHeight);
+                    ctx.fillStyle = "black"; ctx.font = "bold 28px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText(data.newsIndex, numWidth/2, actualNumY + 32);
+                    ctx.textAlign = "left"; // reset
+                }
+
+                // --- 4. BREAKING NEWS Red Box (between Number and Headline) ---
+                if(showHead) {
+                    let breakWidth = 240;
+                    
+                    // Ensure BREAKING NEWS stays in safe zone
+                    let actualBreakY = Math.max(breakY, numY + numHeight + numBreakGap);
+                    
+                    ctx.fillStyle = "#b91c1c"; 
+                    ctx.fillRect(0, actualBreakY, breakWidth, breakHeight);
+                    ctx.fillStyle = "white"; ctx.font = "bold 24px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText("BREAKING NEWS", breakWidth/2, actualBreakY + 32);
+                    ctx.textAlign = "left"; // Reset
+                }
+
+                // --- 5. HEADLINE TICKER (White Bar - Full Width) ---
+                if(showHead) {
+                    let breakWidth = 240;
+                    
+                    // White Scrolling Area - Full width
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+                    ctx.fillRect(breakWidth, headY, canvas.width - breakWidth, headHeight);
+                    
+                    // Headline Text
                     ctx.fillStyle = "black"; ctx.font = "bold 32px Arial";
                     let safeHeadline = data.headline || "ताज़ा खबर";
                     if(safeHeadline.toLowerCase().includes('intro')) safeHeadline = "ताज़ा और बड़ी खबरें";
@@ -1180,35 +1356,17 @@ RULES (Strict Format):
                     
                     ctx.save();
                     ctx.beginPath();
-                    ctx.rect(breakingBoxWidth, headY, canvas.width - breakingBoxWidth, headHeight);
+                    ctx.rect(breakWidth, headY, canvas.width - breakWidth, headHeight);
                     ctx.clip();
-                    ctx.fillText(hTxt, Math.max(hX, breakingBoxWidth + 15), headY + 38);
+                    ctx.fillText(hTxt, Math.max(hX, breakWidth + 15), headY + 38);
                     ctx.restore();
-
-                    ctx.fillStyle = "#b91c1c"; 
-                    ctx.fillRect(0, headY, breakingBoxWidth, headHeight);
-                    ctx.fillStyle = "white"; ctx.font = "bold 24px Arial";
-                    ctx.textAlign = "center";
-                    ctx.fillText("BREAKING NEWS", breakingBoxWidth/2, headY + 36);
-                    ctx.textAlign = "left"; 
                 }
 
-                if(showNewsNum && data.newsIndex) {
-                    let numHeight = 45;
-                    let numWidth = 60;
-                    let numY = showHead ? (headY - numHeight) : (bottomY - numHeight); 
-                    
-                    ctx.fillStyle = newsNumColor; 
-                    ctx.fillRect(0, numY, numWidth, numHeight);
-                    ctx.fillStyle = "black"; ctx.font = "bold 28px Arial";
-                    ctx.textAlign = "center";
-                    ctx.fillText(data.newsIndex, numWidth/2, numY + 32);
-                    ctx.textAlign = "left"; 
-                }
-
+                // --- 6. BOTTOM SUBSCRIBE TICKER & CHANNEL NAME ---
                 if(showSub || showCName) {
                     let cWidth = showCName ? 260 : 0;
 
+                    // Red Subscribe Scrolling Area
                     if(showSub) {
                         ctx.fillStyle = subColor; 
                         ctx.fillRect(cWidth, bottomY, canvas.width - cWidth, activeSubHeight);
@@ -1225,6 +1383,7 @@ RULES (Strict Format):
                         ctx.restore();
                     }
 
+                    // Channel Name Box on the Left
                     if(showCName) {
                         ctx.fillStyle = cNameColor; 
                         ctx.fillRect(0, bottomY, cWidth, activeSubHeight);
