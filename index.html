@@ -96,7 +96,6 @@ header {
     padding-bottom: 80px;
 }
 
-/* Panel Design with Accordion Support */
 .module-panel {
     background: #111827; border: 1px solid #374151; border-radius: 12px;
     margin-bottom: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
@@ -124,7 +123,6 @@ select, input[type="file"], input[type="text"] {
 }
 label { font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px; }
 
-/* Buttons Styling */
 .btn-fetch, .btn-action, .btn-action-green, .btn-action-blue, .btn-action-orange, .btn-action-red {
     background: linear-gradient(135deg, #8b5cf6, #ec4899); color: white; border: none; padding: 10px 15px; border-radius: 8px;
     font-weight: 600; cursor: pointer; width: 100%; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -137,10 +135,10 @@ label { font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px; }
 .btn-action-red { background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); }
 
 .btn-fetch:active, .btn-action:active, .btn-action-green:active, .btn-action-blue:active, .btn-action-orange:active, .btn-action-red:active { transform: scale(0.95); }
-.btn-fetch:disabled, .btn-action:disabled, .btn-action-green:disabled, .btn-action-blue:disabled, .btn-action-orange:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-fetch:disabled, .btn-action:disabled, .btn-action-green:disabled, .btn-action-blue:disabled, .btn-action-orange:disabled { opacity: 0.6; cursor: not-allowed; filter: grayscale(100%); }
 
 .studio-actions { display: flex; gap: 10px; margin-bottom: 10px; justify-content: center; }
-.studio-actions button { border-radius: 50px; font-size: 0.9rem; padding: 10px 20px; width: auto; flex: 1; max-width: 200px;}
+.studio-actions button { border-radius: 50px; font-size: 0.9rem; padding: 12px 20px; width: auto; flex: 1; max-width: 250px;}
 
 .video-preview-container {
     width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; border: 2px solid var(--border);
@@ -211,7 +209,6 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 .audio-duration { font-size: 0.75rem; color: #34d399; text-align: right; }
 
 .loader-overlay { display: none; text-align: center; margin: 15px 0; color: #a78bfa; font-weight: bold;}
-
 .spin { animation: spin 1s linear infinite !important; display: inline-block !important; }
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
@@ -232,6 +229,11 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 
 #hiddenModulesList { margin-top:10px; display:flex; flex-direction:column; gap:8px; }
 .hidden-module-item { background: rgba(0,0,0,0.3); padding:8px 12px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; font-size:0.85rem;}
+
+/* CRITICAL FIX: Invisible Render Engine for Video Recording */
+.invisible-render-engine { position: absolute; width: 1px; height: 1px; opacity: 0.01; overflow: hidden; pointer-events: none; z-index: -9999; }
+.file-saved-badge { display:inline-flex; align-items:center; color:#10b981; font-size:0.75rem; font-weight:bold; gap:4px; margin-left:10px; }
+.file-clear-btn { background:#ef4444; color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:10px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; margin-left:5px;}
 </style>
 </head>
 <body>
@@ -363,45 +365,44 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         <div class="panel-content">
             <div class="input-group">
                 <label>Background Music (BGM) [Auto loops to match news length]</label>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <input type="file" id="bgmInput" accept="audio/*" style="flex:2;" onchange="handleBgmUpload(this)">
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <input type="file" id="bgmInput" accept="audio/*" style="flex:2; min-width:150px;" onchange="handleBgmUpload(this)">
+                    <span id="bgmSavedBadge" class="file-saved-badge" style="display:none;">✅ Saved <button class="file-clear-btn" onclick="clearBgm()">×</button></span>
                     <label style="margin:0;">Vol:</label>
-                    <select id="bgmVolume" style="flex:1; margin:0; padding:6px;" onchange="saveWorkspace()">
-                        <option value="0.05">5%</option>
-                        <option value="0.10" selected>10%</option>
-                        <option value="0.15">15%</option>
-                        <option value="0.20">20%</option>
-                        <option value="0.30">30%</option>
+                    <select id="bgmVolume" style="flex:1; margin:0; padding:6px; min-width:80px;" onchange="saveWorkspace()">
+                        <option value="0.05">5%</option><option value="0.10" selected>10%</option><option value="0.15">15%</option><option value="0.20">20%</option><option value="0.30">30%</option>
                     </select>
                 </div>
             </div>
 
             <div class="input-group">
                 <label>Breaking News Clip (2 sec video) [Optional Transition]</label>
-                <div style="position:relative;">
+                <div style="position:relative; display:flex; align-items:center; gap:10px;">
                     <span id="transVidSpinner" class="uploading-badge"><span class="spin material-icons-round" style="font-size:10px;">sync</span> Processing...</span>
-                    <input type="file" id="transitionVideoInput" accept="video/mp4,video/webm" onchange="loadTransitionVideo(this)">
+                    <input type="file" id="transitionVideoInput" accept="video/mp4,video/webm" style="flex:1;" onchange="loadTransitionVideo(this)">
+                    <span id="transVidSavedBadge" class="file-saved-badge" style="display:none;">✅ Saved <button class="file-clear-btn" onclick="clearTransVid()">×</button></span>
                 </div>
             </div>
 
             <div class="preview-tools">
                 <label style="margin:0; font-weight:bold; color:#a78bfa;">Live Preview</label>
-                <button class="panel-btn" onclick="refreshStudioCanvas()" title="Refresh Player (Fix Errors)"><span class="material-icons-round" style="color:#fbbf24;">refresh</span> Reset Player</button>
+                <button class="panel-btn" onclick="refreshStudioCanvas()" title="Refresh Player (Fix Errors)"><span class="material-icons-round" style="color:#fbbf24;">refresh</span> Refresh Player</button>
             </div>
             
             <div class="video-preview-container">
                 <canvas id="liveCanvas" width="1280" height="720"></canvas>
-                <div class="recording-indicator" id="recIndicator">RECORDING</div>
+                <div class="recording-indicator" id="recIndicator">RECORDING MEMORY</div>
             </div>
 
             <div class="studio-actions">
-                <button class="btn-action" id="btnPreview" onclick="runVideoSequence(false)">
-                    <span class="material-icons-round">play_arrow</span> Preview Play
+                <button class="btn-action" id="btnPreview" onclick="startPlayAndRecordWorkflow()">
+                    <span class="material-icons-round">play_circle</span> Play & Record Video
                 </button>
-                <button class="btn-action-green" id="btnDownload" onclick="runVideoSequence(true)">
+                <button class="btn-action-green" id="btnDownload" onclick="downloadFinalVideo()" disabled style="background:#4b5563; box-shadow:none; cursor:not-allowed;">
                     <span class="material-icons-round">download</span> Download Video
                 </button>
             </div>
+            <div id="recordingStatusText" style="text-align:center; font-size:0.8rem; color:#f59e0b; margin-top:5px; font-weight:bold;"></div>
         </div>
     </div>
 
@@ -484,10 +485,7 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
                 <span class="material-icons-round" style="font-size:1rem;">graphic_eq</span> Gen All Audio
             </button>
             <button class="btn-action-green" style="width:auto; padding:6px 12px; margin:0; font-size:0.8rem; border-radius:6px;" onclick="playAllAudioSequence()">
-                <span class="material-icons-round" style="font-size:1rem;">playlist_play</span> Play All
-            </button>
-            <button class="btn-action-blue" style="width:auto; padding:6px 12px; margin:0; font-size:0.8rem; border-radius:6px;" onclick="downloadAllAudioSequence()">
-                <span class="material-icons-round" style="font-size:1rem;">file_download</span> Down All
+                <span class="material-icons-round" style="font-size:1rem;">playlist_play</span> Play All Audio
             </button>
         </div>
     </div>
@@ -501,26 +499,23 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 </div>
 
 <button class="fab-add" onclick="addSegment('','',null,'')">
-    <span class="material-icons-round">add</span> Add
+    <span class="material-icons-round">add</span> Add Box
 </button>
 
-<!-- CRITICAL FIX: Hidden Media Containers for Download Support -->
-<div id="hidden-media-container" style="display:none;"></div>
-<video id="hiddenTransVideo" style="display:none;" playsinline crossOrigin="anonymous" preload="auto"></video>
+<!-- CRITICAL FIX: Invisible Media Render Engine for Background Recording -->
+<div id="hidden-media-container" class="invisible-render-engine"></div>
 
 <script>
     // --- INDEXED DB SETUP FOR OFFLINE PERSISTENCE ---
-    const DB_NAME = "NewsStudioAppDB_ProFinal";
+    const DB_NAME = "NewsStudioAppDB_V3";
     const STORE_NAME = "workspaceData";
 
     function openDB() {
         return new Promise((resolve, reject) => {
-            let req = indexedDB.open(DB_NAME, 2);
+            let req = indexedDB.open(DB_NAME, 3);
             req.onupgradeneeded = (e) => { 
                 let db = e.target.result;
-                if(!db.objectStoreNames.contains(STORE_NAME)) {
-                    db.createObjectStore(STORE_NAME); 
-                }
+                if(!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME); 
             };
             req.onsuccess = (e) => resolve(e.target.result);
             req.onerror = (e) => reject(e);
@@ -535,7 +530,7 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
                 tx.objectStore(STORE_NAME).put(val, key);
                 tx.oncomplete = resolve; tx.onerror = reject;
             });
-        } catch(e) { console.warn("IndexedDB Save Error:", e); }
+        } catch(e) {}
     }
 
     async function getDB(key) {
@@ -567,8 +562,10 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     const globalApiUrl = document.getElementById("global-api-url");
     let segmentsData = {};
     
+    // Media Blobs
     let globalBgmBlob = null;
     let globalTransVidBlob = null;
+    let finalRecordedBlob = null; // Holds the completed video recording
 
     // Playback Controls
     let isVideoEngineRunning = false;
@@ -608,7 +605,6 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     function hideModule(panelId, title, event) {
         event.stopPropagation();
         document.getElementById(panelId).style.display = "none";
-        
         let hiddenArr = JSON.parse(localStorage.getItem('hiddenModules') || "[]");
         if(!hiddenArr.find(m => m.id === panelId)) {
             hiddenArr.push({id: panelId, title: title});
@@ -627,10 +623,7 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 
     function restoreHiddenModulesState() {
         let hiddenArr = JSON.parse(localStorage.getItem('hiddenModules') || "[]");
-        hiddenArr.forEach(m => {
-            const el = document.getElementById(m.id);
-            if(el) el.style.display = "none";
-        });
+        hiddenArr.forEach(m => { const el = document.getElementById(m.id); if(el) el.style.display = "none"; });
         renderHiddenModulesList();
     }
 
@@ -638,24 +631,15 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         const list = document.getElementById('hiddenModulesList');
         let hiddenArr = JSON.parse(localStorage.getItem('hiddenModules') || "[]");
         list.innerHTML = "";
-        if(hiddenArr.length === 0) {
-            list.innerHTML = '<div style="color:#94a3b8; font-size:0.8rem; font-style:italic;">No modules hidden.</div>';
-            return;
-        }
+        if(hiddenArr.length === 0) { list.innerHTML = '<div style="color:#94a3b8; font-size:0.8rem; font-style:italic;">No modules hidden.</div>'; return; }
         hiddenArr.forEach(m => {
-            list.innerHTML += `
-                <div class="hidden-module-item">
-                    <span>${m.title}</span>
-                    <button class="btn-action-green" style="width:auto; padding:4px 10px; margin:0;" onclick="unhideModule('${m.id}')">Unhide</button>
-                </div>
-            `;
+            list.innerHTML += `<div class="hidden-module-item"><span>${m.title}</span><button class="btn-action-green" style="width:auto; padding:4px 10px; margin:0;" onclick="unhideModule('${m.id}')">Unhide</button></div>`;
         });
     }
 
-    // Manual Refresh to clear stuck states
+    // Refresh Canvas Player Safely
     function refreshStudioCanvas() {
-        const canvas = document.getElementById("liveCanvas");
-        const ctx = canvas.getContext("2d");
+        const canvas = document.getElementById("liveCanvas"); const ctx = canvas.getContext("2d");
         ctx.fillStyle = "black"; ctx.fillRect(0,0, canvas.width, canvas.height);
         
         cancelVideoSequence = true;
@@ -665,8 +649,13 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         if(activeTransVideoNode) { activeTransVideoNode.pause(); }
         
         const btnPreview = document.getElementById("btnPreview");
-        btnPreview.innerHTML = '<span class="material-icons-round">play_arrow</span> Preview Play';
+        btnPreview.innerHTML = '<span class="material-icons-round">play_circle</span> Play & Record Video';
         isPreviewPlaying = false; isVideoEngineRunning = false;
+        
+        // Reset Download Button if sequence interrupted
+        const btnDownload = document.getElementById("btnDownload");
+        btnDownload.disabled = true; btnDownload.style.background = "#4b5563"; btnDownload.style.cursor = "not-allowed";
+        document.getElementById("recordingStatusText").innerText = "";
     }
 
     // --- AUTO SAVE & DB ---
@@ -692,7 +681,6 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         await setDB("segmentsData", dataToSave);
         await setDB("segmentCount", segmentCount);
         
-        // Save Global BGM and Transition
         if(globalBgmBlob) await setDB("globalBgm", globalBgmBlob);
         if(globalTransVidBlob) await setDB("globalTransVid", globalTransVidBlob);
         
@@ -704,20 +692,30 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         let savedData = await getDB("segmentsData");
         let savedCount = await getDB("segmentCount");
         
-        // Restore Global Media
+        // Restore Global BGM
         let savedBgm = await getDB("globalBgm");
         if(savedBgm) { 
             globalBgmBlob = savedBgm; 
-            document.getElementById('bgmInput').style.border = "1px solid #10b981";
+            document.getElementById('bgmInput').style.display = "none";
+            document.getElementById('bgmSavedBadge').style.display = "inline-flex";
         }
+        
+        // Restore Global Transition Video
         let savedTransVid = await getDB("globalTransVid");
         if(savedTransVid) { 
             globalTransVidBlob = savedTransVid;
-            const transVid = document.getElementById("hiddenTransVideo");
+            document.getElementById('transitionVideoInput').style.display = "none";
+            document.getElementById('transVidSavedBadge').style.display = "inline-flex";
+            
+            // Create physical element in hidden container for recording safety
+            const transVid = document.createElement("video");
+            transVid.id = "activeTransitionVideo";
             transVid.src = URL.createObjectURL(savedTransVid);
+            transVid.crossOrigin = "anonymous"; transVid.playsInline = true; transVid.muted = true; transVid.preload = "auto";
+            document.getElementById('hidden-media-container').appendChild(transVid);
             transVid.load();
-            document.getElementById('transitionVideoInput').style.border = "1px solid #10b981";
         }
+        
         let savedVol = await getDB("bgmVol");
         if(savedVol) document.getElementById('bgmVolume').value = savedVol;
 
@@ -736,15 +734,9 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
                 
                 document.getElementById(`use-vid-audio-${id}`).checked = segmentsData[id].useVideoAudio;
                 
-                if(s.imagesBlobs && s.imagesBlobs.length > 0) {
-                    s.imagesBlobs.forEach(blob => restoreImageToGallery(blob, id));
-                }
-                if(s.segmentVideoBlob) {
-                    restoreVideoToGallery(s.segmentVideoBlob, id);
-                }
-                if(s.manualAudioBlob) {
-                    restoreAudioToPlayer(s.manualAudioBlob, id);
-                }
+                if(s.imagesBlobs && s.imagesBlobs.length > 0) s.imagesBlobs.forEach(blob => restoreImageToGallery(blob, id));
+                if(s.segmentVideoBlob) restoreVideoToGallery(s.segmentVideoBlob, id);
+                if(s.manualAudioBlob) restoreAudioToPlayer(s.manualAudioBlob, id);
             }
             checkEmpty();
         }
@@ -753,37 +745,21 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     async function resetEntireStudio() {
         if(!confirm("⚠️ चेतावनी! क्या आप पक्का पूरा स्टूडियो साफ़ करना चाहते हैं? आपकी सारी इमेजेस, वीडियो और ऑडियो डिलीट हो जाएंगे। (API Settings सुरक्षित रहेगी)")) return;
         
-        cancelVideoSequence = true;
-        if(activeAudioNode) { activeAudioNode.pause(); activeAudioNode.src = ""; }
-        if(activeVideoNode) { activeVideoNode.pause(); }
-        if(activeBgmNode) { activeBgmNode.pause(); activeBgmNode.src = ""; }
-        if(activeTransVideoNode) { activeTransVideoNode.pause(); }
-        
+        refreshStudioCanvas();
         await clearDB();
         
-        // Remove old videos from hidden DOM to free memory
-        for(let id in segmentsData) {
-            if(segmentsData[id].segmentVideo) segmentsData[id].segmentVideo.remove();
-        }
-
-        segmentsList.innerHTML = "";
-        segmentsData = {};
-        segmentCount = 0;
+        document.getElementById('hidden-media-container').innerHTML = ""; // Wipe all memory videos
+        segmentsList.innerHTML = ""; segmentsData = {}; segmentCount = 0;
+        finalRecordedBlob = null;
         
         globalBgmBlob = null; globalTransVidBlob = null;
-        document.getElementById("bgmInput").value = ""; document.getElementById("bgmInput").style.border = "1px solid var(--border)";
-        document.getElementById("transitionVideoInput").value = ""; document.getElementById("transitionVideoInput").style.border = "1px solid var(--border)";
-        const transVid = document.getElementById("hiddenTransVideo"); transVid.src = "";
+        document.getElementById('bgmInput').style.display = "block"; document.getElementById('bgmInput').value = "";
+        document.getElementById('bgmSavedBadge').style.display = "none";
         
-        const canvas = document.getElementById("liveCanvas");
-        const ctx = canvas.getContext("2d");
-        ctx.fillStyle = "black"; ctx.fillRect(0,0, canvas.width, canvas.height);
+        document.getElementById('transitionVideoInput').style.display = "block"; document.getElementById('transitionVideoInput').value = "";
+        document.getElementById('transVidSavedBadge').style.display = "none";
         
-        document.getElementById("btnPreview").innerHTML = '<span class="material-icons-round">play_arrow</span> Preview Play';
-        isPreviewPlaying = false; isVideoEngineRunning = false;
-        
-        checkEmpty();
-        alert("✔️ स्टूडियो बिल्कुल फ्रेश हो गया है!");
+        checkEmpty(); alert("✔️ स्टूडियो बिल्कुल फ्रेश हो गया है!");
     }
 
     const voiceOptions = `
@@ -839,12 +815,9 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     
     function clearSettings() { 
         localStorage.clear();
-        document.getElementById('aiProviderSelect').value = 'groq';
-        document.getElementById('groqApiKey').value = '';
-        document.getElementById('mistralApiKey').value = '';
-        document.getElementById('imgProviderSelect').value = 'ranimage';
-        document.getElementById('gApiKey').value = ''; 
-        document.getElementById('gCxId').value = ''; 
+        document.getElementById('aiProviderSelect').value = 'groq'; document.getElementById('groqApiKey').value = '';
+        document.getElementById('mistralApiKey').value = ''; document.getElementById('imgProviderSelect').value = 'ranimage';
+        document.getElementById('gApiKey').value = ''; document.getElementById('gCxId').value = ''; 
         document.getElementById('ranApiUrl').value = 'https://ranimage.onrender.com/api/search';
         toggleImageSettings(); alert('Settings Cleared!'); 
     }
@@ -861,18 +834,12 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         }
     }
 
-    function syncAllVoices(selectedValue) {
-        const selects = document.querySelectorAll('select[id^="voice-"]');
-        selects.forEach(select => { select.value = selectedValue; }); saveWorkspace();
-    }
-    function syncAllSpeeds(selectedValue) {
-        const selects = document.querySelectorAll('select[id^="rate-"]');
-        selects.forEach(select => { select.value = selectedValue; }); saveWorkspace();
-    }
+    function syncAllVoices(selectedValue) { const selects = document.querySelectorAll('select[id^="voice-"]'); selects.forEach(select => { select.value = selectedValue; }); saveWorkspace(); }
+    function syncAllSpeeds(selectedValue) { const selects = document.querySelectorAll('select[id^="rate-"]'); selects.forEach(select => { select.value = selectedValue; }); saveWorkspace(); }
 
-    // Original Robust Parser
+    // Perfected AI Script Parser
     function parseScriptIntoSegments(rawText) {
-        let cleanText = rawText.replace(/\*\*/g, '').trim();
+        let cleanText = rawText.replace(/[\*#]/g, '').trim();
         let lines = cleanText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
         let parsedSegments = [];
         let currentMode = 'INTRO'; let currentHeadline = 'Intro / सारांश'; let currentScript = []; let newsCounter = 0;
@@ -907,11 +874,10 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
             let seg = parsedData[i];
             let preSelectVoice = (i % 2 === 0) ? 'hi-male' : 'hi-female';
             let segId = addSegment(seg.script, preSelectVoice, seg.newsIndex, seg.headline);
-            let searchKeyword = (seg.type === 'INTRO' || seg.type === 'OUTRO') ? "Breaking News Studio India" : seg.headline;
+            let searchKeyword = (seg.type === 'INTRO' || seg.type === 'OUTRO') ? "Breaking News India" : seg.headline;
             await fetchImagesForSegment(segId, searchKeyword, imageLimit);
         }
-        document.getElementById('quickPasteScript').value = ""; 
-        saveWorkspace();
+        document.getElementById('quickPasteScript').value = ""; saveWorkspace();
     }
 
     async function fetchAndCreateSegments() {
@@ -933,18 +899,13 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         checkEmpty(); btn.disabled = true; loader.style.display = 'block';
 
         const prompt = `आप एक प्रोफेशनल हिंदी न्यूज़ एंकर के लिए स्क्रिप्ट राइटर हैं।
-मुझे इंटरनेट की ताज़ा और एकदम नई खबरों के आधार पर न्यूज़ स्क्रिप्ट चाहिए। एक ही खबर बार-बार ना दें।
-Category/Topic: ${category}
-News Count: ${count}
-Script Length (per news): ${lines}
+मुझे इंटरनेट की ताज़ा और एकदम नई खबरों के आधार पर न्यूज़ स्क्रिप्ट चाहिए।
+Category: ${category} | Count: ${count} | Length: ${lines}
 
-RULES (Strict Format):
-1. हर बार एकदम नई और अलग खबरें दें। 
-2. सबसे पहले एक Intro पैराग्राफ लिखें (जैसे: "नमस्कार दोस्तों, आज की ताजा खबरों में..."). इसके ऊपर कोई हेडिंग मत लिखें।
-3. उसके बाद खबरों को नंबर देकर लिखें (जैसे 1. [हेडलाइन], 2. [हेडलाइन]).
-4. हर नंबर वाली हेडलाइन के तुरंत नीचे उस खबर का विवरण (script) लिखें।
-5. सबसे अंत में एक Outro पैराग्राफ लिखें (जैसे: "दोस्तों, अगर आपको खबरें पसंद आईं तो चैनल को सब्सक्राइब करें...").
-6. आउटपुट बिल्कुल साफ टेक्स्ट में होना चाहिए, कोई ||| या कोडिंग टैग्स इस्तेमाल ना करें।`;
+STRICT RULES (Do not use ** or ||| tags):
+1. सबसे पहले Intro पैराग्राफ लिखें (बिना नंबर)।
+2. फिर खबरों को नंबर दें (1. [Headline], फिर अगली लाइन में news body)।
+3. अंत में Outro पैराग्राफ लिखें।`;
 
         let apiUrl = ''; let apiHeaders = { 'Content-Type': 'application/json', 'Accept': 'application/json' }; let apiBody = {};
         if (aiProvider === 'groq') {
@@ -1011,7 +972,7 @@ RULES (Strict Format):
                 </div>
                 <div class="manual-upload-item">
                     <label style="color:#60a5fa;"><span class="material-icons-round" style="font-size:14px; vertical-align:middle;">movie</span> Video</label>
-                    <span id="vid-spin-${id}" class="uploading-badge"><span class="spin material-icons-round" style="font-size:10px;">sync</span> Processing...</span>
+                    <span id="vid-spin-${id}" class="uploading-badge"><span class="spin material-icons-round" style="font-size:10px;">sync</span> Saving...</span>
                     <input type="file" accept="video/mp4,video/webm" onchange="uploadSegmentVideo(this, ${id})">
                 </div>
             </div>
@@ -1054,76 +1015,87 @@ RULES (Strict Format):
 
     function toggleVideoAudio(id, isChecked) { segmentsData[id].useVideoAudio = isChecked; saveWorkspace(); }
 
-    function handleBgmUpload(input) {
+    // --- GLOBAL UPLOADS (BGM / TRANSITION) ---
+    async function handleBgmUpload(input) {
         if(input.files && input.files[0]) {
             globalBgmBlob = input.files[0];
-            input.style.border = "1px solid #10b981";
-            saveWorkspace();
+            await saveWorkspace();
+            input.style.display = "none";
+            document.getElementById('bgmSavedBadge').style.display = "inline-flex";
         }
     }
+    function clearBgm() {
+        globalBgmBlob = null;
+        document.getElementById('bgmInput').value = ""; document.getElementById('bgmInput').style.display = "block";
+        document.getElementById('bgmSavedBadge').style.display = "none"; saveWorkspace();
+    }
 
-    function loadTransitionVideo(input) {
+    async function loadTransitionVideo(input) {
         const spinner = document.getElementById("transVidSpinner");
         if(input.files && input.files[0]) {
             spinner.style.display = "inline-block";
             globalTransVidBlob = input.files[0];
-            const transVid = document.getElementById("hiddenTransVideo");
+            await saveWorkspace();
+            
+            // Create element in hidden container
+            let transVid = document.getElementById("activeTransitionVideo");
+            if(!transVid) {
+                transVid = document.createElement("video"); transVid.id = "activeTransitionVideo";
+                document.getElementById('hidden-media-container').appendChild(transVid);
+            }
             transVid.src = URL.createObjectURL(globalTransVidBlob);
+            transVid.crossOrigin = "anonymous"; transVid.playsInline = true; transVid.muted = true; transVid.preload = "auto";
             
             transVid.onloadeddata = () => { 
                 spinner.style.display = "none"; 
-                input.style.border = "1px solid #10b981"; 
-                saveWorkspace();
+                input.style.display = "none";
+                document.getElementById('transVidSavedBadge').style.display = "inline-flex";
             };
-            transVid.onerror = () => { 
-                spinner.style.display = "none"; 
-                alert("Error loading transition video. Try an MP4."); 
-            }
+            transVid.onerror = () => { spinner.style.display = "none"; alert("Error: Use MP4 video."); }
             transVid.load(); 
         }
     }
+    function clearTransVid() {
+        globalTransVidBlob = null;
+        const transVid = document.getElementById("activeTransitionVideo");
+        if(transVid) transVid.remove();
+        document.getElementById('transitionVideoInput').value = ""; document.getElementById('transitionVideoInput').style.display = "block";
+        document.getElementById('transVidSavedBadge').style.display = "none"; saveWorkspace();
+    }
 
-    function uploadManualImage(input, segId) {
+    async function uploadManualImage(input, segId) {
         if(input.files && input.files.length > 0) {
-            const spinner = document.getElementById(`img-spin-${segId}`); 
-            spinner.style.display = "inline-block";
-            Array.from(input.files).forEach(file => {
-                segmentsData[segId].imagesBlobs.push(file); 
-                restoreImageToGallery(file, segId);
-            });
-            setTimeout(()=>{ spinner.style.display = "none"; }, 500);
-            input.value = ""; saveWorkspace();
+            const spinner = document.getElementById(`img-spin-${segId}`); spinner.style.display = "inline-block";
+            Array.from(input.files).forEach(file => { segmentsData[segId].imagesBlobs.push(file); restoreImageToGallery(file, segId); });
+            await saveWorkspace(); spinner.style.display = "none"; input.value = ""; 
         }
     }
 
     function restoreImageToGallery(blob, segId) {
-        const fileUrl = URL.createObjectURL(blob);
-        const gallery = document.getElementById(`gallery-${segId}`);
+        const fileUrl = URL.createObjectURL(blob); const gallery = document.getElementById(`gallery-${segId}`);
         const wrapper = document.createElement('div'); wrapper.className = 'gallery-img-wrapper';
         const img = document.createElement('img'); img.src = fileUrl;
         
         const imgObj = new Image();
         imgObj.onload = () => { segmentsData[segId].images.push(imgObj); };
-        imgObj.onerror = () => { wrapper.remove(); }; // Remove if broken
+        imgObj.onerror = () => { wrapper.remove(); }; 
         imgObj.src = fileUrl;
 
         const btnDelete = document.createElement('button'); btnDelete.className = 'btn-remove-img'; btnDelete.innerHTML = '×';
         btnDelete.onclick = () => {
-            wrapper.remove();
-            segmentsData[segId].images = segmentsData[segId].images.filter(i => i.src !== imgObj.src);
-            segmentsData[segId].imagesBlobs = segmentsData[segId].imagesBlobs.filter(b => b !== blob);
-            saveWorkspace();
+            wrapper.remove(); segmentsData[segId].images = segmentsData[segId].images.filter(i => i.src !== imgObj.src);
+            segmentsData[segId].imagesBlobs = segmentsData[segId].imagesBlobs.filter(b => b !== blob); saveWorkspace();
         };
         wrapper.appendChild(img); wrapper.appendChild(btnDelete); gallery.appendChild(wrapper);
     }
 
-    // Critical Fix: Appending Video to hidden DOM to allow Download recording
-    function uploadSegmentVideo(input, segId) {
+    async function uploadSegmentVideo(input, segId) {
         const spinner = document.getElementById(`vid-spin-${segId}`);
         if(input.files && input.files[0]) {
             spinner.style.display = "inline-block";
             let fileBlob = input.files[0];
             segmentsData[segId].segmentVideoBlob = fileBlob; 
+            await saveWorkspace();
             restoreVideoToGallery(fileBlob, segId, spinner, input);
         }
     }
@@ -1134,13 +1106,7 @@ RULES (Strict Format):
         const fileUrl = URL.createObjectURL(blob);
         
         const vid = document.createElement('video');
-        vid.src = fileUrl; 
-        vid.crossOrigin = "anonymous"; 
-        vid.playsInline = true; 
-        vid.muted = true; 
-        vid.preload = "auto";
-        
-        // Critical: Must be in DOM to decode properly during recording!
+        vid.src = fileUrl; vid.crossOrigin = "anonymous"; vid.playsInline = true; vid.muted = true; vid.preload = "auto";
         document.getElementById('hidden-media-container').appendChild(vid);
         
         vid.onloadeddata = () => {
@@ -1154,63 +1120,48 @@ RULES (Strict Format):
             const btnDelete = document.createElement('button'); btnDelete.className = 'btn-remove-img'; btnDelete.innerHTML = '×';
             btnDelete.onclick = () => {
                 wrapper.remove();
-                if(segmentsData[segId].segmentVideo) segmentsData[segId].segmentVideo.remove(); // Remove from hidden container
-                segmentsData[segId].segmentVideo = null;
-                segmentsData[segId].segmentVideoBlob = null;
-                segmentsData[segId].videoDuration = 0;
-                optionsDiv.style.display = "none";
-                document.getElementById(`use-vid-audio-${segId}`).checked = false;
-                segmentsData[segId].useVideoAudio = false;
+                if(segmentsData[segId].segmentVideo) segmentsData[segId].segmentVideo.remove();
+                segmentsData[segId].segmentVideo = null; segmentsData[segId].segmentVideoBlob = null; segmentsData[segId].videoDuration = 0;
+                optionsDiv.style.display = "none"; document.getElementById(`use-vid-audio-${segId}`).checked = false; segmentsData[segId].useVideoAudio = false;
                 saveWorkspace();
             };
             wrapper.appendChild(pVid); wrapper.appendChild(btnDelete); gallery.appendChild(wrapper);
-            if(spinner) spinner.style.display = "none";
-            if(inputObj) inputObj.value = ""; 
-            saveWorkspace();
+            if(spinner) spinner.style.display = "none"; if(inputObj) inputObj.value = ""; 
         };
         vid.onerror = () => {
-            if(spinner) spinner.style.display = "none";
-            vid.remove();
-            alert("Error Processing Video. Please use MP4 format.");
+            if(spinner) spinner.style.display = "none"; vid.remove();
+            segmentsData[segId].segmentVideoBlob = null; saveWorkspace();
+            alert("Error Processing Video. Use MP4.");
         }
         vid.load();
     }
 
-    function uploadManualAudio(input, segId) {
+    async function uploadManualAudio(input, segId) {
         if(input.files && input.files[0]) {
-            let blob = input.files[0];
-            segmentsData[segId].manualAudioBlob = blob;
-            restoreAudioToPlayer(blob, segId);
-            input.value = ""; saveWorkspace();
+            let blob = input.files[0]; segmentsData[segId].manualAudioBlob = blob;
+            await saveWorkspace(); restoreAudioToPlayer(blob, segId); input.value = ""; 
         }
     }
 
     function restoreAudioToPlayer(blob, segId) {
         const fileUrl = URL.createObjectURL(blob);
-        const player = document.getElementById(`player-${segId}`);
-        const durLabel = document.getElementById(`duration-${segId}`);
-        const status = document.getElementById(`status-${segId}`);
-        const audioBox = document.getElementById(`audio-box-${segId}`);
+        const player = document.getElementById(`player-${segId}`); const durLabel = document.getElementById(`duration-${segId}`);
+        const status = document.getElementById(`status-${segId}`); const audioBox = document.getElementById(`audio-box-${segId}`);
 
         player.src = fileUrl; segmentsData[segId].audioUrl = fileUrl;
-        player.onloadedmetadata = () => {
-            segmentsData[segId].duration = player.duration;
-            durLabel.innerText = `Duration: ${player.duration.toFixed(1)}s`;
-        };
+        player.onloadedmetadata = () => { segmentsData[segId].duration = player.duration; durLabel.innerText = `Duration: ${player.duration.toFixed(1)}s`; };
         status.style.display = "block"; status.innerText = "✅ Audio Loaded!"; status.style.color = "#4ade80"; audioBox.style.display = "block";
     }
 
     function manualImageSearch(segId) {
-        const query = document.getElementById(`img-query-${segId}`).value.trim();
-        const limit = document.getElementById('imageFetchCount').value;
+        const query = document.getElementById(`img-query-${segId}`).value.trim(); const limit = document.getElementById('imageFetchCount').value;
         if(!query) return alert("Please enter a search query!");
         segmentsData[segId].headline = query; fetchImagesForSegment(segId, query, limit); saveWorkspace();
     }
 
     async function fetchImagesForSegment(segId, query, limit) {
         const provider = document.getElementById('imgProviderSelect').value;
-        const statusBox = document.getElementById(`img-status-${segId}`);
-        const gallery = document.getElementById(`gallery-${segId}`);
+        const statusBox = document.getElementById(`img-status-${segId}`); const gallery = document.getElementById(`gallery-${segId}`);
         gallery.innerHTML = ''; segmentsData[segId].images = []; segmentsData[segId].imagesBlobs = [];
 
         statusBox.style.display = "block"; statusBox.style.color = "#fbbf24"; 
@@ -1246,7 +1197,7 @@ RULES (Strict Format):
                 let success = await processSingleImageFetch(finalUrls[i], segId);
                 if(success) loadedCount++;
             }
-            statusBox.style.display = "none"; saveWorkspace();
+            statusBox.style.display = "none"; await saveWorkspace();
         } catch(e) {
             statusBox.style.display = "block"; statusBox.innerHTML = `❌ Search Failed: ${e.message}`; statusBox.style.color = "#ef4444"; 
         }
@@ -1263,9 +1214,7 @@ RULES (Strict Format):
                 segmentsData[segId].imagesBlobs.push(blob);
                 restoreImageToGallery(blob, segId);
                 resolve(true); 
-            } catch(e) { 
-                resolve(false); 
-            }
+            } catch(e) { resolve(false); }
         });
     }
 
@@ -1283,8 +1232,7 @@ RULES (Strict Format):
             if(!res.ok) throw new Error("Server Error");
             const blob = await res.blob();
             segmentsData[id].manualAudioBlob = blob; 
-            restoreAudioToPlayer(blob, id);
-            saveWorkspace();
+            await saveWorkspace(); restoreAudioToPlayer(blob, id);
         } catch(e) {
             status.innerText = "❌ Error: " + e.message; status.style.color = "#ef4444";
         } finally { btn.disabled = false; btn.innerHTML = '<span class="material-icons-round">graphic_eq</span> Gen Audio'; }
@@ -1296,127 +1244,99 @@ RULES (Strict Format):
         for(let id of keys) {
             if(!segmentsData[id].audioUrl) {
                 const text = document.getElementById(`text-${id}`).value.trim();
-                if(text) { 
-                    document.getElementById(`seg-${id}`).scrollIntoView({behavior: "smooth", block: "center"});
-                    await generateAudio(id); 
-                    generatedCount++; 
-                }
+                if(text) { document.getElementById(`seg-${id}`).scrollIntoView({behavior: "smooth", block: "center"}); await generateAudio(id); generatedCount++; }
             }
         }
         if(generatedCount > 0) alert(`Successfully generated ${generatedCount} new audio clips!`);
         else alert("All audio clips are already generated.");
     }
 
-    async function playAllAudioSequence() {
-        const validIds = Object.keys(segmentsData).filter(id => segmentsData[id].audioUrl);
-        if(validIds.length === 0) return alert("Please generate audio first!");
-        for(let id of validIds) {
-            const player = document.getElementById(`player-${id}`);
-            if(player) {
-                player.scrollIntoView({behavior: "smooth", block: "center"});
-                await new Promise(resolve => { player.onended = resolve; player.play(); });
-            }
-        }
-    }
-
-    async function downloadAllAudioSequence() {
-        const validIds = Object.keys(segmentsData).filter(id => segmentsData[id].audioUrl);
-        if(validIds.length === 0) return alert("No audio generated yet!");
-        for(let i=0; i<validIds.length; i++) {
-            const id = validIds[i]; const a = document.createElement("a");
-            a.href = segmentsData[id].audioUrl; a.download = `Segment_${id}_Audio.wav`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            await new Promise(resolve => setTimeout(resolve, 800));
-        }
-    }
-
-    // --- SMART TOGGLE VIDEO PLAYBACK ENGINE ---
-    async function runVideoSequence(isRecording = false) {
+    // --- NEW: RECORD FIRST, DOWNLOAD LATER WORKFLOW ---
+    async function startPlayAndRecordWorkflow() {
         const btnPreview = document.getElementById("btnPreview"); 
         const btnDownload = document.getElementById("btnDownload");
+        const statusText = document.getElementById("recordingStatusText");
         const canvas = document.getElementById("liveCanvas"); const ctx = canvas.getContext("2d");
 
-        // SMART STOP LOGIC
-        if (!isRecording && isPreviewPlaying) {
-            cancelVideoSequence = true;
-            isPreviewPlaying = false;
-            isVideoEngineRunning = false;
-            btnPreview.innerHTML = '<span class="material-icons-round">play_arrow</span> Preview Play';
-            
+        // TOGGLE STOP LOGIC
+        if (isPreviewPlaying) {
+            cancelVideoSequence = true; isPreviewPlaying = false; isVideoEngineRunning = false;
+            btnPreview.innerHTML = '<span class="material-icons-round">play_circle</span> Play & Record Video';
             if(activeAudioNode) { activeAudioNode.pause(); activeAudioNode.src = ""; }
             if(activeVideoNode) { activeVideoNode.pause(); }
             if(activeBgmNode) { activeBgmNode.pause(); activeBgmNode.src = ""; }
             if(activeTransVideoNode) { activeTransVideoNode.pause(); }
-            
             ctx.fillStyle = "black"; ctx.fillRect(0,0, canvas.width, canvas.height);
+            statusText.innerText = "Recording Cancelled."; statusText.style.color = "#ef4444";
             return;
         }
 
-        if(isVideoEngineRunning) return alert("Please wait for current process to finish.");
+        if(isVideoEngineRunning) return alert("Please wait.");
         const validSegmentIds = Object.keys(segmentsData).filter(id => segmentsData[id].audioUrl);
         if(validSegmentIds.length === 0) return alert("No audio generated. Please generate audio first.");
 
-        isVideoEngineRunning = true; cancelVideoSequence = false;
+        isVideoEngineRunning = true; isPreviewPlaying = true; cancelVideoSequence = false;
         const recIndicator = document.getElementById("recIndicator");
         
         const audioCtx = getAudioContext(); const dest = audioCtx.createMediaStreamDestination();
-        const transVid = document.getElementById("hiddenTransVideo");
-        let hasTransVid = (globalTransVidBlob !== null && transVid.src !== "");
+        const transVid = document.getElementById("activeTransitionVideo");
+        let hasTransVid = (transVid !== null && transVid.src !== "");
         let recorder, chunks = [];
 
         // START BGM
         if(globalBgmBlob) {
-            activeBgmNode = new Audio(URL.createObjectURL(globalBgmBlob));
-            activeBgmNode.loop = true; 
+            activeBgmNode = new Audio(URL.createObjectURL(globalBgmBlob)); activeBgmNode.loop = true; 
             const bgmSource = audioCtx.createMediaElementSource(activeBgmNode);
             const bgmGain = audioCtx.createGain(); bgmGain.gain.value = parseFloat(document.getElementById('bgmVolume').value);
-            bgmSource.connect(bgmGain); bgmGain.connect(audioCtx.destination);
-            if(isRecording) bgmGain.connect(dest);
-            activeBgmNode.play().catch(e => console.error("BGM Error"));
+            bgmSource.connect(bgmGain); bgmGain.connect(audioCtx.destination); bgmGain.connect(dest);
+            activeBgmNode.play().catch(e => console.log("BGM Error"));
         }
 
-        if(isRecording) {
-            btnDownload.disabled = true; btnDownload.innerHTML = '<span class="spin material-icons-round">sync</span> Recording...';
-            btnPreview.disabled = true; recIndicator.style.display = "block";
-            const stream = canvas.captureStream(30);
-            const combinedStream = new MediaStream([...stream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
-            recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm; codecs=vp8,opus' });
-            recorder.ondataavailable = e => chunks.push(e.data);
-            recorder.onstop = () => {
-                const finalBlob = new Blob(chunks, { type: 'video/webm' });
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(finalBlob); a.download = "News_Studio_Output.webm";
-                document.body.appendChild(a); a.click(); document.body.removeChild(a); resetVideoUI();
-            };
-            recorder.start();
-        } else {
-            isPreviewPlaying = true;
-            btnPreview.innerHTML = '<span class="material-icons-round">stop</span> Stop Preview'; 
-            btnDownload.disabled = true;
-        }
+        // Setup Recording
+        btnDownload.disabled = true; btnDownload.style.background = "#4b5563"; btnDownload.style.cursor = "not-allowed";
+        btnPreview.innerHTML = '<span class="material-icons-round">stop</span> Stop Recording'; 
+        recIndicator.style.display = "block";
+        statusText.innerText = "Recording in progress... Please do not close app."; statusText.style.color = "#f59e0b";
 
+        const stream = canvas.captureStream(30);
+        const combinedStream = new MediaStream([...stream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
+        recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm; codecs=vp8,opus' });
+        recorder.ondataavailable = e => chunks.push(e.data);
+        recorder.onstop = () => {
+            if(!cancelVideoSequence) {
+                finalRecordedBlob = new Blob(chunks, { type: 'video/webm' });
+                btnDownload.disabled = false;
+                btnDownload.style.background = "linear-gradient(135deg, #10b981, #059669)";
+                btnDownload.style.cursor = "pointer";
+                statusText.innerText = "✅ Recording Finished! Ready to Download."; statusText.style.color = "#10b981";
+            }
+        };
+        recorder.start();
         canvas.scrollIntoView({behavior: 'smooth', block: 'center'});
 
         for(let i=0; i<validSegmentIds.length; i++) {
             if(cancelVideoSequence) break; 
-            
-            await playSegmentOnCanvas(segmentsData[validSegmentIds[i]], ctx, canvas, audioCtx, dest, isRecording);
-            
+            await playSegmentOnCanvas(segmentsData[validSegmentIds[i]], ctx, canvas, audioCtx, dest);
             if(hasTransVid && i < validSegmentIds.length - 1 && !cancelVideoSequence) {
-                await playTransitionOnCanvas(transVid, ctx, canvas, audioCtx, dest, isRecording);
+                await playTransitionOnCanvas(transVid, ctx, canvas, audioCtx, dest);
             }
         }
 
         if(activeBgmNode) { activeBgmNode.pause(); activeBgmNode.src = ""; }
-        if(isRecording && recorder && recorder.state !== "inactive") recorder.stop(); else resetVideoUI();
+        if(recorder && recorder.state !== "inactive") recorder.stop();
         ctx.fillStyle = "black"; ctx.fillRect(0, 0, canvas.width, canvas.height); 
+        
         isVideoEngineRunning = false; isPreviewPlaying = false;
+        btnPreview.innerHTML = '<span class="material-icons-round">play_circle</span> Play & Record Video';
+        recIndicator.style.display = "none";
+    }
 
-        function resetVideoUI() {
-            btnPreview.disabled = false; btnPreview.innerHTML = '<span class="material-icons-round">play_arrow</span> Preview Play';
-            btnDownload.disabled = false; btnDownload.innerHTML = '<span class="material-icons-round">download</span> Download Video';
-            recIndicator.style.display = "none";
-        }
+    function downloadFinalVideo() {
+        if(!finalRecordedBlob) return alert("No video recorded yet! Please play it completely first.");
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(finalRecordedBlob); 
+        a.download = "News_Studio_Output.webm";
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
     function draw3DBox(ctx, x, y, width, height, color, text = "", textX = 0, textY = 0, fontSize = "24px", isLive = false) {
@@ -1428,7 +1348,7 @@ RULES (Strict Format):
         ctx.restore();
     }
 
-    function playSegmentOnCanvas(data, ctx, canvas, audioCtx, dest, isRecording) {
+    function playSegmentOnCanvas(data, ctx, canvas, audioCtx, dest) {
         return new Promise((resolve) => {
             activeAudioNode = new Audio(data.audioUrl);
             const source = audioCtx.createMediaElementSource(activeAudioNode);
@@ -1437,12 +1357,11 @@ RULES (Strict Format):
             if (data.useVideoAudio && activeVideoNode) {
                 activeAudioNode.volume = 0; activeVideoNode.muted = false; 
                 if(!activeVideoNode.__audioNode) activeVideoNode.__audioNode = audioCtx.createMediaElementSource(activeVideoNode);
-                activeVideoNode.__audioNode.disconnect(); activeVideoNode.__audioNode.connect(audioCtx.destination);
-                if (isRecording) activeVideoNode.__audioNode.connect(dest);
-                source.connect(audioCtx.destination); if(isRecording) source.connect(dest); 
+                activeVideoNode.__audioNode.disconnect(); activeVideoNode.__audioNode.connect(audioCtx.destination); activeVideoNode.__audioNode.connect(dest);
+                source.connect(audioCtx.destination); source.connect(dest); 
             } else {
                 if (activeVideoNode) activeVideoNode.muted = true; 
-                activeAudioNode.volume = 1; source.connect(audioCtx.destination); if(isRecording) source.connect(dest); 
+                activeAudioNode.volume = 1; source.connect(audioCtx.destination); source.connect(dest); 
             }
             
             const images = data.images; 
@@ -1454,7 +1373,7 @@ RULES (Strict Format):
             const imgCount = images.length > 0 ? images.length : 1; const timePerImage = durationMs / imgCount;
             let currentImgIndex = 0; let animationFrameId;
 
-            if(activeVideoNode) { activeVideoNode.currentTime = 0; activeVideoNode.play().catch(e => console.error("Seg Vid Err:", e)); }
+            if(activeVideoNode) { activeVideoNode.currentTime = 0; activeVideoNode.play().catch(e => console.log("SegVid")); }
             
             const startTime = performance.now();
             const showLogo = document.getElementById('chkLogo').checked; const showLive = document.getElementById('chkLive').checked;
@@ -1475,7 +1394,6 @@ RULES (Strict Format):
                 const elapsed = now - startTime;
                 ctx.fillStyle = "#0f172a"; ctx.fillRect(0,0, canvas.width, canvas.height);
                 
-                // Draw Video Frame directly to Canvas (Works in Download because video is attached to hidden DOM)
                 if(activeVideoNode && !activeVideoNode.paused && activeVideoNode.readyState >= 2) {
                     const vRatio = Math.max(canvas.width / activeVideoNode.videoWidth, canvas.height / activeVideoNode.videoHeight);
                     const vWidth = activeVideoNode.videoWidth * vRatio; const vHeight = activeVideoNode.videoHeight * vRatio;
@@ -1512,15 +1430,15 @@ RULES (Strict Format):
                 }
                 animationFrameId = requestAnimationFrame(drawLoop);
             }
-            activeAudioNode.play().then(() => { requestAnimationFrame(drawLoop); }).catch(e => { console.error("Aud Err:", e); resolve(); });
+            activeAudioNode.play().then(() => { requestAnimationFrame(drawLoop); }).catch(e => { resolve(); });
         });
     }
 
-    function playTransitionOnCanvas(videoEle, ctx, canvas, audioCtx, dest, isRecording) {
+    function playTransitionOnCanvas(videoEle, ctx, canvas, audioCtx, dest) {
         return new Promise((resolve) => {
             activeTransVideoNode = videoEle; activeTransVideoNode.currentTime = 0; activeTransVideoNode.muted = false; 
             if(!activeTransVideoNode.__audioNode) { activeTransVideoNode.__audioNode = audioCtx.createMediaElementSource(activeTransVideoNode); }
-            activeTransVideoNode.__audioNode.disconnect(); activeTransVideoNode.__audioNode.connect(audioCtx.destination); if(isRecording) activeTransVideoNode.__audioNode.connect(dest);
+            activeTransVideoNode.__audioNode.disconnect(); activeTransVideoNode.__audioNode.connect(audioCtx.destination); activeTransVideoNode.__audioNode.connect(dest);
             let animationFrameId;
             function drawLoop() {
                 if(cancelVideoSequence) { activeTransVideoNode.pause(); activeTransVideoNode.__audioNode.disconnect(); cancelAnimationFrame(animationFrameId); resolve(); return; }
