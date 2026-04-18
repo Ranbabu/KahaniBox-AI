@@ -108,8 +108,8 @@ select, input[type="file"], input[type="text"] {
 }
 label { font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px; }
 
-/* Smaller & Beautiful Buttons */
-.btn-fetch, .btn-action, .btn-action-green, .btn-action-blue {
+/* Buttons Styling */
+.btn-fetch, .btn-action, .btn-action-green, .btn-action-blue, .btn-action-orange {
     background: linear-gradient(135deg, #8b5cf6, #ec4899); color: white; border: none; padding: 10px 15px; border-radius: 8px;
     font-weight: 600; cursor: pointer; width: 100%; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 6px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.2s, box-shadow 0.2s;
@@ -117,10 +117,11 @@ label { font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px; }
 .btn-action { background: linear-gradient(135deg, #3b82f6, #2dd4bf); box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); }
 .btn-action-green { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
 .btn-action-blue { background: linear-gradient(135deg, #0ea5e9, #2563eb); box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3); }
-.btn-fetch:active, .btn-action:active, .btn-action-green:active, .btn-action-blue:active { transform: scale(0.95); }
-.btn-fetch:disabled, .btn-action:disabled, .btn-action-green:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-action-orange { background: linear-gradient(135deg, #f59e0b, #ea580c); box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3); }
 
-/* Side-by-Side Studio Buttons */
+.btn-fetch:active, .btn-action:active, .btn-action-green:active, .btn-action-blue:active, .btn-action-orange:active { transform: scale(0.95); }
+.btn-fetch:disabled, .btn-action:disabled, .btn-action-green:disabled, .btn-action-blue:disabled, .btn-action-orange:disabled { opacity: 0.6; cursor: not-allowed; }
+
 .studio-actions { display: flex; gap: 10px; margin-bottom: 10px; justify-content: center; }
 .studio-actions button { border-radius: 50px; font-size: 0.9rem; padding: 10px 20px; width: auto; flex: 1; max-width: 200px;}
 
@@ -192,18 +193,18 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 
 .loader-overlay { display: none; text-align: center; margin: 15px 0; color: #a78bfa; font-weight: bold;}
 
-/* Fixed Spinner Animation */
+/* Ensure spin animation is global and visible */
 .spin { animation: spin 1s linear infinite !important; display: inline-block !important; }
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
-/* Horizontal One-Line Upload Row */
 .manual-upload-row { 
     display: flex; flex-direction: row; gap: 10px; background: rgba(0,0,0,0.2); 
     padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px dashed var(--border);
     align-items: center; justify-content: space-between; flex-wrap: nowrap; overflow-x: auto;
 }
-.manual-upload-item { display: flex; flex-direction: column; flex: 1; min-width: 130px;}
+.manual-upload-item { display: flex; flex-direction: column; flex: 1; min-width: 130px; position:relative;}
 .manual-upload-item input[type="file"] { padding: 4px; font-size: 0.75rem; }
+.uploading-badge { position:absolute; top:-10px; right:0; background:#f59e0b; color:black; font-size:0.6rem; padding:2px 5px; border-radius:4px; font-weight:bold; display:none; }
 
 .fab-add {
     position: fixed; bottom: 20px; right: 20px; background: var(--text); color: var(--bg);
@@ -225,34 +226,28 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 
 <div class="sidebar" id="apiSidebar">
     <h3><span class="material-icons-round" style="vertical-align:middle;">smart_toy</span> AI Provider Settings</h3>
-    
     <label>Select AI Provider</label>
     <select id="aiProviderSelect">
         <option value="groq">Groq AI (Fastest)</option>
         <option value="mistral">Mistral AI (High Quality)</option>
     </select>
-
     <label>Groq API Key</label>
     <input type="password" id="groqApiKey" placeholder="Enter Groq API Key">
-    
     <label>Mistral AI API Key</label>
     <input type="password" id="mistralApiKey" placeholder="Enter Mistral API Key">
     
     <h3 style="margin-top:20px;"><span class="material-icons-round" style="vertical-align:middle;">image</span> Image Search Settings</h3>
-    
     <label>Select Image Provider</label>
     <select id="imgProviderSelect" onchange="toggleImageSettings()">
         <option value="ranimage">Custom API (Ranimage / DuckDuckGo)</option>
         <option value="google">Google Custom Search</option>
     </select>
-
     <div id="googleSettingsBox" style="display: none; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
         <label>Google API Key</label>
         <input type="password" id="gApiKey" placeholder="Enter API Key">
         <label>Search Engine ID (CX)</label>
         <input type="text" id="gCxId" placeholder="Enter CX ID">
     </div>
-
     <div id="ranSettingsBox" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
         <label>Custom API URL (Ranimage)</label>
         <input type="text" id="ranApiUrl" value="https://ranimage.onrender.com/api/search" placeholder="Enter Custom API URL">
@@ -266,17 +261,14 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
 
     <h3><span class="material-icons-round" style="vertical-align:middle;">layers</span> Video Overlays & Colors</h3>
-
     <div class="overlay-setting">
         <label><input type="checkbox" id="chkLogo" checked> Show Channel Logo</label>
         <input type="file" id="logoUpload" accept="image/*" onchange="loadGlobalImage(this, 'logo')">
     </div>
-
     <div class="overlay-setting">
         <label><input type="checkbox" id="chkLive" checked> Show LIVE Icon</label>
         <input type="file" id="liveUpload" accept="image/*" onchange="loadGlobalImage(this, 'live')">
     </div>
-
     <div class="overlay-setting">
         <label><input type="checkbox" id="chkTopTicker" checked> Show Top Breaking News</label>
         <input type="text" id="topTickerTxt" value="BREAKING NEWS - ताज़ा और बड़ी खबरें" placeholder="Enter Top Ticker Text">
@@ -284,22 +276,18 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         <input type="range" id="topTickerHeight" min="30" max="80" value="45">
         <div class="color-row"><span>Background Color:</span> <input type="color" id="topTickerColor" value="#ef4444"></div>
     </div>
-
     <div class="overlay-setting">
         <label><input type="checkbox" id="chkNewsNumber" checked> Show News Number Badge</label>
         <div class="color-row"><span>Background Color:</span> <input type="color" id="newsNumColor" value="#fbbf24"></div>
     </div>
-
     <div class="overlay-setting">
         <label><input type="checkbox" id="chkChannelName" checked> Show Channel Name</label>
         <input type="text" id="channelNameTxt" value="RAN News Tek" placeholder="Enter Channel Name">
         <div class="color-row"><span>Background Color:</span> <input type="color" id="channelNameColor" value="#b91c1c"></div>
     </div>
-
     <div class="overlay-setting">
         <label><input type="checkbox" id="chkHeadline" checked> Show Headline Ticker</label>
     </div>
-
     <div class="overlay-setting">
         <label><input type="checkbox" id="chkSubscribe" checked> Show Subscribe Ticker (Bottom)</label>
         <input type="text" id="subscribeTxt" value="कृपया हमारे चैनल को सब्सक्राइब करें और बेल आइकन दबाएं | पल-पल की ख़बरों के लिए जुड़े रहें |" placeholder="Enter Subscribe Text">
@@ -307,7 +295,6 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         <input type="range" id="bottomTickerHeight" min="30" max="80" value="45">
         <div class="color-row"><span>Background Color:</span> <input type="color" id="bottomTickerColor" value="#dc2626"></div>
     </div>
-
 </div>
 
 <div class="data-sidebar" id="dataSidebar">
@@ -330,7 +317,6 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 </div>
 
 <div class="main-content">
-
     <div class="video-studio-panel">
         <div class="panel-title"><span class="material-icons-round">movie</span> 1. Live Video Studio & Export</div>
         
@@ -351,7 +337,10 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 
         <div class="input-group">
             <label>Breaking News Clip (2 sec video) [Optional Transition]</label>
-            <input type="file" id="transitionVideoInput" accept="video/mp4,video/webm" onchange="loadTransitionVideo(this)">
+            <div style="position:relative;">
+                <input type="file" id="transitionVideoInput" accept="video/mp4,video/webm" onchange="loadTransitionVideo(this)">
+                <span id="transVidSpinner" class="uploading-badge"><span class="spin material-icons-round" style="font-size:10px;">sync</span> Loading...</span>
+            </div>
         </div>
 
         <div class="video-preview-container">
@@ -359,7 +348,6 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
             <div class="recording-indicator" id="recIndicator">RECORDING</div>
         </div>
 
-        <!-- Buttons Side-by-Side (Smaller) -->
         <div class="studio-actions">
             <button class="btn-action" id="btnPreview" onclick="runVideoSequence(false)">
                 <span class="material-icons-round">play_arrow</span> Preview
@@ -370,7 +358,6 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         </div>
     </div>
 
-    <!-- Advanced Quick Paste Panel -->
     <div class="news-control-panel">
         <div class="panel-title"><span class="material-icons-round">content_paste</span> Quick Paste & Auto-Segment</div>
         <label>अपनी पूरी स्क्रिप्ट यहाँ पेस्ट करें। सिस्टम 1, 2, 3 नंबरों से ख़बरों को पहचान लेगा।</label>
@@ -384,7 +371,6 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 
     <div class="news-control-panel">
         <div class="panel-title"><span class="material-icons-round">rss_feed</span> 2. Generate News Script & Images</div>
-        
         <div class="input-group">
             <label>Select Category</label>
             <select id="newsCategory">
@@ -393,7 +379,6 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
                 <option value="govt_schemes">🎁 भारत सरकार की नई योजना (Schemes)</option>
             </select>
         </div>
-
         <div class="grid-row">
             <div>
                 <label>Headlines Count</label>
@@ -410,7 +395,6 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
                 </select>
             </div>
         </div>
-        
         <div class="input-group">
             <label>Images per Headline</label>
             <select id="imageFetchCount">
@@ -419,7 +403,6 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
                 <option value="10">10 Images</option>
             </select>
         </div>
-
         <button class="btn-fetch" id="fetchBtn" onclick="fetchAndCreateSegments()">
             <span class="material-icons-round">smart_toy</span> Fetch AI News
         </button>
@@ -428,14 +411,18 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 
     <input type="hidden" id="global-api-url" value="https://hindi-tts-3gjy.onrender.com">
 
+    <!-- ALL AUDIO CONTROLS ROW -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; margin-top:20px; gap:5px; flex-wrap:wrap;">
         <h3 style="margin:0; color:#a78bfa; font-size:1rem;"><span class="material-icons-round" style="vertical-align:middle; font-size:1.2rem;">library_music</span> 3. Audio Segments</h3>
-        <div style="display:flex; gap:8px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn-action-orange" style="width:auto; padding:6px 12px; margin:0; font-size:0.8rem; border-radius:6px;" onclick="generateAllAudioSequence()">
+                <span class="material-icons-round" style="font-size:1rem;">graphic_eq</span> Gen All Audio
+            </button>
             <button class="btn-action-green" style="width:auto; padding:6px 12px; margin:0; font-size:0.8rem; border-radius:6px;" onclick="playAllAudioSequence()">
                 <span class="material-icons-round" style="font-size:1rem;">playlist_play</span> Play All
             </button>
             <button class="btn-action-blue" style="width:auto; padding:6px 12px; margin:0; font-size:0.8rem; border-radius:6px;" onclick="downloadAllAudioSequence()">
-                <span class="material-icons-round" style="font-size:1rem;">file_download</span> Download All
+                <span class="material-icons-round" style="font-size:1rem;">file_download</span> Down All
             </button>
         </div>
     </div>
@@ -446,14 +433,14 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         <span class="material-icons-round" style="font-size:3rem; opacity:0.3;">format_quote</span>
         <p>No scripts yet. Click "Fetch AI News" or Paste Script.</p>
     </div>
-
 </div>
 
 <button class="fab-add" onclick="addSegment('','',null,'')">
     <span class="material-icons-round">add</span> Add
 </button>
 
-<video id="hiddenTransVideo" style="display:none;" playsinline crossOrigin="anonymous"></video>
+<!-- Important: Video element setup to prevent CORS and drawing issues -->
+<video id="hiddenTransVideo" style="display:none;" playsinline preload="auto"></video>
 
 <script>
     let segmentCount = 0;
@@ -733,7 +720,6 @@ RULES (Strict Format):
         
         let titleText = newsIndex ? `News #${newsIndex} : ${displayTitle}` : `${displayTitle}`;
         
-        // Added useVideoAudio option
         segmentsData[id] = { images: [], segmentVideo: null, videoDuration: 0, useVideoAudio: false, audioUrl: null, duration: 0, headline: headline, newsIndex: newsIndex };
 
         let currentSyncedSpeed = "0";
@@ -769,7 +755,8 @@ RULES (Strict Format):
                 </div>
                 <div class="manual-upload-item">
                     <label style="color:#60a5fa;"><span class="material-icons-round" style="font-size:14px; vertical-align:middle;">movie</span> Video</label>
-                    <input type="file" accept="video/mp4,video/webm" onchange="uploadSegmentVideo(this, ${id})">
+                    <span id="vid-spin-${id}" class="uploading-badge"><span class="spin material-icons-round" style="font-size:10px;">sync</span> Wait...</span>
+                    <input type="file" accept="video/mp4,video/webm,video/ogg" onchange="uploadSegmentVideo(this, ${id})">
                 </div>
             </div>
 
@@ -856,16 +843,21 @@ RULES (Strict Format):
         }
     }
 
+    // Fixed segment video upload with clear loading spinner and error handling
     function uploadSegmentVideo(input, segId) {
         const optionsDiv = document.getElementById(`video-options-${segId}`);
         const gallery = document.getElementById(`gallery-${segId}`);
+        const spinner = document.getElementById(`vid-spin-${segId}`);
+        
         if(input.files && input.files[0]) {
+            spinner.style.display = "inline-block"; // Show loading badge
+            
             const fileUrl = URL.createObjectURL(input.files[0]);
             const vid = document.createElement('video');
             vid.src = fileUrl;
-            vid.crossOrigin = "anonymous";
-            vid.muted = true; // default
             vid.playsInline = true;
+            vid.muted = true; // Essential for proper loading without user interaction
+            vid.preload = "auto";
             
             vid.onloadedmetadata = () => {
                 segmentsData[segId].segmentVideo = vid;
@@ -892,6 +884,14 @@ RULES (Strict Format):
                 wrapper.appendChild(pVid);
                 wrapper.appendChild(btnDelete);
                 gallery.appendChild(wrapper);
+                
+                spinner.style.display = "none"; // Hide loading badge
+                input.value = ""; // Reset input
+            };
+            
+            vid.onerror = () => {
+                alert("Error loading video format. Please try MP4.");
+                spinner.style.display = "none";
             };
         }
     }
@@ -926,6 +926,7 @@ RULES (Strict Format):
         fetchImagesForSegment(segId, query, limit); 
     }
 
+    // Step-by-Step Image Fetcher
     async function fetchImagesForSegment(segId, query, limit) {
         const provider = document.getElementById('imgProviderSelect').value;
         const statusBox = document.getElementById(`img-status-${segId}`);
@@ -934,18 +935,11 @@ RULES (Strict Format):
         gallery.innerHTML = ''; 
         segmentsData[segId].images = []; 
 
-        let seconds = 0;
         statusBox.style.display = "block";
         statusBox.style.color = "#fbbf24"; 
         
-        let loadingMsg = "Image Search running...";
-        statusBox.innerHTML = `<span class="material-icons-round spin" style="font-size:1.1rem; vertical-align:middle;">sync</span> ${loadingMsg} (<span id="timer-${segId}">0</span>s)`;
-
-        const timerInterval = setInterval(() => {
-            seconds++;
-            const tElem = document.getElementById(`timer-${segId}`);
-            if(tElem) tElem.innerText = seconds;
-        }, 1000);
+        let loadingMsg = "Searching Images...";
+        statusBox.innerHTML = `<span class="material-icons-round spin" style="font-size:1.1rem; vertical-align:middle;">sync</span> ${loadingMsg}`;
 
         try {
             let finalUrls = [];
@@ -979,52 +973,59 @@ RULES (Strict Format):
 
             if(finalUrls.length === 0) throw new Error("No images found. Try manually.");
             
-            // Render images slowly so they download properly
+            // Render images slowly step-by-step so they download properly
             for(let i=0; i < limit && i < finalUrls.length; i++){
-                processSingleImage(finalUrls[i], gallery, segId);
-                // Timer / Delay to ensure images fetch properly without breaking
-                await new Promise(resolve => setTimeout(resolve, 500));
+                statusBox.innerHTML = `<span class="material-icons-round spin" style="font-size:1.1rem; vertical-align:middle;">sync</span> Downloading Image ${i+1} of ${limit}...`;
+                await processSingleImageWithPromise(finalUrls[i], gallery, segId);
             }
             
-            clearInterval(timerInterval);
             statusBox.style.display = "none";
             
         } catch(e) {
-            clearInterval(timerInterval);
             statusBox.style.display = "block";
             statusBox.innerHTML = `❌ Search Failed: ${e.message}`;
             statusBox.style.color = "#ef4444"; 
         }
     }
 
-    function processSingleImage(url, gallery, segId) {
-        const proxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
-        const wrapper = document.createElement('div');
-        wrapper.className = 'gallery-img-wrapper';
+    // Promise wrapper to ensure image loads completely before moving to next
+    function processSingleImageWithPromise(url, gallery, segId) {
+        return new Promise((resolve) => {
+            const proxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'gallery-img-wrapper';
 
-        const img = document.createElement('img');
-        img.crossOrigin = "anonymous";
-        img.src = proxyUrl;
-        img.onerror = function() { wrapper.style.display = 'none'; };
-        
-        const imgObj = new Image();
-        imgObj.crossOrigin = "anonymous";
-        imgObj.onload = () => { segmentsData[segId].images.push(imgObj); };
-        imgObj.src = proxyUrl;
+            const img = document.createElement('img');
+            img.crossOrigin = "anonymous";
+            
+            const imgObj = new Image();
+            imgObj.crossOrigin = "anonymous";
+            
+            imgObj.onload = () => { 
+                segmentsData[segId].images.push(imgObj); 
+                img.src = proxyUrl; // Set visual source only after loaded
+                
+                const btnDelete = document.createElement('button');
+                btnDelete.className = 'btn-remove-img';
+                btnDelete.innerHTML = '×';
+                btnDelete.onclick = () => {
+                    wrapper.remove();
+                    segmentsData[segId].images = segmentsData[segId].images.filter(i => i.src !== imgObj.src);
+                };
 
-        const btnDelete = document.createElement('button');
-        btnDelete.className = 'btn-remove-img';
-        btnDelete.innerHTML = '×';
-        btnDelete.onclick = () => {
-            wrapper.remove();
-            segmentsData[segId].images = segmentsData[segId].images.filter(i => i.src !== imgObj.src);
-        };
-
-        wrapper.appendChild(img);
-        wrapper.appendChild(btnDelete);
-        gallery.appendChild(wrapper);
+                wrapper.appendChild(img);
+                wrapper.appendChild(btnDelete);
+                gallery.appendChild(wrapper);
+                resolve(); // Done loading
+            };
+            
+            imgObj.onerror = () => { resolve(); /* Skip error images to not block queue */ };
+            
+            imgObj.src = proxyUrl; // Start loading
+        });
     }
 
+    // Generate Audio Single
     async function generateAudio(id) {
         const text = document.getElementById(`text-${id}`).value.trim();
         const voice = document.getElementById(`voice-${id}`).value;
@@ -1037,7 +1038,7 @@ RULES (Strict Format):
 
         if(!text) return alert("Script is empty!");
 
-        btn.disabled = true; btn.innerHTML = '<span class="spin material-icons-round">sync</span> Generating...';
+        btn.disabled = true; btn.innerHTML = '<span class="spin material-icons-round">sync</span> Wait...';
         status.style.display = "block"; status.innerText = "Generating Audio..."; status.style.color = "#fbbf24";
         audioBox.style.display = "none";
         
@@ -1062,6 +1063,26 @@ RULES (Strict Format):
         } finally {
             btn.disabled = false; btn.innerHTML = '<span class="material-icons-round">graphic_eq</span> Gen Audio';
         }
+    }
+
+    // NEW: Generate ALL Audio Sequence
+    async function generateAllAudioSequence() {
+        const keys = Object.keys(segmentsData);
+        if(keys.length === 0) return alert("No scripts found!");
+        
+        let generatedCount = 0;
+        for(let id of keys) {
+            // Only generate if it hasn't been generated manually already
+            if(!segmentsData[id].audioUrl) {
+                const text = document.getElementById(`text-${id}`).value.trim();
+                if(text) {
+                    await generateAudio(id);
+                    generatedCount++;
+                }
+            }
+        }
+        if(generatedCount > 0) alert(`Successfully generated ${generatedCount} new audio clips!`);
+        else alert("All audio clips are already generated.");
     }
 
     async function playAllAudioSequence() {
@@ -1092,10 +1113,22 @@ RULES (Strict Format):
         }
     }
 
+    // Fixed Loading for Transition Video
     function loadTransitionVideo(input) {
+        const spinner = document.getElementById("transVidSpinner");
         if(input.files && input.files.length > 0) {
+            spinner.style.display = "inline-block";
             const transVid = document.getElementById("hiddenTransVideo");
             transVid.src = URL.createObjectURL(input.files[0]);
+            
+            transVid.onloadeddata = () => {
+                spinner.style.display = "none";
+                input.style.border = "1px solid #10b981"; // Highlight success
+            };
+            transVid.onerror = () => {
+                spinner.style.display = "none";
+                alert("Error loading transition video.");
+            }
             transVid.load(); 
         }
     }
@@ -1162,7 +1195,7 @@ RULES (Strict Format):
             }
         }
 
-        // Strictly stop Background Music when video sequence is over
+        // Properly stop BGM
         if(bgmAudio) { 
             bgmAudio.pause(); 
             bgmAudio.src = ""; 
@@ -1212,31 +1245,29 @@ RULES (Strict Format):
         ctx.restore();
     }
 
+    // Fully Revised Segment Video + Canvas Draw Logic
     function playSegmentOnCanvas(data, ctx, canvas, audioCtx, dest, isRecording) {
         return new Promise((resolve) => {
             const audioObj = new Audio(data.audioUrl);
             const source = audioCtx.createMediaElementSource(audioObj);
             
-            // Logic for Audio Muting if Video Audio is enabled
+            // Audio Routing
             if (data.useVideoAudio && data.segmentVideo) {
-                audioObj.volume = 0; // Mute AI Audio
-                data.segmentVideo.muted = false; // Turn on Video Audio
+                audioObj.volume = 0; // AI Audio Silent
+                data.segmentVideo.muted = false; // Video Audio ON
                 
-                // Connect Video to AudioContext
-                if(!data.segmentVideo.mediaElementSource) {
-                    data.segmentVideo.mediaElementSource = audioCtx.createMediaElementSource(data.segmentVideo);
+                if(!data.segmentVideo.__audioNode) {
+                    data.segmentVideo.__audioNode = audioCtx.createMediaElementSource(data.segmentVideo);
                 }
-                data.segmentVideo.mediaElementSource.disconnect();
-                data.segmentVideo.mediaElementSource.connect(audioCtx.destination);
-                if (isRecording) data.segmentVideo.mediaElementSource.connect(dest);
+                data.segmentVideo.__audioNode.disconnect();
+                data.segmentVideo.__audioNode.connect(audioCtx.destination);
+                if (isRecording) data.segmentVideo.__audioNode.connect(dest);
                 
-                // Keep AI audio connected so we can track its duration if needed, but it's silent
                 source.connect(audioCtx.destination); 
                 if(isRecording) source.connect(dest); 
             } else {
-                // Normal AI Audio Playback
-                if (data.segmentVideo) data.segmentVideo.muted = true;
-                audioObj.volume = 1;
+                if (data.segmentVideo) data.segmentVideo.muted = true; // Video Audio OFF
+                audioObj.volume = 1; // AI Audio ON
                 source.connect(audioCtx.destination); 
                 if(isRecording) source.connect(dest); 
             }
@@ -1246,9 +1277,9 @@ RULES (Strict Format):
             // Calculate Maximum Duration
             let maxDuration = data.duration;
             if(data.segmentVideo && data.videoDuration > 0 && data.useVideoAudio) {
-                maxDuration = Math.max(maxDuration, data.videoDuration); // Extend to video length if needed
+                maxDuration = Math.max(maxDuration, data.videoDuration);
             } else if (data.segmentVideo && data.videoDuration > 0) {
-                 maxDuration = Math.max(maxDuration, data.videoDuration); // Extend to video length
+                 maxDuration = Math.max(maxDuration, data.videoDuration);
             }
             
             const durationMs = maxDuration * 1000; 
@@ -1256,6 +1287,7 @@ RULES (Strict Format):
             const timePerImage = durationMs / imgCount;
             let currentImgIndex = 0; let animationFrameId;
 
+            // Start Video immediately if exists
             if(data.segmentVideo) {
                 data.segmentVideo.currentTime = 0;
                 data.segmentVideo.play().catch(e => console.error("Segment Video Play Error:", e));
@@ -1291,13 +1323,13 @@ RULES (Strict Format):
             function drawLoop(now) {
                 const elapsed = now - startTime;
                 
-                // End Segment Condition
+                // Segment Finish Condition
                 if (elapsed >= durationMs) {
                     cancelAnimationFrame(animationFrameId);
                     source.disconnect();
                     if(data.segmentVideo) {
                         data.segmentVideo.pause();
-                        if(data.segmentVideo.mediaElementSource) data.segmentVideo.mediaElementSource.disconnect();
+                        if(data.segmentVideo.__audioNode) data.segmentVideo.__audioNode.disconnect();
                     }
                     resolve();
                     return;
@@ -1305,14 +1337,16 @@ RULES (Strict Format):
 
                 ctx.fillStyle = "#0f172a"; ctx.fillRect(0,0, canvas.width, canvas.height);
                 
-                // BACKGROUND VISUALS
-                if(data.segmentVideo && !data.segmentVideo.paused) {
+                // BACKGROUND VISUALS (Priority to Video over Image)
+                if(data.segmentVideo && !data.segmentVideo.paused && !data.segmentVideo.ended) {
+                    // Draw active video
                     const vRatio = Math.max(canvas.width / data.segmentVideo.videoWidth, canvas.height / data.segmentVideo.videoHeight);
                     const vWidth = data.segmentVideo.videoWidth * vRatio;
                     const vHeight = data.segmentVideo.videoHeight * vRatio;
                     ctx.drawImage(data.segmentVideo, (canvas.width - vWidth) / 2, (canvas.height - vHeight) / 2, vWidth, vHeight);
                 }
                 else if(images.length > 0 && images[currentImgIndex] && images[currentImgIndex].complete && images[currentImgIndex].naturalHeight !== 0) {
+                    // Fallback to Images
                     currentImgIndex = Math.floor(elapsed / timePerImage);
                     if(currentImgIndex >= images.length) currentImgIndex = images.length - 1;
                     
@@ -1342,7 +1376,7 @@ RULES (Strict Format):
 
                 ctx.textAlign = "left"; 
 
-                // OVERLAYS (Buttons, Tickers, Texts)
+                // OVERLAYS (Drawings)
                 if(showTopTicker) {
                     ctx.font = "bold 26px Arial";
                     const tW = ctx.measureText(topTickerTxt).width;
@@ -1439,29 +1473,31 @@ RULES (Strict Format):
         });
     }
 
+    // Fully Revised Transition Video Canvas Drawing Logic
     function playTransitionOnCanvas(videoEle, ctx, canvas, audioCtx, dest, isRecording) {
         return new Promise((resolve) => {
             videoEle.currentTime = 0;
             videoEle.muted = false; 
 
-            if(!videoEle.mediaSource) { 
-                videoEle.mediaSource = audioCtx.createMediaElementSource(videoEle); 
+            // Prevent recreating Audio Nodes which causes crashes
+            if(!videoEle.__audioNode) { 
+                videoEle.__audioNode = audioCtx.createMediaElementSource(videoEle); 
             }
-            videoEle.mediaSource.disconnect();
-            videoEle.mediaSource.connect(audioCtx.destination); 
-            if(isRecording) videoEle.mediaSource.connect(dest);
+            videoEle.__audioNode.disconnect();
+            videoEle.__audioNode.connect(audioCtx.destination); 
+            if(isRecording) videoEle.__audioNode.connect(dest);
 
             let animationFrameId;
 
             function drawLoop() {
-                if(!videoEle.paused && !videoEle.ended) {
+                // Keep drawing as long as it's not ended
+                if(!videoEle.ended) {
                     ctx.drawImage(videoEle, 0, 0, canvas.width, canvas.height);
                     animationFrameId = requestAnimationFrame(drawLoop);
-                } else if(videoEle.ended) {
-                    videoEle.mediaSource.disconnect();
-                    resolve();
                 } else {
-                    animationFrameId = requestAnimationFrame(drawLoop);
+                    // Stop drawing when ended
+                    videoEle.__audioNode.disconnect();
+                    resolve();
                 }
             }
 
