@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>News Studio Pro - Advanced</title>
+<title>Islamic Story Studio Pro</title>
 
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -188,7 +188,7 @@ textarea {
 
 .gallery-img-wrapper { position: relative; display: inline-block; flex-shrink: 0; }
 .gallery-img-wrapper img, .gallery-img-wrapper video {
-    height: 70px; width: 100px; border-radius: 6px; border: 1px solid var(--border); object-fit: cover; background: #000; display: block;
+    height: 120px; width: 160px; border-radius: 6px; border: 1px solid var(--border); object-fit: cover; background: #000; display: block;
 }
 .btn-remove-img {
     position: absolute; top: -6px; right: -6px; background: #ef4444; color: white;
@@ -230,10 +230,10 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 #hiddenModulesList { margin-top:10px; display:flex; flex-direction:column; gap:8px; }
 .hidden-module-item { background: rgba(0,0,0,0.3); padding:8px 12px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; font-size:0.85rem;}
 
-/* CRITICAL FIX: Invisible Render Engine for Video Recording */
 .invisible-render-engine { position: absolute; width: 1px; height: 1px; opacity: 0.01; overflow: hidden; pointer-events: none; z-index: -9999; }
 .file-saved-badge { display:inline-flex; align-items:center; color:#10b981; font-size:0.75rem; font-weight:bold; gap:4px; margin-left:10px; }
 .file-clear-btn { background:#ef4444; color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:10px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; margin-left:5px;}
+.word-count-badge { background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; margin-bottom: 10px; display: inline-block;}
 </style>
 </head>
 <body>
@@ -241,8 +241,8 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 <header>
     <div class="header-title">
         <button class="btn-icon" onclick="toggleDataSidebar()"><span class="material-icons-round">menu</span></button>
-        <span class="material-icons-round" style="color:#fbbf24;">campaign</span> 
-        <span>News Studio Pro</span>
+        <span class="material-icons-round" style="color:#fbbf24;">auto_stories</span> 
+        <span>Islamic Story Studio</span>
     </div>
     <div style="display:flex; align-items:center;">
         <button class="btn-icon btn-reset-all" onclick="resetEntireStudio()" title="Delete All Data & Reset Studio">
@@ -264,21 +264,13 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     <label>Mistral AI API Key</label>
     <input type="password" id="mistralApiKey" placeholder="Enter Mistral API Key">
     
-    <h3 style="margin-top:20px;"><span class="material-icons-round" style="vertical-align:middle;">image</span> Image Search Settings</h3>
-    <label>Select Image Provider</label>
-    <select id="imgProviderSelect" onchange="toggleImageSettings()">
-        <option value="ranimage">Custom API (Ranimage / DuckDuckGo)</option>
-        <option value="google">Google Custom Search</option>
-    </select>
-    <div id="googleSettingsBox" style="display: none; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-        <label>Google API Key</label>
-        <input type="password" id="gApiKey" placeholder="Enter API Key">
-        <label>Search Engine ID (CX)</label>
-        <input type="text" id="gCxId" placeholder="Enter CX ID">
-    </div>
-    <div id="ranSettingsBox" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-        <label>Custom API URL (Ranimage)</label>
-        <input type="text" id="ranApiUrl" value="https://ranimage.onrender.com/api/search" placeholder="Enter Custom API URL">
+    <h3 style="margin-top:20px;"><span class="material-icons-round" style="vertical-align:middle;">image</span> SDXL Image APIs</h3>
+    <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+        <label>Primary Cloudflare API</label>
+        <input type="text" id="api1" value="https://cloudflare-sdxl-worker.mdrajubhai908.workers.dev/?prompt=" disabled style="opacity:0.6;">
+        <label>Fallback Cloudflare API</label>
+        <input type="text" id="api2" value="https://sd-image-generator.babu902644.workers.dev/?prompt=" disabled style="opacity:0.6;">
+        <p style="font-size:0.75rem; color:#94a3b8; margin:0;">*Images will be generated sequentially with a timer to avoid errors.</p>
     </div>
     
     <div class="sidebar-btns">
@@ -305,30 +297,30 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         <input type="file" id="liveUpload" accept="image/*" onchange="loadGlobalImage(this, 'live')">
     </div>
     <div class="overlay-setting">
-        <label><input type="checkbox" id="chkTopTicker" checked> Show Top Breaking News</label>
-        <input type="text" id="topTickerTxt" value="BREAKING NEWS - ताज़ा और बड़ी खबरें" placeholder="Enter Top Ticker Text">
+        <label><input type="checkbox" id="chkTopTicker" checked> Show Story Title</label>
+        <input type="text" id="topTickerTxt" value="ISLAMIC STORY - दिलचस्प वाक्या" placeholder="Enter Story Title Text">
         <label style="margin-top:10px; font-size:0.75rem;">Height</label>
         <input type="range" id="topTickerHeight" min="30" max="80" value="45">
         <div class="color-row"><span>Background Color:</span> <input type="color" id="topTickerColor" value="#ef4444"></div>
     </div>
     <div class="overlay-setting">
-        <label><input type="checkbox" id="chkNewsNumber" checked> Show News Number Badge</label>
+        <label><input type="checkbox" id="chkNewsNumber" checked> Show Episode/Part Number</label>
         <div class="color-row"><span>Background Color:</span> <input type="color" id="newsNumColor" value="#fbbf24"></div>
     </div>
     <div class="overlay-setting">
         <label><input type="checkbox" id="chkChannelName" checked> Show Channel Name</label>
-        <input type="text" id="channelNameTxt" value="RAN News Tek" placeholder="Enter Channel Name">
-        <div class="color-row"><span>Background Color:</span> <input type="color" id="channelNameColor" value="#b91c1c"></div>
+        <input type="text" id="channelNameTxt" value="Islamic Quotes" placeholder="Enter Channel Name">
+        <div class="color-row"><span>Background Color:</span> <input type="color" id="channelNameColor" value="#10b981"></div>
     </div>
     <div class="overlay-setting">
-        <label><input type="checkbox" id="chkHeadline" checked> Show Headline Ticker</label>
+        <label><input type="checkbox" id="chkHeadline" checked> Show Headline Strip</label>
     </div>
     <div class="overlay-setting">
         <label><input type="checkbox" id="chkSubscribe" checked> Show Subscribe Ticker (Bottom)</label>
-        <input type="text" id="subscribeTxt" value="कृपया हमारे चैनल को सब्सक्राइब करें और बेल आइकन दबाएं | पल-पल की ख़बरों के लिए जुड़े रहें |" placeholder="Enter Subscribe Text">
+        <input type="text" id="subscribeTxt" value="कृपया हमारे चैनल को सब्सक्राइब करें और बेल आइकन दबाएं | अल्लाह आपको सलामत रखे |" placeholder="Enter Subscribe Text">
         <label style="margin-top:10px; font-size:0.75rem;">Height</label>
         <input type="range" id="bottomTickerHeight" min="30" max="80" value="45">
-        <div class="color-row"><span>Background Color:</span> <input type="color" id="bottomTickerColor" value="#dc2626"></div>
+        <div class="color-row"><span>Background Color:</span> <input type="color" id="bottomTickerColor" value="#0f766e"></div>
     </div>
 </div>
 
@@ -338,16 +330,18 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         <button class="close-btn" onclick="toggleDataSidebar()"><span class="material-icons-round">close</span></button>
     </h3>
     <div class="box">
-        <div class="box-header"><span class="box-title">ℹ️ Source & Time Info</span></div>
+        <div class="box-header"><span class="box-title">ℹ️ Source Info</span></div>
         <div class="box-content" id="metaBox">No data yet.</div>
     </div>
     <div class="box">
-        <div class="box-header"><span class="box-title">📰 Headlines</span><button class="copy-btn" onclick="copyText('headlineBox')">Copy</button></div>
+        <div class="box-header"><span class="box-title">🖼️ Image Prompts</span><button class="copy-btn" onclick="copyText('headlineBox')">Copy</button></div>
         <div class="box-content" id="headlineBox">No data yet.</div>
     </div>
     <div class="box">
-        <div class="box-header"><span class="box-title">📝 Full Script</span><button class="copy-btn" onclick="copyText('scriptBox')">Copy</button></div>
-        <div class="box-content" id="scriptBox">No data yet.</div>
+        <div class="box-header"><span class="box-title">📝 Full Story Script</span><button class="copy-btn" onclick="copyText('scriptBox')">Copy</button></div>
+        <div class="box-content" id="scriptBox">
+            No data yet.
+        </div>
     </div>
 </div>
 
@@ -356,7 +350,7 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     <!-- MODULE 1: VIDEO STUDIO -->
     <div class="module-panel" id="mod-studio">
         <div class="panel-header" onclick="toggleCollapse('mod-studio')">
-            <h2 class="panel-title"><span class="material-icons-round">movie</span> 1. Live Video Studio & Export</h2>
+            <h2 class="panel-title"><span class="material-icons-round">movie</span> 1. Story Video Studio & Export</h2>
             <div class="panel-actions">
                 <button class="panel-btn" onclick="hideModule('mod-studio', 'Video Studio', event)" title="Hide from Home"><span class="material-icons-round">visibility_off</span></button>
                 <button class="panel-btn toggle-icon"><span class="material-icons-round">expand_less</span></button>
@@ -364,7 +358,7 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         </div>
         <div class="panel-content">
             <div class="input-group">
-                <label>Background Music (BGM) [Auto loops to match news length]</label>
+                <label>Background Music (BGM) [Auto loops to match story length]</label>
                 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                     <input type="file" id="bgmInput" accept="audio/*" style="flex:2; min-width:150px;" onchange="handleBgmUpload(this)">
                     <span id="bgmSavedBadge" class="file-saved-badge" style="display:none;">✅ Saved <button class="file-clear-btn" onclick="clearBgm()">×</button></span>
@@ -376,7 +370,7 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
             </div>
 
             <div class="input-group">
-                <label>Breaking News Clip (2 sec video) [Optional Transition]</label>
+                <label>Transition Clip (2 sec video) [Optional]</label>
                 <div style="position:relative; display:flex; align-items:center; gap:10px;">
                     <span id="transVidSpinner" class="uploading-badge"><span class="spin material-icons-round" style="font-size:10px;">sync</span> Processing...</span>
                     <input type="file" id="transitionVideoInput" accept="video/mp4,video/webm" style="flex:1;" onchange="loadTransitionVideo(this)">
@@ -407,19 +401,17 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     </div>
 
     <!-- MODULE 2: QUICK PASTE -->
-    <div class="module-panel" id="mod-paste">
+    <div class="module-panel" id="mod-paste" style="display:none;">
         <div class="panel-header" onclick="toggleCollapse('mod-paste')">
-            <h2 class="panel-title"><span class="material-icons-round">content_paste</span> Quick Paste & Auto-Segment</h2>
+            <h2 class="panel-title"><span class="material-icons-round">content_paste</span> Quick Paste Story</h2>
             <div class="panel-actions">
                 <button class="panel-btn" onclick="hideModule('mod-paste', 'Quick Paste Script', event)" title="Hide from Home"><span class="material-icons-round">visibility_off</span></button>
                 <button class="panel-btn toggle-icon"><span class="material-icons-round">expand_less</span></button>
             </div>
         </div>
         <div class="panel-content">
-            <label>अपनी पूरी स्क्रिप्ट यहाँ पेस्ट करें। सिस्टम 1, 2, 3 नंबरों से ख़बरों को पहचान लेगा।</label>
-            <textarea id="quickPasteScript" placeholder="नमस्कार दोस्तों...
-1. नोएडा मजदूर आंदोलन...
-2. सुप्रीम कोर्ट..." style="min-height: 80px;"></textarea>
+            <label>अपनी कहानी यहाँ पेस्ट करें। (सिस्टम इसे पैराग्राफ के हिसाब से बाँट देगा)</label>
+            <textarea id="quickPasteScript" placeholder="एक दफा का ज़िक्र है..." style="min-height: 80px;"></textarea>
             <button class="btn-action-green" style="margin-top:0;" onclick="createSegmentsFromAdvancedPaste()">
                 <span class="material-icons-round">auto_awesome</span> Create Segments
             </button>
@@ -429,49 +421,30 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     <!-- MODULE 3: AI GENERATE -->
     <div class="module-panel" id="mod-ai">
         <div class="panel-header" onclick="toggleCollapse('mod-ai')">
-            <h2 class="panel-title"><span class="material-icons-round">rss_feed</span> 2. Generate News Script & Images</h2>
+            <h2 class="panel-title"><span class="material-icons-round">auto_stories</span> 2. Generate Islamic Story & Images</h2>
             <div class="panel-actions">
-                <button class="panel-btn" onclick="hideModule('mod-ai', 'AI Script Generator', event)" title="Hide from Home"><span class="material-icons-round">visibility_off</span></button>
+                <button class="panel-btn" onclick="hideModule('mod-ai', 'AI Story Generator', event)" title="Hide from Home"><span class="material-icons-round">visibility_off</span></button>
                 <button class="panel-btn toggle-icon"><span class="material-icons-round">expand_less</span></button>
             </div>
         </div>
         <div class="panel-content">
             <div class="input-group">
-                <label>Select Category</label>
-                <select id="newsCategory">
-                    <option value="general">🌍 General News (Top Headlines)</option>
-                    <option value="govt_rules">⚖️ गवर्नमेंट का नया नियम (New Rules)</option>
-                    <option value="govt_schemes">🎁 भारत सरकार की नई योजना (Schemes)</option>
-                </select>
+                <label>Story Topic / Title</label>
+                <input type="text" id="storyTopic" placeholder="उदा: हज़रत उमर का इंसाफ, या कोई भी कहानी...">
             </div>
             <div class="grid-row">
                 <div>
-                    <label>Headlines Count</label>
-                    <select id="newsCount">
-                        <option value="5">Top 5</option>
-                        <option value="10">Top 10</option>
+                    <label>Story Length</label>
+                    <select id="storyLength">
+                        <option value="2000-3000 words" selected>Long (2000 - 3000 Words)</option>
+                        <option value="1000-1500 words">Medium (1000 - 1500 Words)</option>
                     </select>
                 </div>
-                <div>
-                    <label>Script Length</label>
-                    <select id="lineCount">
-                        <option value="2 lines">Short (2 Lines)</option>
-                        <option value="5 lines">Detailed (5 Lines)</option>
-                    </select>
-                </div>
-            </div>
-            <div class="input-group">
-                <label>Images per Headline</label>
-                <select id="imageFetchCount">
-                    <option value="2">2 Images</option>
-                    <option value="5" selected>5 Images</option>
-                    <option value="10">10 Images</option>
-                </select>
             </div>
             <button class="btn-fetch" id="fetchBtn" onclick="fetchAndCreateSegments()">
-                <span class="material-icons-round">smart_toy</span> Fetch AI News
+                <span class="material-icons-round">smart_toy</span> Generate Story & Prompts
             </button>
-            <div class="loader-overlay" id="mainLoader"><span class="material-icons-round spin">sync</span> Generating...</div>
+            <div class="loader-overlay" id="mainLoader"><span class="material-icons-round spin">sync</span> Generating Story (This might take a minute)...</div>
         </div>
     </div>
 
@@ -479,7 +452,7 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 
     <!-- ALL AUDIO CONTROLS ROW -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; margin-top:20px; gap:5px; flex-wrap:wrap;">
-        <h3 style="margin:0; color:#a78bfa; font-size:1rem;"><span class="material-icons-round" style="vertical-align:middle; font-size:1.2rem;">library_music</span> 3. Audio Segments</h3>
+        <h3 style="margin:0; color:#a78bfa; font-size:1rem;"><span class="material-icons-round" style="vertical-align:middle; font-size:1.2rem;">library_music</span> 3. Story Audio & Image Segments</h3>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button class="btn-action-orange" style="width:auto; padding:6px 12px; margin:0; font-size:0.8rem; border-radius:6px;" onclick="generateAllAudioSequence()">
                 <span class="material-icons-round" style="font-size:1rem;">graphic_eq</span> Gen All Audio
@@ -494,25 +467,24 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     
     <div id="empty-state" style="text-align:center; color:#64748b; margin-top:30px;">
         <span class="material-icons-round" style="font-size:3rem; opacity:0.3;">format_quote</span>
-        <p>No scripts yet. Click "Fetch AI News" or Paste Script.</p>
+        <p>No story generated yet. Click "Generate Story" above.</p>
     </div>
 </div>
 
-<button class="fab-add" onclick="addSegment('','',null,'')">
+<button class="fab-add" onclick="addSegment('','','', null)">
     <span class="material-icons-round">add</span> Add Box
 </button>
 
-<!-- CRITICAL FIX: Invisible Media Render Engine for Background Recording -->
 <div id="hidden-media-container" class="invisible-render-engine"></div>
 
 <script>
     // --- INDEXED DB SETUP FOR OFFLINE PERSISTENCE ---
-    const DB_NAME = "NewsStudioAppDB_V3";
+    const DB_NAME = "StoryStudioAppDB_V1";
     const STORE_NAME = "workspaceData";
 
     function openDB() {
         return new Promise((resolve, reject) => {
-            let req = indexedDB.open(DB_NAME, 3);
+            let req = indexedDB.open(DB_NAME, 1);
             req.onupgradeneeded = (e) => { 
                 let db = e.target.result;
                 if(!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME); 
@@ -523,36 +495,15 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     }
 
     async function setDB(key, val) {
-        try {
-            let db = await openDB();
-            return new Promise((resolve, reject) => {
-                let tx = db.transaction(STORE_NAME, "readwrite");
-                tx.objectStore(STORE_NAME).put(val, key);
-                tx.oncomplete = resolve; tx.onerror = reject;
-            });
-        } catch(e) {}
+        try { let db = await openDB(); return new Promise((resolve, reject) => { let tx = db.transaction(STORE_NAME, "readwrite"); tx.objectStore(STORE_NAME).put(val, key); tx.oncomplete = resolve; tx.onerror = reject; }); } catch(e) {}
     }
 
     async function getDB(key) {
-        try {
-            let db = await openDB();
-            return new Promise((resolve, reject) => {
-                let tx = db.transaction(STORE_NAME, "readonly");
-                let req = tx.objectStore(STORE_NAME).get(key);
-                req.onsuccess = () => resolve(req.result); req.onerror = reject;
-            });
-        } catch(e) { return null; }
+        try { let db = await openDB(); return new Promise((resolve, reject) => { let tx = db.transaction(STORE_NAME, "readonly"); let req = tx.objectStore(STORE_NAME).get(key); req.onsuccess = () => resolve(req.result); req.onerror = reject; }); } catch(e) { return null; }
     }
 
     async function clearDB() {
-        try {
-            let db = await openDB();
-            return new Promise((resolve, reject) => {
-                let tx = db.transaction(STORE_NAME, "readwrite");
-                tx.objectStore(STORE_NAME).clear();
-                tx.oncomplete = resolve; tx.onerror = reject;
-            });
-        } catch(e) {}
+        try { let db = await openDB(); return new Promise((resolve, reject) => { let tx = db.transaction(STORE_NAME, "readwrite"); tx.objectStore(STORE_NAME).clear(); tx.oncomplete = resolve; tx.onerror = reject; }); } catch(e) {}
     }
 
     // GLOBALS
@@ -565,7 +516,7 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     // Media Blobs
     let globalBgmBlob = null;
     let globalTransVidBlob = null;
-    let finalRecordedBlob = null; // Holds the completed video recording
+    let finalRecordedBlob = null; 
 
     // Playback Controls
     let isVideoEngineRunning = false;
@@ -588,12 +539,10 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 
     window.onload = async () => { 
         loadSettings(); 
-        toggleImageSettings(); 
         restoreHiddenModulesState();
         await loadWorkspaceFromDB(); 
     }
 
-    // --- UI MODULE COLLAPSE & HIDE LOGIC ---
     function toggleCollapse(panelId) {
         const panel = document.getElementById(panelId);
         panel.classList.toggle('collapsed');
@@ -606,18 +555,14 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         event.stopPropagation();
         document.getElementById(panelId).style.display = "none";
         let hiddenArr = JSON.parse(localStorage.getItem('hiddenModules') || "[]");
-        if(!hiddenArr.find(m => m.id === panelId)) {
-            hiddenArr.push({id: panelId, title: title});
-            localStorage.setItem('hiddenModules', JSON.stringify(hiddenArr));
-        }
+        if(!hiddenArr.find(m => m.id === panelId)) { hiddenArr.push({id: panelId, title: title}); localStorage.setItem('hiddenModules', JSON.stringify(hiddenArr)); }
         renderHiddenModulesList();
     }
 
     function unhideModule(panelId) {
         document.getElementById(panelId).style.display = "block";
         let hiddenArr = JSON.parse(localStorage.getItem('hiddenModules') || "[]");
-        hiddenArr = hiddenArr.filter(m => m.id !== panelId);
-        localStorage.setItem('hiddenModules', JSON.stringify(hiddenArr));
+        hiddenArr = hiddenArr.filter(m => m.id !== panelId); localStorage.setItem('hiddenModules', JSON.stringify(hiddenArr));
         renderHiddenModulesList();
     }
 
@@ -632,12 +577,9 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         let hiddenArr = JSON.parse(localStorage.getItem('hiddenModules') || "[]");
         list.innerHTML = "";
         if(hiddenArr.length === 0) { list.innerHTML = '<div style="color:#94a3b8; font-size:0.8rem; font-style:italic;">No modules hidden.</div>'; return; }
-        hiddenArr.forEach(m => {
-            list.innerHTML += `<div class="hidden-module-item"><span>${m.title}</span><button class="btn-action-green" style="width:auto; padding:4px 10px; margin:0;" onclick="unhideModule('${m.id}')">Unhide</button></div>`;
-        });
+        hiddenArr.forEach(m => { list.innerHTML += `<div class="hidden-module-item"><span>${m.title}</span><button class="btn-action-green" style="width:auto; padding:4px 10px; margin:0;" onclick="unhideModule('${m.id}')">Unhide</button></div>`; });
     }
 
-    // Refresh Canvas Player Safely
     function refreshStudioCanvas() {
         const canvas = document.getElementById("liveCanvas"); const ctx = canvas.getContext("2d");
         ctx.fillStyle = "black"; ctx.fillRect(0,0, canvas.width, canvas.height);
@@ -652,13 +594,11 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         btnPreview.innerHTML = '<span class="material-icons-round">play_circle</span> Play & Record Video';
         isPreviewPlaying = false; isVideoEngineRunning = false;
         
-        // Reset Download Button if sequence interrupted
         const btnDownload = document.getElementById("btnDownload");
         btnDownload.disabled = true; btnDownload.style.background = "#4b5563"; btnDownload.style.cursor = "not-allowed";
         document.getElementById("recordingStatusText").innerText = "";
     }
 
-    // --- AUTO SAVE & DB ---
     async function saveWorkspace() {
         let dataToSave = {};
         for(let id in segmentsData) {
@@ -680,44 +620,28 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         }
         await setDB("segmentsData", dataToSave);
         await setDB("segmentCount", segmentCount);
-        
         if(globalBgmBlob) await setDB("globalBgm", globalBgmBlob);
         if(globalTransVidBlob) await setDB("globalTransVid", globalTransVidBlob);
-        
-        const bgmVol = document.getElementById('bgmVolume').value;
-        await setDB("bgmVol", bgmVol);
+        await setDB("bgmVol", document.getElementById('bgmVolume').value);
     }
 
     async function loadWorkspaceFromDB() {
         let savedData = await getDB("segmentsData");
         let savedCount = await getDB("segmentCount");
-        
-        // Restore Global BGM
         let savedBgm = await getDB("globalBgm");
         if(savedBgm) { 
             globalBgmBlob = savedBgm; 
-            document.getElementById('bgmInput').style.display = "none";
-            document.getElementById('bgmSavedBadge').style.display = "inline-flex";
+            document.getElementById('bgmInput').style.display = "none"; document.getElementById('bgmSavedBadge').style.display = "inline-flex";
         }
-        
-        // Restore Global Transition Video
         let savedTransVid = await getDB("globalTransVid");
         if(savedTransVid) { 
             globalTransVidBlob = savedTransVid;
-            document.getElementById('transitionVideoInput').style.display = "none";
-            document.getElementById('transVidSavedBadge').style.display = "inline-flex";
-            
-            // Create physical element in hidden container for recording safety
-            const transVid = document.createElement("video");
-            transVid.id = "activeTransitionVideo";
-            transVid.src = URL.createObjectURL(savedTransVid);
+            document.getElementById('transitionVideoInput').style.display = "none"; document.getElementById('transVidSavedBadge').style.display = "inline-flex";
+            const transVid = document.createElement("video"); transVid.id = "activeTransitionVideo"; transVid.src = URL.createObjectURL(savedTransVid);
             transVid.crossOrigin = "anonymous"; transVid.playsInline = true; transVid.muted = true; transVid.preload = "auto";
-            document.getElementById('hidden-media-container').appendChild(transVid);
-            transVid.load();
+            document.getElementById('hidden-media-container').appendChild(transVid); transVid.load();
         }
-        
-        let savedVol = await getDB("bgmVol");
-        if(savedVol) document.getElementById('bgmVolume').value = savedVol;
+        let savedVol = await getDB("bgmVol"); if(savedVol) document.getElementById('bgmVolume').value = savedVol;
 
         if(savedData && Object.keys(savedData).length > 0) {
             segmentCount = savedCount || 0;
@@ -725,15 +649,11 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
                 let s = savedData[id];
                 addSegmentDOM(id, s.text, s.voice, s.rate, s.newsIndex, s.headline);
                 segmentsData[id] = { 
-                    images: [], imagesBlobs: s.imagesBlobs || [], 
-                    segmentVideo: null, segmentVideoBlob: s.segmentVideoBlob || null,
-                    audioUrl: null, manualAudioBlob: s.manualAudioBlob || null,
-                    duration: s.audioDuration || 0, videoDuration: s.videoDuration || 0,
+                    images: [], imagesBlobs: s.imagesBlobs || [], segmentVideo: null, segmentVideoBlob: s.segmentVideoBlob || null,
+                    audioUrl: null, manualAudioBlob: s.manualAudioBlob || null, duration: s.audioDuration || 0, videoDuration: s.videoDuration || 0,
                     headline: s.headline, newsIndex: s.newsIndex, useVideoAudio: s.useVideoAudio || false 
                 };
-                
                 document.getElementById(`use-vid-audio-${id}`).checked = segmentsData[id].useVideoAudio;
-                
                 if(s.imagesBlobs && s.imagesBlobs.length > 0) s.imagesBlobs.forEach(blob => restoreImageToGallery(blob, id));
                 if(s.segmentVideoBlob) restoreVideoToGallery(s.segmentVideoBlob, id);
                 if(s.manualAudioBlob) restoreAudioToPlayer(s.manualAudioBlob, id);
@@ -743,55 +663,36 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     }
 
     async function resetEntireStudio() {
-        if(!confirm("⚠️ चेतावनी! क्या आप पक्का पूरा स्टूडियो साफ़ करना चाहते हैं? आपकी सारी इमेजेस, वीडियो और ऑडियो डिलीट हो जाएंगे। (API Settings सुरक्षित रहेगी)")) return;
-        
-        refreshStudioCanvas();
-        await clearDB();
-        
-        document.getElementById('hidden-media-container').innerHTML = ""; // Wipe all memory videos
-        segmentsList.innerHTML = ""; segmentsData = {}; segmentCount = 0;
-        finalRecordedBlob = null;
-        
+        if(!confirm("⚠️ चेतावनी! क्या आप पक्का पूरा स्टूडियो साफ़ करना चाहते हैं? आपकी सारी इमेजेस, वीडियो और ऑडियो डिलीट हो जाएंगे।")) return;
+        refreshStudioCanvas(); await clearDB();
+        document.getElementById('hidden-media-container').innerHTML = ""; 
+        segmentsList.innerHTML = ""; segmentsData = {}; segmentCount = 0; finalRecordedBlob = null;
         globalBgmBlob = null; globalTransVidBlob = null;
-        document.getElementById('bgmInput').style.display = "block"; document.getElementById('bgmInput').value = "";
-        document.getElementById('bgmSavedBadge').style.display = "none";
-        
-        document.getElementById('transitionVideoInput').style.display = "block"; document.getElementById('transitionVideoInput').value = "";
-        document.getElementById('transVidSavedBadge').style.display = "none";
-        
+        document.getElementById('bgmInput').style.display = "block"; document.getElementById('bgmInput').value = ""; document.getElementById('bgmSavedBadge').style.display = "none";
+        document.getElementById('transitionVideoInput').style.display = "block"; document.getElementById('transitionVideoInput').value = ""; document.getElementById('transVidSavedBadge').style.display = "none";
         checkEmpty(); alert("✔️ स्टूडियो बिल्कुल फ्रेश हो गया है!");
     }
 
+    // Default to Urdu voices for Islamic Stories
     const voiceOptions = `
-        <optgroup label="📺 Professional Hindi News">
-            <option value="hi-male" selected>🇮🇳 Male: Madhur (Deep News)</option>
-            <option value="hi-female">🇮🇳 Female: Swara (Standard Anchor)</option>
-        </optgroup>
-        <optgroup label="🗣️ Casual & Urdu">
+        <optgroup label="🗣️ Storytellers (Urdu Tone)">
+             <option value="ur-pk-male" selected>🇵🇰 Male: Asad (Storyteller)</option>
              <option value="ur-male">🇮🇳 Male: Salman (Casual)</option>
-             <option value="ur-pk-male">🇵🇰 Male: Asad (Poetic/Heavy)</option>
              <option value="ur-pk-female">🇵🇰 Female: Uzma (Soft)</option>
+        </optgroup>
+        <optgroup label="📺 Standard Hindi">
+            <option value="hi-male">🇮🇳 Male: Madhur (Deep)</option>
+            <option value="hi-female">🇮🇳 Female: Swara</option>
         </optgroup>
     `;
 
     function toggleSidebar() { document.getElementById('apiSidebar').classList.toggle('active'); document.getElementById('dataSidebar').classList.remove('active'); }
     function toggleDataSidebar() { document.getElementById('dataSidebar').classList.toggle('active'); document.getElementById('apiSidebar').classList.remove('active');}
     
-    function toggleImageSettings() {
-        const provider = document.getElementById('imgProviderSelect').value;
-        document.getElementById('googleSettingsBox').style.display = 'none'; document.getElementById('ranSettingsBox').style.display = 'none';
-        if(provider === 'google') document.getElementById('googleSettingsBox').style.display = 'block';
-        else if(provider === 'ranimage') document.getElementById('ranSettingsBox').style.display = 'block';
-    }
-
     function saveSettings() { 
         localStorage.setItem('aiProvider', document.getElementById('aiProviderSelect').value);
         localStorage.setItem('groqApiKey', document.getElementById('groqApiKey').value);
         localStorage.setItem('mistralApiKey', document.getElementById('mistralApiKey').value);
-        localStorage.setItem('imageProvider', document.getElementById('imgProviderSelect').value);
-        localStorage.setItem('googleApiKey', document.getElementById('gApiKey').value); 
-        localStorage.setItem('googleCxId', document.getElementById('gCxId').value); 
-        localStorage.setItem('ranApiUrl', document.getElementById('ranApiUrl').value);
         alert('Settings Saved Successfully!'); toggleSidebar(); 
     }
     
@@ -799,36 +700,23 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         const aiProvider = localStorage.getItem('aiProvider');
         const groqKey = localStorage.getItem('groqApiKey');
         const mistralKey = localStorage.getItem('mistralApiKey');
-        const imgProv = localStorage.getItem('imageProvider');
-        const key = localStorage.getItem('googleApiKey'); 
-        const cx = localStorage.getItem('googleCxId'); 
-        const ranUrl = localStorage.getItem('ranApiUrl');
-        
         if(aiProvider) document.getElementById('aiProviderSelect').value = aiProvider;
         if(groqKey) document.getElementById('groqApiKey').value = groqKey;
         if(mistralKey) document.getElementById('mistralApiKey').value = mistralKey;
-        if(imgProv) document.getElementById('imgProviderSelect').value = imgProv;
-        if(key) document.getElementById('gApiKey').value = key; 
-        if(cx) document.getElementById('gCxId').value = cx; 
-        if(ranUrl) document.getElementById('ranApiUrl').value = ranUrl;
     }
     
     function clearSettings() { 
         localStorage.clear();
         document.getElementById('aiProviderSelect').value = 'groq'; document.getElementById('groqApiKey').value = '';
-        document.getElementById('mistralApiKey').value = ''; document.getElementById('imgProviderSelect').value = 'ranimage';
-        document.getElementById('gApiKey').value = ''; document.getElementById('gCxId').value = ''; 
-        document.getElementById('ranApiUrl').value = 'https://ranimage.onrender.com/api/search';
-        toggleImageSettings(); alert('Settings Cleared!'); 
+        document.getElementById('mistralApiKey').value = ''; 
+        alert('Settings Cleared!'); 
     }
 
     function loadGlobalImage(input, type) {
         if(input.files && input.files[0]) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                const img = new Image();
-                img.onload = () => { if(type === 'logo') globalLogoImg = img; else globalLiveImg = img; };
-                img.src = e.target.result;
+                const img = new Image(); img.onload = () => { if(type === 'logo') globalLogoImg = img; else globalLiveImg = img; }; img.src = e.target.result;
             }
             reader.readAsDataURL(input.files[0]);
         }
@@ -837,83 +725,78 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     function syncAllVoices(selectedValue) { const selects = document.querySelectorAll('select[id^="voice-"]'); selects.forEach(select => { select.value = selectedValue; }); saveWorkspace(); }
     function syncAllSpeeds(selectedValue) { const selects = document.querySelectorAll('select[id^="rate-"]'); selects.forEach(select => { select.value = selectedValue; }); saveWorkspace(); }
 
-    // Perfected AI Script Parser
+    // Parse pasted script (if user pastes manually)
     function parseScriptIntoSegments(rawText) {
-        let cleanText = rawText.replace(/[\*#]/g, '').trim();
-        let lines = cleanText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        let lines = rawText.split('\n').filter(l => l.trim().length > 0);
         let parsedSegments = [];
-        let currentMode = 'INTRO'; let currentHeadline = 'Intro / सारांश'; let currentScript = []; let newsCounter = 0;
-
+        let currentScript = []; let counter = 1;
+        
         for (let i = 0; i < lines.length; i++) {
-            let line = lines[i]; let numMatch = line.match(/^(\d+)[\.\)]\s*(.*)/);
-            if (numMatch) {
-                if (currentScript.length > 0) parsedSegments.push({ type: currentMode, newsIndex: currentMode === 'NEWS' ? newsCounter : null, headline: currentHeadline, script: currentScript.join('\n') });
-                newsCounter++; currentMode = 'NEWS'; currentHeadline = numMatch[2] || `News ${newsCounter}`; currentScript = [];
-            } else {
-                let lowerLine = line.toLowerCase();
-                let isOutroTrigger = lowerLine.includes('सब्सक्राइब') || lowerLine.includes('धन्यवाद') || lowerLine.includes('जय हिंद') || lowerLine.includes('दोस्तों, अगर');
-                if (currentMode === 'NEWS' && isOutroTrigger) {
-                    if (currentScript.length > 0) parsedSegments.push({ type: currentMode, newsIndex: newsCounter, headline: currentHeadline, script: currentScript.join('\n') });
-                    currentMode = 'OUTRO'; currentHeadline = 'Outro / चैनल अपील'; currentScript = [line];
-                } else { currentScript.push(line); }
+            currentScript.push(lines[i]);
+            // Group 3-4 lines into one segment
+            if(currentScript.length >= 3 || i === lines.length - 1) {
+                parsedSegments.push({ text: currentScript.join(' '), prompt: "Islamic historical scene, highly detailed, 8k resolution", index: counter });
+                counter++; currentScript = [];
             }
         }
-        if (currentScript.length > 0) parsedSegments.push({ type: currentMode, newsIndex: currentMode === 'NEWS' ? newsCounter : null, headline: currentHeadline, script: currentScript.join('\n') });
         return parsedSegments;
     }
 
     async function createSegmentsFromAdvancedPaste() {
         const text = document.getElementById('quickPasteScript').value.trim();
         if(!text) return alert("Please paste the script first.");
-        const imageLimit = document.getElementById('imageFetchCount').value;
         const parsedData = parseScriptIntoSegments(text);
         
         segmentsList.innerHTML = ''; segmentsData = {}; segmentCount = 0; checkEmpty();
+        let segIds = [];
 
         for(let i=0; i<parsedData.length; i++) {
             let seg = parsedData[i];
-            let preSelectVoice = (i % 2 === 0) ? 'hi-male' : 'hi-female';
-            let segId = addSegment(seg.script, preSelectVoice, seg.newsIndex, seg.headline);
-            let searchKeyword = (seg.type === 'INTRO' || seg.type === 'OUTRO') ? "Breaking News India" : seg.headline;
-            await fetchImagesForSegment(segId, searchKeyword, imageLimit);
+            let segId = addSegment(seg.text, "ur-pk-male", seg.index, seg.prompt);
+            segIds.push(segId);
         }
         document.getElementById('quickPasteScript').value = ""; saveWorkspace();
+        // Trigger image generation sequentially
+        fetchStoryImagesSequentially(parsedData, segIds);
     }
 
+    // MAIN AI STORY GENERATION
     async function fetchAndCreateSegments() {
         const aiProvider = document.getElementById('aiProviderSelect').value;
-        const groqKey = localStorage.getItem('groqApiKey');
-        const mistralKey = localStorage.getItem('mistralApiKey');
+        const groqKey = document.getElementById('groqApiKey').value;
+        const mistralKey = document.getElementById('mistralApiKey').value;
         
         if(aiProvider === 'groq' && !groqKey) { alert("कृपया सेटिंग्स में जाकर पहले Groq API Key सेव करें!"); toggleSidebar(); return; }
         if(aiProvider === 'mistral' && !mistralKey) { alert("कृपया सेटिंग्स में जाकर पहले Mistral API Key सेव करें!"); toggleSidebar(); return; }
 
-        const count = document.getElementById('newsCount').value;
-        const lines = document.getElementById('lineCount').value;
-        const category = document.getElementById('newsCategory').value; 
-        const imageLimit = document.getElementById('imageFetchCount').value;
+        const topic = document.getElementById('storyTopic').value || "एक इस्लामिक प्रेरणादायक कहानी";
+        const length = document.getElementById('storyLength').value;
         const btn = document.getElementById('fetchBtn'); const loader = document.getElementById('mainLoader');
 
         segmentsList.innerHTML = ''; segmentsData = {}; segmentCount = 0;
         document.getElementById("metaBox").innerHTML = ''; document.getElementById("headlineBox").innerHTML = ''; document.getElementById("scriptBox").innerHTML = '';
         checkEmpty(); btn.disabled = true; loader.style.display = 'block';
 
-        const prompt = `आप एक प्रोफेशनल हिंदी न्यूज़ एंकर के लिए स्क्रिप्ट राइटर हैं।
-मुझे इंटरनेट की ताज़ा और एकदम नई खबरों के आधार पर न्यूज़ स्क्रिप्ट चाहिए।
-Category: ${category} | Count: ${count} | Length: ${lines}
+        const promptText = `आप एक प्रोफेशनल कहानीकार हैं। आपको लगभग ${length} की एक बेहतरीन और ज्ञानवर्धक 'इस्लामिक कहानी' लिखनी है।
+        विषय: ${topic}
+        कहानी का लहजा पाकिस्तानी उर्दू (जैसे अस्सलामु अलैकुम, वालिद, वालिदा, अल्लाह का करम, वगैरह) होना चाहिए, लेकिन पूरी स्क्रिप्ट देवनागरी (Hindi) लिपि में लिखी होनी चाहिए।
 
-STRICT RULES (Do not use ** or ||| tags):
-1. सबसे पहले Intro पैराग्राफ लिखें (बिना नंबर)।
-2. फिर खबरों को नंबर दें (1. [Headline], फिर अगली लाइन में news body)।
-3. अंत में Outro पैराग्राफ लिखें।`;
+        STRICT FORMAT (Must follow exactly):
+        कहानी को 5 से 10 हिस्सों (Segments) में बांटें।
+        हर हिस्से के लिए यह फॉर्मेट इस्तेमाल करें:
+
+        Segment [Number]:
+        Text: [कहानी का हिस्सा हिंदी में]
+        Prompt: [इस हिस्से को दर्शाने के लिए एक शानदार English Image Generation Prompt, no quotes]
+        `;
 
         let apiUrl = ''; let apiHeaders = { 'Content-Type': 'application/json', 'Accept': 'application/json' }; let apiBody = {};
         if (aiProvider === 'groq') {
             apiUrl = 'https://api.groq.com/openai/v1/chat/completions'; apiHeaders['Authorization'] = `Bearer ${groqKey}`;
-            apiBody = { model: "llama-3.3-70b-versatile", messages: [{role: "user", content: prompt}], temperature: 0.85 };
+            apiBody = { model: "llama-3.3-70b-versatile", messages: [{role: "user", content: promptText}], temperature: 0.8 };
         } else {
             apiUrl = 'https://api.mistral.ai/v1/chat/completions'; apiHeaders['Authorization'] = `Bearer ${mistralKey}`;
-            apiBody = { model: "mistral-large-latest", messages: [{role: "user", content: prompt}], temperature: 0.85 };
+            apiBody = { model: "mistral-large-latest", messages: [{role: "user", content: promptText}], temperature: 0.8 };
         }
 
         try {
@@ -922,56 +805,102 @@ STRICT RULES (Do not use ** or ||| tags):
             if (!response.ok || data.error) throw new Error(data.error ? data.error.message : response.statusText);
 
             const aiText = data.choices[0].message.content;
+            
+            // Parsing the structured AI output
+            let parsedData = [];
+            let parts = aiText.split(/Segment \d+:/i).filter(p => p.trim() !== '');
+            parts.forEach((part, index) => {
+                let textMatch = part.match(/Text:\s*([\s\S]*?)Prompt:/i);
+                let promptMatch = part.match(/Prompt:\s*([\s\S]*?)(?=Segment|$)/i);
+                if(textMatch && promptMatch) {
+                    parsedData.push({ text: textMatch[1].trim(), prompt: promptMatch[1].trim(), index: index + 1 });
+                }
+            });
+
+            // Fallback if parsing fails
+            if(parsedData.length === 0) parsedData = parseScriptIntoSegments(aiText);
+            
+            // Calculate Word Count
+            let totalWords = 0; parsedData.forEach(p => totalWords += p.text.split(/\s+/).length);
+
             document.getElementById('dataSidebar').classList.add('active');
             const sourceName = aiProvider === 'groq' ? "Groq AI" : "Mistral AI";
             document.getElementById("metaBox").innerHTML += `<div class="meta-item"><span><span class="meta-source">${sourceName}</span></span></div>`;
-            document.getElementById("scriptBox").innerText = aiText;
+            document.getElementById("scriptBox").innerHTML = `<div class="word-count-badge">Total Words: ~${totalWords}</div><br><div style="white-space:pre-wrap;">${aiText}</div>`;
 
-            const parsedData = parseScriptIntoSegments(aiText);
-            if(parsedData.length === 0) throw new Error("AI failed format.");
-
+            let segIds = [];
             for(let i=0; i<parsedData.length; i++) {
                 let seg = parsedData[i];
-                let preSelectVoice = (i % 2 === 0) ? 'hi-male' : 'hi-female';
-                let segId = addSegment(seg.script, preSelectVoice, seg.newsIndex, seg.headline);
-                document.getElementById("headlineBox").innerHTML += `<div class="headline-item">${seg.headline}</div>`;
-                let searchKeyword = (seg.type === 'INTRO' || seg.type === 'OUTRO') ? "Breaking News India" : seg.headline;
-                await fetchImagesForSegment(segId, searchKeyword, imageLimit);
+                let segId = addSegment(seg.text, "ur-pk-male", seg.index, seg.prompt);
+                segIds.push(segId);
+                document.getElementById("headlineBox").innerHTML += `<div class="headline-item"><strong>Part ${seg.index}:</strong> ${seg.prompt}</div>`;
             }
             saveWorkspace();
+            
+            // Start Image Generation Sequentially
+            fetchStoryImagesSequentially(parsedData, segIds);
+
         } catch (err) { alert("Error: " + err.message); } 
         finally { btn.disabled = false; loader.style.display = 'none'; }
     }
 
-    function addSegmentDOM(id, text, voice, rate, newsIndex, headline) {
-        let displayTitle = headline ? headline : text;
-        if(displayTitle.length > 50) displayTitle = displayTitle.substring(0, 50) + "...";
-        let titleText = newsIndex ? `News #${newsIndex} : ${displayTitle}` : `${displayTitle}`;
+    // SEQUENTIAL IMAGE GENERATION LOGIC
+    async function fetchStoryImagesSequentially(parsedData, segIds) {
+        const api1 = document.getElementById('api1').value; // "https://cloudflare-sdxl-worker.mdrajubhai908.workers.dev/?prompt="
+        const api2 = document.getElementById('api2').value; // Fallback
 
+        for(let i=0; i<parsedData.length; i++) {
+            let segId = segIds[i];
+            let prompt = parsedData[i].prompt;
+            const statusBox = document.getElementById(`img-status-${segId}`);
+            statusBox.style.display = "block"; statusBox.style.color = "#fbbf24";
+            statusBox.innerHTML = `<span class="spin material-icons-round" style="font-size:1.1rem; vertical-align:middle;">sync</span> Generating Image... Please wait.`;
+
+            try {
+                let enhancedPrompt = `Islamic historical story, ${prompt}, high quality, cinematic lighting, realistic`;
+                let res = await fetch(api1 + encodeURIComponent(enhancedPrompt));
+                
+                if(!res.ok) res = await fetch(api2 + encodeURIComponent(enhancedPrompt)); // Try Fallback
+                if(!res.ok) throw new Error("Image generation failed");
+
+                let blob = await res.blob();
+                if(!blob.type.startsWith('image/')) throw new Error("Not an image");
+                
+                segmentsData[segId].imagesBlobs.push(blob);
+                restoreImageToGallery(blob, segId);
+                statusBox.style.display = "none";
+            } catch(e) {
+                statusBox.innerHTML = `❌ Image Generation Failed. Try Manual Upload.`;
+                statusBox.style.color = "#ef4444";
+            }
+            // Timer gap between requests to ensure API doesn't block
+            await new Promise(r => setTimeout(r, 2000));
+        }
+        saveWorkspace();
+    }
+
+    function addSegmentDOM(id, text, voice, rate, newsIndex, headline) {
+        let displayTitle = `Part ${newsIndex || id}`;
         const div = document.createElement('div'); div.className = 'segment-card'; div.id = `seg-${id}`;
         div.innerHTML = `
             <div class="card-header">
-                <span class="card-title"><span class="material-icons-round" style="vertical-align:middle; color:#0ea5e9;">description</span> ${titleText}</span>
+                <span class="card-title"><span class="material-icons-round" style="vertical-align:middle; color:#0ea5e9;">description</span> ${displayTitle}</span>
                 <div class="header-actions">
                     <button class="btn-icon-action btn-delete" onclick="removeSegment(${id})" title="Delete"><span class="material-icons-round">close</span></button>
                 </div>
             </div>
-            <div style="display:flex; gap:10px; margin-bottom:10px;">
-                <input type="text" id="img-query-${id}" value="${headline || text.substring(0, 30)}" style="margin:0; flex:1;" placeholder="Search Image..." oninput="saveWorkspace()">
-                <button class="btn-action-green" style="margin:0; width:auto; padding:8px 12px; border-radius:8px;" onclick="manualImageSearch(${id})"><span class="material-icons-round">search</span></button>
-            </div>
             <div class="manual-upload-row">
                 <div class="manual-upload-item">
-                    <label style="color:#34d399;"><span class="material-icons-round" style="font-size:14px; vertical-align:middle;">image</span> Images</label>
+                    <label style="color:#34d399;"><span class="material-icons-round" style="font-size:14px; vertical-align:middle;">image</span> Add Image</label>
                     <span id="img-spin-${id}" class="uploading-badge"><span class="spin material-icons-round" style="font-size:10px;">sync</span> Uploading...</span>
                     <input type="file" accept="image/*" multiple onchange="uploadManualImage(this, ${id})">
                 </div>
                 <div class="manual-upload-item">
-                    <label style="color:#f472b6;"><span class="material-icons-round" style="font-size:14px; vertical-align:middle;">audiotrack</span> Audio</label>
+                    <label style="color:#f472b6;"><span class="material-icons-round" style="font-size:14px; vertical-align:middle;">audiotrack</span> Add Audio</label>
                     <input type="file" accept="audio/*" onchange="uploadManualAudio(this, ${id})">
                 </div>
                 <div class="manual-upload-item">
-                    <label style="color:#60a5fa;"><span class="material-icons-round" style="font-size:14px; vertical-align:middle;">movie</span> Video</label>
+                    <label style="color:#60a5fa;"><span class="material-icons-round" style="font-size:14px; vertical-align:middle;">movie</span> Add Video</label>
                     <span id="vid-spin-${id}" class="uploading-badge"><span class="spin material-icons-round" style="font-size:10px;">sync</span> Saving...</span>
                     <input type="file" accept="video/mp4,video/webm" onchange="uploadSegmentVideo(this, ${id})">
                 </div>
@@ -983,7 +912,7 @@ STRICT RULES (Do not use ** or ||| tags):
             </div>
             <div class="image-gallery-placeholder" id="img-status-${id}">Images/Videos will appear here...</div>
             <div class="image-gallery" id="gallery-${id}"></div>
-            <label>Select Anchor Voice</label>
+            <label>Select Voice</label>
             <select id="voice-${id}" onchange="syncAllVoices(this.value)">${voiceOptions}</select>
             <textarea id="text-${id}" placeholder="Script will appear here..." oninput="saveWorkspace()">${text}</textarea>
             <div class="controls-row">
@@ -1005,7 +934,7 @@ STRICT RULES (Do not use ** or ||| tags):
         if(rate) document.getElementById(`rate-${id}`).value = rate;
     }
 
-    function addSegment(text = "", preSelectedVoice = "hi-male", newsIndex = null, headline = "") {
+    function addSegment(text = "", preSelectedVoice = "ur-pk-male", newsIndex = null, headline = "") {
         segmentCount++; const id = segmentCount;
         let currentSyncedSpeed = "0"; const extSpd = document.querySelector('select[id^="rate-"]'); if (extSpd) currentSyncedSpeed = extSpd.value;
         addSegmentDOM(id, text, preSelectedVoice, currentSyncedSpeed, newsIndex, headline);
@@ -1015,52 +944,26 @@ STRICT RULES (Do not use ** or ||| tags):
 
     function toggleVideoAudio(id, isChecked) { segmentsData[id].useVideoAudio = isChecked; saveWorkspace(); }
 
-    // --- GLOBAL UPLOADS (BGM / TRANSITION) ---
     async function handleBgmUpload(input) {
-        if(input.files && input.files[0]) {
-            globalBgmBlob = input.files[0];
-            await saveWorkspace();
-            input.style.display = "none";
-            document.getElementById('bgmSavedBadge').style.display = "inline-flex";
-        }
+        if(input.files && input.files[0]) { globalBgmBlob = input.files[0]; await saveWorkspace(); input.style.display = "none"; document.getElementById('bgmSavedBadge').style.display = "inline-flex"; }
     }
-    function clearBgm() {
-        globalBgmBlob = null;
-        document.getElementById('bgmInput').value = ""; document.getElementById('bgmInput').style.display = "block";
-        document.getElementById('bgmSavedBadge').style.display = "none"; saveWorkspace();
-    }
+    function clearBgm() { globalBgmBlob = null; document.getElementById('bgmInput').value = ""; document.getElementById('bgmInput').style.display = "block"; document.getElementById('bgmSavedBadge').style.display = "none"; saveWorkspace(); }
 
     async function loadTransitionVideo(input) {
         const spinner = document.getElementById("transVidSpinner");
         if(input.files && input.files[0]) {
-            spinner.style.display = "inline-block";
-            globalTransVidBlob = input.files[0];
-            await saveWorkspace();
-            
-            // Create element in hidden container
+            spinner.style.display = "inline-block"; globalTransVidBlob = input.files[0]; await saveWorkspace();
             let transVid = document.getElementById("activeTransitionVideo");
-            if(!transVid) {
-                transVid = document.createElement("video"); transVid.id = "activeTransitionVideo";
-                document.getElementById('hidden-media-container').appendChild(transVid);
-            }
-            transVid.src = URL.createObjectURL(globalTransVidBlob);
-            transVid.crossOrigin = "anonymous"; transVid.playsInline = true; transVid.muted = true; transVid.preload = "auto";
-            
-            transVid.onloadeddata = () => { 
-                spinner.style.display = "none"; 
-                input.style.display = "none";
-                document.getElementById('transVidSavedBadge').style.display = "inline-flex";
-            };
+            if(!transVid) { transVid = document.createElement("video"); transVid.id = "activeTransitionVideo"; document.getElementById('hidden-media-container').appendChild(transVid); }
+            transVid.src = URL.createObjectURL(globalTransVidBlob); transVid.crossOrigin = "anonymous"; transVid.playsInline = true; transVid.muted = true; transVid.preload = "auto";
+            transVid.onloadeddata = () => { spinner.style.display = "none"; input.style.display = "none"; document.getElementById('transVidSavedBadge').style.display = "inline-flex"; };
             transVid.onerror = () => { spinner.style.display = "none"; alert("Error: Use MP4 video."); }
             transVid.load(); 
         }
     }
     function clearTransVid() {
-        globalTransVidBlob = null;
-        const transVid = document.getElementById("activeTransitionVideo");
-        if(transVid) transVid.remove();
-        document.getElementById('transitionVideoInput').value = ""; document.getElementById('transitionVideoInput').style.display = "block";
-        document.getElementById('transVidSavedBadge').style.display = "none"; saveWorkspace();
+        globalTransVidBlob = null; const transVid = document.getElementById("activeTransitionVideo"); if(transVid) transVid.remove();
+        document.getElementById('transitionVideoInput').value = ""; document.getElementById('transitionVideoInput').style.display = "block"; document.getElementById('transVidSavedBadge').style.display = "none"; saveWorkspace();
     }
 
     async function uploadManualImage(input, segId) {
@@ -1075,12 +978,7 @@ STRICT RULES (Do not use ** or ||| tags):
         const fileUrl = URL.createObjectURL(blob); const gallery = document.getElementById(`gallery-${segId}`);
         const wrapper = document.createElement('div'); wrapper.className = 'gallery-img-wrapper';
         const img = document.createElement('img'); img.src = fileUrl;
-        
-        const imgObj = new Image();
-        imgObj.onload = () => { segmentsData[segId].images.push(imgObj); };
-        imgObj.onerror = () => { wrapper.remove(); }; 
-        imgObj.src = fileUrl;
-
+        const imgObj = new Image(); imgObj.onload = () => { segmentsData[segId].images.push(imgObj); }; imgObj.onerror = () => { wrapper.remove(); }; imgObj.src = fileUrl;
         const btnDelete = document.createElement('button'); btnDelete.className = 'btn-remove-img'; btnDelete.innerHTML = '×';
         btnDelete.onclick = () => {
             wrapper.remove(); segmentsData[segId].images = segmentsData[segId].images.filter(i => i.src !== imgObj.src);
@@ -1092,130 +990,43 @@ STRICT RULES (Do not use ** or ||| tags):
     async function uploadSegmentVideo(input, segId) {
         const spinner = document.getElementById(`vid-spin-${segId}`);
         if(input.files && input.files[0]) {
-            spinner.style.display = "inline-block";
-            let fileBlob = input.files[0];
-            segmentsData[segId].segmentVideoBlob = fileBlob; 
-            await saveWorkspace();
+            spinner.style.display = "inline-block"; let fileBlob = input.files[0]; segmentsData[segId].segmentVideoBlob = fileBlob; await saveWorkspace();
             restoreVideoToGallery(fileBlob, segId, spinner, input);
         }
     }
 
     function restoreVideoToGallery(blob, segId, spinner = null, inputObj = null) {
-        const optionsDiv = document.getElementById(`video-options-${segId}`);
-        const gallery = document.getElementById(`gallery-${segId}`);
-        const fileUrl = URL.createObjectURL(blob);
-        
-        const vid = document.createElement('video');
+        const optionsDiv = document.getElementById(`video-options-${segId}`); const gallery = document.getElementById(`gallery-${segId}`);
+        const fileUrl = URL.createObjectURL(blob); const vid = document.createElement('video');
         vid.src = fileUrl; vid.crossOrigin = "anonymous"; vid.playsInline = true; vid.muted = true; vid.preload = "auto";
         document.getElementById('hidden-media-container').appendChild(vid);
-        
         vid.onloadeddata = () => {
-            segmentsData[segId].segmentVideo = vid;
-            segmentsData[segId].videoDuration = vid.duration; 
-            optionsDiv.style.display = "block";
-            
+            segmentsData[segId].segmentVideo = vid; segmentsData[segId].videoDuration = vid.duration; optionsDiv.style.display = "block";
             const wrapper = document.createElement('div'); wrapper.className = 'gallery-img-wrapper';
             const pVid = document.createElement('video'); pVid.src = fileUrl; pVid.muted = true;
-            
             const btnDelete = document.createElement('button'); btnDelete.className = 'btn-remove-img'; btnDelete.innerHTML = '×';
             btnDelete.onclick = () => {
-                wrapper.remove();
-                if(segmentsData[segId].segmentVideo) segmentsData[segId].segmentVideo.remove();
+                wrapper.remove(); if(segmentsData[segId].segmentVideo) segmentsData[segId].segmentVideo.remove();
                 segmentsData[segId].segmentVideo = null; segmentsData[segId].segmentVideoBlob = null; segmentsData[segId].videoDuration = 0;
-                optionsDiv.style.display = "none"; document.getElementById(`use-vid-audio-${segId}`).checked = false; segmentsData[segId].useVideoAudio = false;
-                saveWorkspace();
+                optionsDiv.style.display = "none"; document.getElementById(`use-vid-audio-${segId}`).checked = false; segmentsData[segId].useVideoAudio = false; saveWorkspace();
             };
             wrapper.appendChild(pVid); wrapper.appendChild(btnDelete); gallery.appendChild(wrapper);
             if(spinner) spinner.style.display = "none"; if(inputObj) inputObj.value = ""; 
         };
-        vid.onerror = () => {
-            if(spinner) spinner.style.display = "none"; vid.remove();
-            segmentsData[segId].segmentVideoBlob = null; saveWorkspace();
-            alert("Error Processing Video. Use MP4.");
-        }
+        vid.onerror = () => { if(spinner) spinner.style.display = "none"; vid.remove(); segmentsData[segId].segmentVideoBlob = null; saveWorkspace(); alert("Error Processing Video. Use MP4."); }
         vid.load();
     }
 
     async function uploadManualAudio(input, segId) {
-        if(input.files && input.files[0]) {
-            let blob = input.files[0]; segmentsData[segId].manualAudioBlob = blob;
-            await saveWorkspace(); restoreAudioToPlayer(blob, segId); input.value = ""; 
-        }
+        if(input.files && input.files[0]) { let blob = input.files[0]; segmentsData[segId].manualAudioBlob = blob; await saveWorkspace(); restoreAudioToPlayer(blob, segId); input.value = ""; }
     }
 
     function restoreAudioToPlayer(blob, segId) {
-        const fileUrl = URL.createObjectURL(blob);
-        const player = document.getElementById(`player-${segId}`); const durLabel = document.getElementById(`duration-${segId}`);
+        const fileUrl = URL.createObjectURL(blob); const player = document.getElementById(`player-${segId}`); const durLabel = document.getElementById(`duration-${segId}`);
         const status = document.getElementById(`status-${segId}`); const audioBox = document.getElementById(`audio-box-${segId}`);
-
         player.src = fileUrl; segmentsData[segId].audioUrl = fileUrl;
         player.onloadedmetadata = () => { segmentsData[segId].duration = player.duration; durLabel.innerText = `Duration: ${player.duration.toFixed(1)}s`; };
         status.style.display = "block"; status.innerText = "✅ Audio Loaded!"; status.style.color = "#4ade80"; audioBox.style.display = "block";
-    }
-
-    function manualImageSearch(segId) {
-        const query = document.getElementById(`img-query-${segId}`).value.trim(); const limit = document.getElementById('imageFetchCount').value;
-        if(!query) return alert("Please enter a search query!");
-        segmentsData[segId].headline = query; fetchImagesForSegment(segId, query, limit); saveWorkspace();
-    }
-
-    async function fetchImagesForSegment(segId, query, limit) {
-        const provider = document.getElementById('imgProviderSelect').value;
-        const statusBox = document.getElementById(`img-status-${segId}`); const gallery = document.getElementById(`gallery-${segId}`);
-        gallery.innerHTML = ''; segmentsData[segId].images = []; segmentsData[segId].imagesBlobs = [];
-
-        statusBox.style.display = "block"; statusBox.style.color = "#fbbf24"; 
-        statusBox.innerHTML = `<span class="material-icons-round spin" style="font-size:1.1rem; vertical-align:middle;">sync</span> Searching Images...`;
-
-        try {
-            let finalUrls = [];
-            if (provider === 'google') {
-                const apiKey = document.getElementById('gApiKey').value; const cx = document.getElementById('gCxId').value;
-                if(!apiKey || !cx) throw new Error("Google API Key or CX not set.");
-                const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}&searchType=image&num=${limit}`;
-                const res = await fetch(url); const data = await res.json();
-                if(data.items) finalUrls = data.items.map(item => item.link);
-            } else if (provider === 'ranimage') {
-                const rawUrl = document.getElementById('ranApiUrl').value.trim();
-                let res = await fetch(`${rawUrl}?q=${encodeURIComponent(query)}`); let data = await res.json();
-                let arr = Array.isArray(data) ? data : (data.results || data.data || data.images || []);
-                finalUrls = arr.map(i => typeof i === 'string' ? i : (i.image || i.url || i.src || i.link)).filter(u=>u);
-                if(finalUrls.length < limit) {
-                    let fallbackQuery = query.split(" ")[0] + " news India"; 
-                    let res2 = await fetch(`${rawUrl}?q=${encodeURIComponent(fallbackQuery)}`); let data2 = await res2.json();
-                    let arr2 = Array.isArray(data2) ? data2 : (data2.results || data2.data || data2.images || []);
-                    let urls2 = arr2.map(i => typeof i === 'string' ? i : (i.image || i.url || i.src || i.link)).filter(u=>u);
-                    finalUrls = [...finalUrls, ...urls2];
-                }
-            }
-            if(finalUrls.length === 0) throw new Error("No images found. Try manually.");
-            
-            let loadedCount = 0;
-            for(let i=0; i < finalUrls.length; i++){
-                if(loadedCount >= limit) break; 
-                statusBox.innerHTML = `<span class="material-icons-round spin" style="font-size:1.1rem; vertical-align:middle;">sync</span> Downloading Image ${loadedCount+1} of ${limit}...`;
-                let success = await processSingleImageFetch(finalUrls[i], segId);
-                if(success) loadedCount++;
-            }
-            statusBox.style.display = "none"; await saveWorkspace();
-        } catch(e) {
-            statusBox.style.display = "block"; statusBox.innerHTML = `❌ Search Failed: ${e.message}`; statusBox.style.color = "#ef4444"; 
-        }
-    }
-
-    async function processSingleImageFetch(url, segId) {
-        return new Promise(async (resolve) => {
-            try {
-                const proxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
-                const response = await fetch(proxyUrl);
-                if(!response.ok) throw new Error("Bad Response");
-                const blob = await response.blob();
-                if(!blob.type.startsWith('image/')) throw new Error("Not an image");
-                segmentsData[segId].imagesBlobs.push(blob);
-                restoreImageToGallery(blob, segId);
-                resolve(true); 
-            } catch(e) { resolve(false); }
-        });
     }
 
     async function generateAudio(id) {
@@ -1233,9 +1044,7 @@ STRICT RULES (Do not use ** or ||| tags):
             const blob = await res.blob();
             segmentsData[id].manualAudioBlob = blob; 
             await saveWorkspace(); restoreAudioToPlayer(blob, id);
-        } catch(e) {
-            status.innerText = "❌ Error: " + e.message; status.style.color = "#ef4444";
-        } finally { btn.disabled = false; btn.innerHTML = '<span class="material-icons-round">graphic_eq</span> Gen Audio'; }
+        } catch(e) { status.innerText = "❌ Error: " + e.message; status.style.color = "#ef4444"; } finally { btn.disabled = false; btn.innerHTML = '<span class="material-icons-round">graphic_eq</span> Gen Audio'; }
     }
 
     async function generateAllAudioSequence() {
@@ -1247,18 +1056,13 @@ STRICT RULES (Do not use ** or ||| tags):
                 if(text) { document.getElementById(`seg-${id}`).scrollIntoView({behavior: "smooth", block: "center"}); await generateAudio(id); generatedCount++; }
             }
         }
-        if(generatedCount > 0) alert(`Successfully generated ${generatedCount} new audio clips!`);
-        else alert("All audio clips are already generated.");
+        if(generatedCount > 0) alert(`Successfully generated ${generatedCount} new audio clips!`); else alert("All audio clips are already generated.");
     }
 
-    // --- NEW: RECORD FIRST, DOWNLOAD LATER WORKFLOW ---
     async function startPlayAndRecordWorkflow() {
-        const btnPreview = document.getElementById("btnPreview"); 
-        const btnDownload = document.getElementById("btnDownload");
-        const statusText = document.getElementById("recordingStatusText");
-        const canvas = document.getElementById("liveCanvas"); const ctx = canvas.getContext("2d");
+        const btnPreview = document.getElementById("btnPreview"); const btnDownload = document.getElementById("btnDownload");
+        const statusText = document.getElementById("recordingStatusText"); const canvas = document.getElementById("liveCanvas"); const ctx = canvas.getContext("2d");
 
-        // TOGGLE STOP LOGIC
         if (isPreviewPlaying) {
             cancelVideoSequence = true; isPreviewPlaying = false; isVideoEngineRunning = false;
             btnPreview.innerHTML = '<span class="material-icons-round">play_circle</span> Play & Record Video';
@@ -1267,8 +1071,7 @@ STRICT RULES (Do not use ** or ||| tags):
             if(activeBgmNode) { activeBgmNode.pause(); activeBgmNode.src = ""; }
             if(activeTransVideoNode) { activeTransVideoNode.pause(); }
             ctx.fillStyle = "black"; ctx.fillRect(0,0, canvas.width, canvas.height);
-            statusText.innerText = "Recording Cancelled."; statusText.style.color = "#ef4444";
-            return;
+            statusText.innerText = "Recording Cancelled."; statusText.style.color = "#ef4444"; return;
         }
 
         if(isVideoEngineRunning) return alert("Please wait.");
@@ -1279,11 +1082,9 @@ STRICT RULES (Do not use ** or ||| tags):
         const recIndicator = document.getElementById("recIndicator");
         
         const audioCtx = getAudioContext(); const dest = audioCtx.createMediaStreamDestination();
-        const transVid = document.getElementById("activeTransitionVideo");
-        let hasTransVid = (transVid !== null && transVid.src !== "");
+        const transVid = document.getElementById("activeTransitionVideo"); let hasTransVid = (transVid !== null && transVid.src !== "");
         let recorder, chunks = [];
 
-        // START BGM
         if(globalBgmBlob) {
             activeBgmNode = new Audio(URL.createObjectURL(globalBgmBlob)); activeBgmNode.loop = true; 
             const bgmSource = audioCtx.createMediaElementSource(activeBgmNode);
@@ -1292,50 +1093,36 @@ STRICT RULES (Do not use ** or ||| tags):
             activeBgmNode.play().catch(e => console.log("BGM Error"));
         }
 
-        // Setup Recording
         btnDownload.disabled = true; btnDownload.style.background = "#4b5563"; btnDownload.style.cursor = "not-allowed";
-        btnPreview.innerHTML = '<span class="material-icons-round">stop</span> Stop Recording'; 
-        recIndicator.style.display = "block";
+        btnPreview.innerHTML = '<span class="material-icons-round">stop</span> Stop Recording'; recIndicator.style.display = "block";
         statusText.innerText = "Recording in progress... Please do not close app."; statusText.style.color = "#f59e0b";
 
-        const stream = canvas.captureStream(30);
-        const combinedStream = new MediaStream([...stream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
+        const stream = canvas.captureStream(30); const combinedStream = new MediaStream([...stream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
         recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm; codecs=vp8,opus' });
         recorder.ondataavailable = e => chunks.push(e.data);
         recorder.onstop = () => {
             if(!cancelVideoSequence) {
-                finalRecordedBlob = new Blob(chunks, { type: 'video/webm' });
-                btnDownload.disabled = false;
-                btnDownload.style.background = "linear-gradient(135deg, #10b981, #059669)";
-                btnDownload.style.cursor = "pointer";
+                finalRecordedBlob = new Blob(chunks, { type: 'video/webm' }); btnDownload.disabled = false; btnDownload.style.background = "linear-gradient(135deg, #10b981, #059669)"; btnDownload.style.cursor = "pointer";
                 statusText.innerText = "✅ Recording Finished! Ready to Download."; statusText.style.color = "#10b981";
             }
         };
-        recorder.start();
-        canvas.scrollIntoView({behavior: 'smooth', block: 'center'});
+        recorder.start(); canvas.scrollIntoView({behavior: 'smooth', block: 'center'});
 
         for(let i=0; i<validSegmentIds.length; i++) {
             if(cancelVideoSequence) break; 
             await playSegmentOnCanvas(segmentsData[validSegmentIds[i]], ctx, canvas, audioCtx, dest);
-            if(hasTransVid && i < validSegmentIds.length - 1 && !cancelVideoSequence) {
-                await playTransitionOnCanvas(transVid, ctx, canvas, audioCtx, dest);
-            }
+            if(hasTransVid && i < validSegmentIds.length - 1 && !cancelVideoSequence) await playTransitionOnCanvas(transVid, ctx, canvas, audioCtx, dest);
         }
 
         if(activeBgmNode) { activeBgmNode.pause(); activeBgmNode.src = ""; }
         if(recorder && recorder.state !== "inactive") recorder.stop();
         ctx.fillStyle = "black"; ctx.fillRect(0, 0, canvas.width, canvas.height); 
-        
-        isVideoEngineRunning = false; isPreviewPlaying = false;
-        btnPreview.innerHTML = '<span class="material-icons-round">play_circle</span> Play & Record Video';
-        recIndicator.style.display = "none";
+        isVideoEngineRunning = false; isPreviewPlaying = false; btnPreview.innerHTML = '<span class="material-icons-round">play_circle</span> Play & Record Video'; recIndicator.style.display = "none";
     }
 
     function downloadFinalVideo() {
         if(!finalRecordedBlob) return alert("No video recorded yet! Please play it completely first.");
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(finalRecordedBlob); 
-        a.download = "News_Studio_Output.webm";
+        const a = document.createElement("a"); a.href = URL.createObjectURL(finalRecordedBlob); a.download = "Islamic_Story_Output.webm";
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
@@ -1350,32 +1137,24 @@ STRICT RULES (Do not use ** or ||| tags):
 
     function playSegmentOnCanvas(data, ctx, canvas, audioCtx, dest) {
         return new Promise((resolve) => {
-            activeAudioNode = new Audio(data.audioUrl);
-            const source = audioCtx.createMediaElementSource(activeAudioNode);
-            activeVideoNode = data.segmentVideo;
-            
+            activeAudioNode = new Audio(data.audioUrl); const source = audioCtx.createMediaElementSource(activeAudioNode); activeVideoNode = data.segmentVideo;
             if (data.useVideoAudio && activeVideoNode) {
                 activeAudioNode.volume = 0; activeVideoNode.muted = false; 
                 if(!activeVideoNode.__audioNode) activeVideoNode.__audioNode = audioCtx.createMediaElementSource(activeVideoNode);
                 activeVideoNode.__audioNode.disconnect(); activeVideoNode.__audioNode.connect(audioCtx.destination); activeVideoNode.__audioNode.connect(dest);
                 source.connect(audioCtx.destination); source.connect(dest); 
-            } else {
-                if (activeVideoNode) activeVideoNode.muted = true; 
-                activeAudioNode.volume = 1; source.connect(audioCtx.destination); source.connect(dest); 
-            }
+            } else { if (activeVideoNode) activeVideoNode.muted = true; activeAudioNode.volume = 1; source.connect(audioCtx.destination); source.connect(dest); }
             
-            const images = data.images; 
-            let maxDuration = data.duration;
+            const images = data.images; let maxDuration = data.duration;
             if(activeVideoNode && data.videoDuration > 0 && data.useVideoAudio) maxDuration = Math.max(maxDuration, data.videoDuration);
             else if (activeVideoNode && data.videoDuration > 0) maxDuration = Math.max(maxDuration, data.videoDuration);
             
-            const durationMs = maxDuration * 1000; 
-            const imgCount = images.length > 0 ? images.length : 1; const timePerImage = durationMs / imgCount;
+            const durationMs = maxDuration * 1000; const imgCount = images.length > 0 ? images.length : 1; const timePerImage = durationMs / imgCount;
             let currentImgIndex = 0; let animationFrameId;
 
             if(activeVideoNode) { activeVideoNode.currentTime = 0; activeVideoNode.play().catch(e => console.log("SegVid")); }
-            
             const startTime = performance.now();
+            
             const showLogo = document.getElementById('chkLogo').checked; const showLive = document.getElementById('chkLive').checked;
             const showCName = document.getElementById('chkChannelName').checked; const cNameTxt = document.getElementById('channelNameTxt').value; const cNameColor = document.getElementById('channelNameColor').value;
             const showHead = document.getElementById('chkHeadline').checked; const showSub = document.getElementById('chkSubscribe').checked; const subTxt = document.getElementById('subscribeTxt').value; const subColor = document.getElementById('bottomTickerColor').value;
@@ -1386,13 +1165,8 @@ STRICT RULES (Do not use ** or ||| tags):
             const bottomY = canvas.height - activeSubHeight; const headY = bottomY - headHeight; const breakingStripHeight = showHead ? 35 : 0; const breakingStripY = headY - breakingStripHeight - gapBetweenStrips;
 
             function drawLoop(now) {
-                if (cancelVideoSequence || (now - startTime) >= durationMs) {
-                    cancelAnimationFrame(animationFrameId); source.disconnect();
-                    if(activeVideoNode) { activeVideoNode.pause(); if(activeVideoNode.__audioNode) activeVideoNode.__audioNode.disconnect(); }
-                    resolve(); return;
-                }
-                const elapsed = now - startTime;
-                ctx.fillStyle = "#0f172a"; ctx.fillRect(0,0, canvas.width, canvas.height);
+                if (cancelVideoSequence || (now - startTime) >= durationMs) { cancelAnimationFrame(animationFrameId); source.disconnect(); if(activeVideoNode) { activeVideoNode.pause(); if(activeVideoNode.__audioNode) activeVideoNode.__audioNode.disconnect(); } resolve(); return; }
+                const elapsed = now - startTime; ctx.fillStyle = "#0f172a"; ctx.fillRect(0,0, canvas.width, canvas.height);
                 
                 if(activeVideoNode && !activeVideoNode.paused && activeVideoNode.readyState >= 2) {
                     const vRatio = Math.max(canvas.width / activeVideoNode.videoWidth, canvas.height / activeVideoNode.videoHeight);
@@ -1407,8 +1181,8 @@ STRICT RULES (Do not use ** or ||| tags):
                     ctx.save(); ctx.translate(canvas.width / 2, canvas.height / 2); ctx.scale(scale, scale); ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight); ctx.restore();
                 } else {
                     ctx.fillStyle = "#1e293b"; ctx.fillRect(0,0,canvas.width, canvas.height);
-                    ctx.fillStyle = "#0ea5e9"; ctx.font = "bold 40px 'Segoe UI', Arial"; ctx.textAlign = "center"; ctx.fillText("Breaking News", canvas.width/2, canvas.height/2 - 40);
-                    ctx.fillStyle = "white"; ctx.font = "30px 'Segoe UI', Arial"; wrapText(ctx, data.headline || "News Segment", canvas.width/2, canvas.height/2 + 20, canvas.width - 100, 40);
+                    ctx.fillStyle = "#10b981"; ctx.font = "bold 40px 'Segoe UI', Arial"; ctx.textAlign = "center"; ctx.fillText("Islamic Story", canvas.width/2, canvas.height/2 - 40);
+                    ctx.fillStyle = "white"; ctx.font = "30px 'Segoe UI', Arial"; wrapText(ctx, "Generating Visuals...", canvas.width/2, canvas.height/2 + 20, canvas.width - 100, 40);
                 }
                 ctx.textAlign = "left"; 
                 if(showTopTicker) { ctx.font = "bold 26px Arial"; const tW = ctx.measureText(topTickerTxt).width; let tX = canvas.width - ((elapsed * 0.18) % (canvas.width + tW)); draw3DBox(ctx, 0, 0, canvas.width, topHeight, topTickerColor, topTickerTxt, tX, (topHeight / 2) + 8, "26px"); }
@@ -1417,10 +1191,10 @@ STRICT RULES (Do not use ** or ||| tags):
                 if(showLive && globalLiveImg) ctx.drawImage(globalLiveImg, safePadding, topYPadding, 120, 60); else if(showLive && !globalLiveImg) draw3DBox(ctx, safePadding, topYPadding, 110, 40, "#ef4444", "LIVE", safePadding + 42, topYPadding + 28, "24px", true);
                 if(showHead) {
                     ctx.fillStyle = "rgba(255, 255, 255, 0.95)"; ctx.fillRect(0, headY, canvas.width, headHeight); ctx.strokeStyle = "black"; ctx.lineWidth = 3; ctx.strokeRect(0, headY, canvas.width, headHeight);
-                    ctx.fillStyle = "black"; ctx.font = "bold 32px Arial"; let safeHeadline = data.headline || "ताज़ा खबर"; if(safeHeadline.toLowerCase().includes('intro')) safeHeadline = "ताज़ा और बड़ी खबरें"; if(safeHeadline.toLowerCase().includes('outro')) safeHeadline = "ख़बरों का सिलसिला जारी रहेगा...";
+                    ctx.fillStyle = "black"; ctx.font = "bold 32px Arial"; let safeHeadline = "कहानी का हिस्सा"; 
                     const hTxt = "► " + safeHeadline.toUpperCase(); const hW = ctx.measureText(hTxt).width; let hX = canvas.width - ((elapsed * 0.2) % (canvas.width + hW));
                     ctx.save(); ctx.beginPath(); ctx.rect(0, headY, canvas.width, headHeight); ctx.clip(); ctx.fillText(hTxt, Math.max(hX, 20), headY + 38); ctx.restore();
-                    let stripWidth = 260; draw3DBox(ctx, 0, breakingStripY, stripWidth, breakingStripHeight, "#b91c1c"); ctx.fillStyle = "white"; ctx.font = "bold 22px Arial"; ctx.textAlign = "center"; ctx.shadowColor = "black"; ctx.shadowBlur = 4; ctx.fillText("BREAKING NEWS", stripWidth/2, breakingStripY + 25); ctx.shadowColor = "transparent"; ctx.textAlign = "left"; 
+                    let stripWidth = 260; draw3DBox(ctx, 0, breakingStripY, stripWidth, breakingStripHeight, "#0f766e"); ctx.fillStyle = "white"; ctx.font = "bold 22px Arial"; ctx.textAlign = "center"; ctx.shadowColor = "black"; ctx.shadowBlur = 4; ctx.fillText("STORY HIGHLIGHT", stripWidth/2, breakingStripY + 25); ctx.shadowColor = "transparent"; ctx.textAlign = "left"; 
                 }
                 if(showNewsNum && data.newsIndex) { let numHeight = 60; let numWidth = 80; let numY = showHead ? (breakingStripY - numHeight - gapBetweenStrips) : (bottomY - numHeight - gapBetweenStrips); let numX = safePadding; draw3DBox(ctx, numX, numY, numWidth, numHeight, newsNumColor); ctx.fillStyle = "black"; ctx.font = "bold 40px Arial"; ctx.textAlign = "center"; ctx.fillText(data.newsIndex, numX + (numWidth/2), numY + 42); ctx.textAlign = "left"; }
                 if(showSub || showCName) {
@@ -1442,10 +1216,7 @@ STRICT RULES (Do not use ** or ||| tags):
             let animationFrameId;
             function drawLoop() {
                 if(cancelVideoSequence) { activeTransVideoNode.pause(); activeTransVideoNode.__audioNode.disconnect(); cancelAnimationFrame(animationFrameId); resolve(); return; }
-                if(!activeTransVideoNode.ended && activeTransVideoNode.readyState >= 2) { 
-                    ctx.drawImage(activeTransVideoNode, 0, 0, canvas.width, canvas.height); 
-                    animationFrameId = requestAnimationFrame(drawLoop); 
-                } 
+                if(!activeTransVideoNode.ended && activeTransVideoNode.readyState >= 2) { ctx.drawImage(activeTransVideoNode, 0, 0, canvas.width, canvas.height); animationFrameId = requestAnimationFrame(drawLoop); } 
                 else if(activeTransVideoNode.ended) { activeTransVideoNode.__audioNode.disconnect(); resolve(); }
                 else { animationFrameId = requestAnimationFrame(drawLoop); } 
             }
@@ -1454,18 +1225,12 @@ STRICT RULES (Do not use ** or ||| tags):
     }
 
     function removeSegment(id) { 
-        if(segmentsData[id].segmentVideo) segmentsData[id].segmentVideo.remove();
-        document.getElementById(`seg-${id}`).remove(); 
-        delete segmentsData[id]; 
-        checkEmpty(); saveWorkspace(); 
+        if(segmentsData[id].segmentVideo) segmentsData[id].segmentVideo.remove(); document.getElementById(`seg-${id}`).remove(); delete segmentsData[id]; checkEmpty(); saveWorkspace(); 
     }
     
     function wrapText(context, text, x, y, maxWidth, lineHeight) {
         var words = text.split(' '), line = '';
-        for(var n = 0; n < words.length; n++) {
-            var testLine = line + words[n] + ' '; var metrics = context.measureText(testLine);
-            if (metrics.width > maxWidth && n > 0) { context.fillText(line, x, y); line = words[n] + ' '; y += lineHeight; } else { line = testLine; }
-        }
+        for(var n = 0; n < words.length; n++) { var testLine = line + words[n] + ' '; var metrics = context.measureText(testLine); if (metrics.width > maxWidth && n > 0) { context.fillText(line, x, y); line = words[n] + ' '; y += lineHeight; } else { line = testLine; } }
         context.fillText(line, x, y);
     }
     
