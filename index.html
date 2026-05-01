@@ -33,6 +33,12 @@ body {
     flex-direction: column;
 }
 
+/* Sidebar Overlay */
+.sidebar-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 85; display: none; backdrop-filter: blur(2px);
+}
+
 header {
     height: var(--header-h);
     background: rgba(15, 23, 42, 0.95);
@@ -238,6 +244,9 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 </head>
 <body>
 
+<!-- Overlay for clicking outside to close sidebar -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeAllSidebars()"></div>
+
 <header>
     <div class="header-title">
         <button class="btn-icon" onclick="toggleDataSidebar()"><span class="material-icons-round">menu</span></button>
@@ -264,14 +273,12 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     <label>Mistral AI API Key</label>
     <input type="password" id="mistralApiKey" placeholder="Enter Mistral API Key">
     
-    <h3 style="margin-top:20px;"><span class="material-icons-round" style="vertical-align:middle;">image</span> SDXL Image APIs</h3>
-    <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-        <label>Primary Cloudflare API</label>
-        <input type="text" id="api1" value="https://cloudflare-sdxl-worker.mdrajubhai908.workers.dev/?prompt=" disabled style="opacity:0.6;">
-        <label>Fallback Cloudflare API</label>
-        <input type="text" id="api2" value="https://sd-image-generator.babu902644.workers.dev/?prompt=" disabled style="opacity:0.6;">
-        <p style="font-size:0.75rem; color:#94a3b8; margin:0;">*Images will be generated sequentially with a timer to avoid errors.</p>
-    </div>
+    <h3 style="margin-top:20px;"><span class="material-icons-round" style="vertical-align:middle;">image</span> Image Search Settings</h3>
+    <label>Select Image Generator Model</label>
+    <select id="imgProviderSelect">
+        <option value="https://cloudflare-sdxl-worker.mdrajubhai908.workers.dev/?prompt=">Model 1: SDXL Fast (Rajubhai)</option>
+        <option value="https://sd-image-generator.babu902644.workers.dev/?prompt=">Model 2: SD Stable (Babu)</option>
+    </select>
     
     <div class="sidebar-btns">
         <button class="btn-save" onclick="saveSettings()">Save API Settings</button>
@@ -347,12 +354,12 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 
 <div class="main-content">
 
-    <!-- MODULE 1: VIDEO STUDIO -->
-    <div class="module-panel" id="mod-studio">
-        <div class="panel-header" onclick="toggleCollapse('mod-studio')">
-            <h2 class="panel-title"><span class="material-icons-round">movie</span> 1. Story Video Studio & Export</h2>
+    <!-- MODULE 1: GLOBAL MEDIA SETTINGS -->
+    <div class="module-panel" id="mod-global-media">
+        <div class="panel-header" onclick="toggleCollapse('mod-global-media')">
+            <h2 class="panel-title"><span class="material-icons-round">perm_media</span> Global Media Settings</h2>
             <div class="panel-actions">
-                <button class="panel-btn" onclick="hideModule('mod-studio', 'Video Studio', event)" title="Hide from Home"><span class="material-icons-round">visibility_off</span></button>
+                <button class="panel-btn" onclick="hideModule('mod-global-media', 'Global Media Settings', event)" title="Hide from Home"><span class="material-icons-round">visibility_off</span></button>
                 <button class="panel-btn toggle-icon"><span class="material-icons-round">expand_less</span></button>
             </div>
         </div>
@@ -377,31 +384,28 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
                     <span id="transVidSavedBadge" class="file-saved-badge" style="display:none;">✅ Saved <button class="file-clear-btn" onclick="clearTransVid()">×</button></span>
                 </div>
             </div>
-
-            <div class="preview-tools">
-                <label style="margin:0; font-weight:bold; color:#a78bfa;">Live Preview</label>
-                <button class="panel-btn" onclick="refreshStudioCanvas()" title="Refresh Player (Fix Errors)"><span class="material-icons-round" style="color:#fbbf24;">refresh</span> Refresh Player</button>
-            </div>
-            
-            <div class="video-preview-container">
-                <canvas id="liveCanvas" width="1280" height="720"></canvas>
-                <div class="recording-indicator" id="recIndicator">RECORDING MEMORY</div>
-            </div>
-
-            <div class="studio-actions">
-                <button class="btn-action" id="btnPreview" onclick="startPlayAndRecordWorkflow()">
-                    <span class="material-icons-round">play_circle</span> Play & Record Video
-                </button>
-                <button class="btn-action-green" id="btnDownload" onclick="downloadFinalVideo()" disabled style="background:#4b5563; box-shadow:none; cursor:not-allowed;">
-                    <span class="material-icons-round">download</span> Download Video
-                </button>
-            </div>
-            <div id="recordingStatusText" style="text-align:center; font-size:0.8rem; color:#f59e0b; margin-top:5px; font-weight:bold;"></div>
         </div>
     </div>
 
-    <!-- MODULE 2: QUICK PASTE -->
-    <div class="module-panel" id="mod-paste" style="display:none;">
+    <!-- MODULE 2: YOUTUBE SEO -->
+    <div class="module-panel" id="mod-seo">
+        <div class="panel-header" onclick="toggleCollapse('mod-seo')">
+            <h2 class="panel-title"><span class="material-icons-round">search</span> YouTube SEO Tools</h2>
+            <div class="panel-actions">
+                <button class="panel-btn" onclick="hideModule('mod-seo', 'YouTube SEO Tools', event)" title="Hide from Home"><span class="material-icons-round">visibility_off</span></button>
+                <button class="panel-btn toggle-icon"><span class="material-icons-round">expand_less</span></button>
+            </div>
+        </div>
+        <div class="panel-content">
+            <label>YouTube Title Idea</label>
+            <input type="text" id="seoTitle" placeholder="e.g. Hazrat Umar ka Insaf | Emotional Islamic Story">
+            <label style="margin-top:10px;">YouTube Description / Tags</label>
+            <textarea id="seoDesc" placeholder="#islamicstory #urdu #hazratumar ..." style="min-height: 80px;"></textarea>
+        </div>
+    </div>
+
+    <!-- MODULE 3: QUICK PASTE -->
+    <div class="module-panel" id="mod-paste">
         <div class="panel-header" onclick="toggleCollapse('mod-paste')">
             <h2 class="panel-title"><span class="material-icons-round">content_paste</span> Quick Paste Story</h2>
             <div class="panel-actions">
@@ -418,10 +422,10 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         </div>
     </div>
 
-    <!-- MODULE 3: AI GENERATE -->
+    <!-- MODULE 4: AI GENERATE -->
     <div class="module-panel" id="mod-ai">
         <div class="panel-header" onclick="toggleCollapse('mod-ai')">
-            <h2 class="panel-title"><span class="material-icons-round">auto_stories</span> 2. Generate Islamic Story & Images</h2>
+            <h2 class="panel-title"><span class="material-icons-round">auto_stories</span> Generate Islamic Story & Images</h2>
             <div class="panel-actions">
                 <button class="panel-btn" onclick="hideModule('mod-ai', 'AI Story Generator', event)" title="Hide from Home"><span class="material-icons-round">visibility_off</span></button>
                 <button class="panel-btn toggle-icon"><span class="material-icons-round">expand_less</span></button>
@@ -448,11 +452,43 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         </div>
     </div>
 
+    <!-- MODULE 5: VIDEO STUDIO -->
+    <div class="module-panel" id="mod-studio">
+        <div class="panel-header" onclick="toggleCollapse('mod-studio')">
+            <h2 class="panel-title"><span class="material-icons-round">movie</span> Story Video Studio & Export</h2>
+            <div class="panel-actions">
+                <button class="panel-btn" onclick="hideModule('mod-studio', 'Video Studio', event)" title="Hide from Home"><span class="material-icons-round">visibility_off</span></button>
+                <button class="panel-btn toggle-icon"><span class="material-icons-round">expand_less</span></button>
+            </div>
+        </div>
+        <div class="panel-content">
+            <div class="preview-tools">
+                <label style="margin:0; font-weight:bold; color:#a78bfa;">Live Preview</label>
+                <button class="panel-btn" onclick="refreshStudioCanvas()" title="Refresh Player (Fix Errors)"><span class="material-icons-round" style="color:#fbbf24;">refresh</span> Refresh Player</button>
+            </div>
+            
+            <div class="video-preview-container">
+                <canvas id="liveCanvas" width="1280" height="720"></canvas>
+                <div class="recording-indicator" id="recIndicator">RECORDING MEMORY</div>
+            </div>
+
+            <div class="studio-actions">
+                <button class="btn-action" id="btnPreview" onclick="startPlayAndRecordWorkflow()">
+                    <span class="material-icons-round">play_circle</span> Play & Record Video
+                </button>
+                <button class="btn-action-green" id="btnDownload" onclick="downloadFinalVideo()" disabled style="background:#4b5563; box-shadow:none; cursor:not-allowed;">
+                    <span class="material-icons-round">download</span> Download Video
+                </button>
+            </div>
+            <div id="recordingStatusText" style="text-align:center; font-size:0.8rem; color:#f59e0b; margin-top:5px; font-weight:bold;"></div>
+        </div>
+    </div>
+
     <input type="hidden" id="global-api-url" value="https://hindi-tts-3gjy.onrender.com">
 
     <!-- ALL AUDIO CONTROLS ROW -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; margin-top:20px; gap:5px; flex-wrap:wrap;">
-        <h3 style="margin:0; color:#a78bfa; font-size:1rem;"><span class="material-icons-round" style="vertical-align:middle; font-size:1.2rem;">library_music</span> 3. Story Audio & Image Segments</h3>
+        <h3 style="margin:0; color:#a78bfa; font-size:1rem;"><span class="material-icons-round" style="vertical-align:middle; font-size:1.2rem;">library_music</span> Story Audio & Image Segments</h3>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button class="btn-action-orange" style="width:auto; padding:6px 12px; margin:0; font-size:0.8rem; border-radius:6px;" onclick="generateAllAudioSequence()">
                 <span class="material-icons-round" style="font-size:1rem;">graphic_eq</span> Gen All Audio
@@ -543,6 +579,33 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         await loadWorkspaceFromDB(); 
     }
 
+    // SIDEBAR & OVERLAY LOGIC
+    function toggleSidebar() { 
+        document.getElementById('apiSidebar').classList.toggle('active'); 
+        document.getElementById('dataSidebar').classList.remove('active');
+        updateOverlay();
+    }
+    
+    function toggleDataSidebar() { 
+        document.getElementById('dataSidebar').classList.toggle('active'); 
+        document.getElementById('apiSidebar').classList.remove('active');
+        updateOverlay();
+    }
+
+    function closeAllSidebars() {
+        document.getElementById('apiSidebar').classList.remove('active');
+        document.getElementById('dataSidebar').classList.remove('active');
+        updateOverlay();
+    }
+
+    function updateOverlay() {
+        if(document.getElementById('apiSidebar').classList.contains('active') || document.getElementById('dataSidebar').classList.contains('active')) {
+            document.getElementById('sidebarOverlay').style.display = 'block';
+        } else {
+            document.getElementById('sidebarOverlay').style.display = 'none';
+        }
+    }
+
     function toggleCollapse(panelId) {
         const panel = document.getElementById(panelId);
         panel.classList.toggle('collapsed');
@@ -608,7 +671,7 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
                 text: document.getElementById(`text-${id}`) ? document.getElementById(`text-${id}`).value : seg.text,
                 voice: document.getElementById(`voice-${id}`) ? document.getElementById(`voice-${id}`).value : seg.voice,
                 rate: document.getElementById(`rate-${id}`) ? document.getElementById(`rate-${id}`).value : seg.rate,
-                headline: seg.headline,
+                headline: document.getElementById(`img-query-${id}`) ? document.getElementById(`img-query-${id}`).value : seg.headline,
                 newsIndex: seg.newsIndex,
                 imagesBlobs: seg.imagesBlobs || [], 
                 segmentVideoBlob: seg.segmentVideoBlob || null,
@@ -664,7 +727,7 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 
     async function resetEntireStudio() {
         if(!confirm("⚠️ चेतावनी! क्या आप पक्का पूरा स्टूडियो साफ़ करना चाहते हैं? आपकी सारी इमेजेस, वीडियो और ऑडियो डिलीट हो जाएंगे।")) return;
-        refreshStudioCanvas(); await clearDB();
+        refreshStudioCanvas(); closeAllSidebars(); await clearDB();
         document.getElementById('hidden-media-container').innerHTML = ""; 
         segmentsList.innerHTML = ""; segmentsData = {}; segmentCount = 0; finalRecordedBlob = null;
         globalBgmBlob = null; globalTransVidBlob = null;
@@ -673,7 +736,6 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         checkEmpty(); alert("✔️ स्टूडियो बिल्कुल फ्रेश हो गया है!");
     }
 
-    // Default to Urdu voices for Islamic Stories
     const voiceOptions = `
         <optgroup label="🗣️ Storytellers (Urdu Tone)">
              <option value="ur-pk-male" selected>🇵🇰 Male: Asad (Storyteller)</option>
@@ -686,29 +748,30 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         </optgroup>
     `;
 
-    function toggleSidebar() { document.getElementById('apiSidebar').classList.toggle('active'); document.getElementById('dataSidebar').classList.remove('active'); }
-    function toggleDataSidebar() { document.getElementById('dataSidebar').classList.toggle('active'); document.getElementById('apiSidebar').classList.remove('active');}
-    
     function saveSettings() { 
         localStorage.setItem('aiProvider', document.getElementById('aiProviderSelect').value);
         localStorage.setItem('groqApiKey', document.getElementById('groqApiKey').value);
         localStorage.setItem('mistralApiKey', document.getElementById('mistralApiKey').value);
-        alert('Settings Saved Successfully!'); toggleSidebar(); 
+        localStorage.setItem('imgProvider', document.getElementById('imgProviderSelect').value);
+        alert('Settings Saved Successfully!'); closeAllSidebars(); 
     }
     
     function loadSettings() { 
         const aiProvider = localStorage.getItem('aiProvider');
         const groqKey = localStorage.getItem('groqApiKey');
         const mistralKey = localStorage.getItem('mistralApiKey');
+        const imgProv = localStorage.getItem('imgProvider');
         if(aiProvider) document.getElementById('aiProviderSelect').value = aiProvider;
         if(groqKey) document.getElementById('groqApiKey').value = groqKey;
         if(mistralKey) document.getElementById('mistralApiKey').value = mistralKey;
+        if(imgProv) document.getElementById('imgProviderSelect').value = imgProv;
     }
     
     function clearSettings() { 
         localStorage.clear();
         document.getElementById('aiProviderSelect').value = 'groq'; document.getElementById('groqApiKey').value = '';
         document.getElementById('mistralApiKey').value = ''; 
+        document.getElementById('imgProviderSelect').value = 'https://cloudflare-sdxl-worker.mdrajubhai908.workers.dev/?prompt='; 
         alert('Settings Cleared!'); 
     }
 
@@ -725,7 +788,6 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     function syncAllVoices(selectedValue) { const selects = document.querySelectorAll('select[id^="voice-"]'); selects.forEach(select => { select.value = selectedValue; }); saveWorkspace(); }
     function syncAllSpeeds(selectedValue) { const selects = document.querySelectorAll('select[id^="rate-"]'); selects.forEach(select => { select.value = selectedValue; }); saveWorkspace(); }
 
-    // Parse pasted script (if user pastes manually)
     function parseScriptIntoSegments(rawText) {
         let lines = rawText.split('\n').filter(l => l.trim().length > 0);
         let parsedSegments = [];
@@ -733,7 +795,6 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         
         for (let i = 0; i < lines.length; i++) {
             currentScript.push(lines[i]);
-            // Group 3-4 lines into one segment
             if(currentScript.length >= 3 || i === lines.length - 1) {
                 parsedSegments.push({ text: currentScript.join(' '), prompt: "Islamic historical scene, highly detailed, 8k resolution", index: counter });
                 counter++; currentScript = [];
@@ -756,7 +817,7 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
             segIds.push(segId);
         }
         document.getElementById('quickPasteScript').value = ""; saveWorkspace();
-        // Trigger image generation sequentially
+        // Trigger sequential image fetch
         fetchStoryImagesSequentially(parsedData, segIds);
     }
 
@@ -806,7 +867,6 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
 
             const aiText = data.choices[0].message.content;
             
-            // Parsing the structured AI output
             let parsedData = [];
             let parts = aiText.split(/Segment \d+:/i).filter(p => p.trim() !== '');
             parts.forEach((part, index) => {
@@ -817,13 +877,12 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
                 }
             });
 
-            // Fallback if parsing fails
             if(parsedData.length === 0) parsedData = parseScriptIntoSegments(aiText);
             
-            // Calculate Word Count
             let totalWords = 0; parsedData.forEach(p => totalWords += p.text.split(/\s+/).length);
 
             document.getElementById('dataSidebar').classList.add('active');
+            updateOverlay();
             const sourceName = aiProvider === 'groq' ? "Groq AI" : "Mistral AI";
             document.getElementById("metaBox").innerHTML += `<div class="meta-item"><span><span class="meta-source">${sourceName}</span></span></div>`;
             document.getElementById("scriptBox").innerHTML = `<div class="word-count-badge">Total Words: ~${totalWords}</div><br><div style="white-space:pre-wrap;">${aiText}</div>`;
@@ -844,43 +903,70 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         finally { btn.disabled = false; loader.style.display = 'none'; }
     }
 
-    // SEQUENTIAL IMAGE GENERATION LOGIC
+    // MANUAL IMAGE SEARCH
+    async function manualImageSearch(segId) {
+        const query = document.getElementById(`img-query-${segId}`).value.trim();
+        if(!query) return alert("Please enter a prompt!");
+        segmentsData[segId].headline = query;
+        saveWorkspace();
+        
+        // Single sequential fetch
+        fetchStoryImagesSequentially([{ prompt: query }], [segId]);
+    }
+
+    // SEQUENTIAL TIMER IMAGE GENERATION LOGIC
     async function fetchStoryImagesSequentially(parsedData, segIds) {
-        const api1 = document.getElementById('api1').value; // "https://cloudflare-sdxl-worker.mdrajubhai908.workers.dev/?prompt="
-        const api2 = document.getElementById('api2').value; // Fallback
+        const apiUrl = document.getElementById('imgProviderSelect').value;
 
         for(let i=0; i<parsedData.length; i++) {
             let segId = segIds[i];
             let prompt = parsedData[i].prompt;
             const statusBox = document.getElementById(`img-status-${segId}`);
+            
             statusBox.style.display = "block"; statusBox.style.color = "#fbbf24";
-            statusBox.innerHTML = `<span class="spin material-icons-round" style="font-size:1.1rem; vertical-align:middle;">sync</span> Generating Image... Please wait.`;
+            
+            // Start Timer UI
+            let seconds = 0;
+            statusBox.innerHTML = `<span class="spin material-icons-round" style="font-size:1.1rem; vertical-align:middle;">sync</span> Generating Image... (Wait for AI API)`;
+            
+            let timerInterval = setInterval(() => {
+                seconds++;
+                statusBox.innerHTML = `<span class="spin material-icons-round" style="font-size:1.1rem; vertical-align:middle;">sync</span> Generating Image... (${seconds}s)`;
+            }, 1000);
 
             try {
                 let enhancedPrompt = `Islamic historical story, ${prompt}, high quality, cinematic lighting, realistic`;
-                let res = await fetch(api1 + encodeURIComponent(enhancedPrompt));
+                let res = await fetch(apiUrl + encodeURIComponent(enhancedPrompt));
                 
-                if(!res.ok) res = await fetch(api2 + encodeURIComponent(enhancedPrompt)); // Try Fallback
-                if(!res.ok) throw new Error("Image generation failed");
+                if(!res.ok) throw new Error("Image API failed or timeout");
 
                 let blob = await res.blob();
                 if(!blob.type.startsWith('image/')) throw new Error("Not an image");
                 
                 segmentsData[segId].imagesBlobs.push(blob);
                 restoreImageToGallery(blob, segId);
+                
+                clearInterval(timerInterval);
                 statusBox.style.display = "none";
+                
+                // Small gap before the next image to prevent server block
+                if (i < parsedData.length - 1) {
+                    await new Promise(r => setTimeout(r, 2000));
+                }
+
             } catch(e) {
-                statusBox.innerHTML = `❌ Image Generation Failed. Try Manual Upload.`;
+                clearInterval(timerInterval);
+                statusBox.innerHTML = `❌ Failed. Click search icon above to retry.`;
                 statusBox.style.color = "#ef4444";
             }
-            // Timer gap between requests to ensure API doesn't block
-            await new Promise(r => setTimeout(r, 2000));
         }
         saveWorkspace();
     }
 
     function addSegmentDOM(id, text, voice, rate, newsIndex, headline) {
         let displayTitle = `Part ${newsIndex || id}`;
+        let safeHeadline = headline ? headline : "";
+        
         const div = document.createElement('div'); div.className = 'segment-card'; div.id = `seg-${id}`;
         div.innerHTML = `
             <div class="card-header">
@@ -889,6 +975,13 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
                     <button class="btn-icon-action btn-delete" onclick="removeSegment(${id})" title="Delete"><span class="material-icons-round">close</span></button>
                 </div>
             </div>
+            
+            <!-- SEARCH PROMPT BOX (RESTORED) -->
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <input type="text" id="img-query-${id}" value="${safeHeadline}" style="margin:0; flex:1;" placeholder="Image Prompt / Search..." oninput="saveWorkspace()">
+                <button class="btn-action-green" style="margin:0; width:auto; padding:8px 12px; border-radius:8px;" onclick="manualImageSearch(${id})"><span class="material-icons-round">search</span></button>
+            </div>
+
             <div class="manual-upload-row">
                 <div class="manual-upload-item">
                     <label style="color:#34d399;"><span class="material-icons-round" style="font-size:14px; vertical-align:middle;">image</span> Add Image</label>
