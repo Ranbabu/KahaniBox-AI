@@ -284,7 +284,6 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
     
     <h3 style="margin-top:20px;"><span class="material-icons-round" style="vertical-align:middle;">record_voice_over</span> Audio TTS Settings</h3>
     <label>Active TTS API URL</label>
-    <!-- REVERTED BACK TO THE STABLE TTS API -->
     <input type="text" id="ttsApiUrl" value="https://hindi-tts-3gjy.onrender.com">
 
     <div class="sidebar-btns">
@@ -444,6 +443,10 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
             </div>
         </div>
         <div class="panel-content">
+            <div class="input-group">
+                <label>YouTube Channel / Video URL (Optional)</label>
+                <input type="text" id="ytRefUrl" placeholder="Paste URL here to inspire the story...">
+            </div>
             <div class="input-group">
                 <label>Story Topic / Title</label>
                 <input type="text" id="storyTopic" placeholder="उदा: हज़रत उमर का इंसाफ, या कोई भी कहानी...">
@@ -842,8 +845,9 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
             });
             
             if(textPart) {
-                textPart = textPart.replace(/\*/g, '').trim(); 
-                if(promptsPart.length === 0) promptsPart.push("Islamic historical scene, highly detailed, 8k resolution");
+                // Strict regex to clean unwanted characters
+                textPart = textPart.replace(/[*#_]/g, '').trim(); 
+                if(promptsPart.length === 0) promptsPart.push("Islamic historical scene, highly detailed, cinematic lighting");
                 parsedSegments.push({ text: textPart, prompts: promptsPart, index: counter });
                 counter++;
             }
@@ -885,6 +889,7 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
         if(aiProvider === 'groq' && !groqKey) { alert("कृपया सेटिंग्स में जाकर पहले Groq API Key सेव करें!"); toggleSidebar(); return; }
         if(aiProvider === 'mistral' && !mistralKey) { alert("कृपया सेटिंग्स में जाकर पहले Mistral API Key सेव करें!"); toggleSidebar(); return; }
 
+        const ytUrl = document.getElementById('ytRefUrl').value.trim();
         const topic = document.getElementById('storyTopic').value || "एक इस्लामिक प्रेरणादायक कहानी";
         const length = document.getElementById('storyLength').value;
         const btn = document.getElementById('fetchBtn'); const loader = document.getElementById('mainLoader');
@@ -893,29 +898,30 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
         document.getElementById("metaBox").innerHTML = ''; document.getElementById("headlineBox").innerHTML = ''; document.getElementById("scriptBox").innerHTML = '';
         checkEmpty(); btn.disabled = true; loader.style.display = 'block';
 
-        const promptText = `आप एक प्रोफेशनल कहानीकार हैं। आपको लगभग ${length} की एक बेहतरीन और ज्ञानवर्धक 'इस्लामिक कहानी' लिखनी है।
-        विषय: ${topic}
-        कहानी का लहजा पाकिस्तानी उर्दू (जैसे अस्सलामु अलैकुम, वालिद, वालिदा, अल्लाह का करम, वगैरह) होना चाहिए, लेकिन पूरी स्क्रिप्ट देवनागरी (Hindi) लिपि में लिखी होनी चाहिए।
+        const promptText = `आप एक प्रोफेशनल कहानीकार हैं। आपको ${length} की एक बेहतरीन 'इस्लामिक कहानी' लिखनी है।
+        विषय/टाइटल: ${topic}
+        ${ytUrl ? `User provided this YouTube URL for reference/inspiration: ${ytUrl} (इस चैनल/वीडियो के स्टाइल को समझकर कहानी बनाएं)` : ''}
+        
+        STRICT RULES (Read carefully):
+        1. DO NOT use asterisks (**), hashes (##), or dashes (---) anywhere in your response. DO NOT add any "Note:" or "निष्कर्ष" at the end.
+        2. Divide the story into 5 to 10 Segments.
+        3. For EACH Segment, write the Hindi text, then write line-by-line English Image Prompts.
+        4. Provide EXACTLY 1 prompt for every main event/sentence in the segment.
+        5. Maintain EXACT character descriptions in EVERY prompt so the character looks identical. Add "perfect face, symmetrical eyes, highly detailed" to all prompts.
 
-        STRICT FORMAT (Must follow exactly):
-        कहानी को 5 से 10 हिस्सों (Segments) में बांटें। 
-        हर हिस्से (Segment) में कहानी की कुछ लाइनें दें। फिर उन लाइनों के आधार पर कम से कम 2 से 3 English Image Prompts लिखें।
-        Important Rule for Prompts: **Maintain exact character descriptions (e.g. "young man with black beard wearing white kurta") in EVERY prompt so the character looks identical across the video. Add "perfect face, symmetrical eyes, highly detailed" to all prompts.**
-
-        Use this exact format:
+        FORMAT MUST BE EXACTLY LIKE THIS (No other words, no markdown):
 
         Segment 1:
-        Text: [कहानी का हिस्सा हिंदी में। ** का इस्तेमाल न करें।]
+        Text: एक दिन की बात है। एक नेक आदमी रास्ते से जा रहा था।
         Prompts:
-        1. [Line 1 image prompt in English]
-        2. [Line 2 image prompt in English]
-        
+        1. Islamic historical scene, a kind man with black beard wearing white kurta walking on a dirt path during daytime, realistic, highly detailed, perfect face.
+        2. Islamic historical scene, close up of the kind man looking ahead, realistic, highly detailed, perfect face.
+
         Segment 2:
-        Text: [कहानी का हिस्सा हिंदी में। ** का इस्तेमाल न करें।]
+        Text: अचानक उसे एक गरीब बच्चा मिला। उसने उसे खाना दिया।
         Prompts:
-        1. [Line 1 image prompt in English]
-        2. [Line 2 image prompt in English]
-        3. [Line 3 image prompt in English]
+        1. Islamic historical scene, a poor crying child sitting on the street, realistic, highly detailed.
+        2. Islamic historical scene, the kind man with black beard giving bread to the poor child, realistic, highly detailed.
         `;
 
         let apiUrl = ''; let apiHeaders = { 'Content-Type': 'application/json', 'Accept': 'application/json' }; let apiBody = {};
@@ -932,25 +938,38 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
             const data = await response.json();
             if (!response.ok || data.error) throw new Error(data.error ? data.error.message : response.statusText);
 
-            let aiText = data.choices[0].message.content;
+            // AGGRESSIVE REGEX CLEANUP TO PREVENT **, ##, AND ---
+            let aiText = data.choices[0].message.content.replace(/[*#_]/g, ''); 
             
             let parsedData = [];
-            let parts = aiText.split(/Segment \d+:/i).filter(p => p.trim() !== '');
+            // Split by Segment 1:, Segment 2:, etc.
+            let parts = aiText.split(/Segment\s+\d+:/i).filter(p => p.trim() !== '');
             
             parts.forEach((part, index) => {
                 let textMatch = part.match(/Text:\s*([\s\S]*?)Prompts:/i);
-                let promptsMatch = part.match(/Prompts:\s*([\s\S]*?)(?=Segment|$)/i);
+                let promptsMatch = part.match(/Prompts:\s*([\s\S]*)/i); // Match till end of this part
+                
                 if(textMatch && promptsMatch) {
-                    let cleanedText = textMatch[1].replace(/\*/g, '').trim(); // Remove **
-                    let rawPrompts = promptsMatch[1].split(/\d+\./).filter(p => p.trim() !== '').map(p => p.trim());
-                    if(rawPrompts.length === 0) rawPrompts = [promptsMatch[1].trim()]; // Fallback
-                    parsedData.push({ text: cleanedText, prompts: rawPrompts, index: index + 1 });
+                    let cleanedText = textMatch[1].trim();
+                    let rawPrompts = promptsMatch[1].split(/\n/).filter(l => l.trim() !== '');
+                    let cleanPrompts = [];
+                    
+                    for(let pr of rawPrompts) {
+                        let cleanedP = pr.replace(/^\d+\.\s*/, '').trim(); // Remove "1. " or "2. "
+                        // Filter out weird stuff that might have slipped through
+                        if(cleanedP && !cleanedP.startsWith('---') && !cleanedP.toLowerCase().includes('नोट:')) {
+                            cleanPrompts.push(cleanedP);
+                        }
+                    }
+                    
+                    if(cleanPrompts.length === 0) cleanPrompts = ["Islamic historical scene, highly detailed"]; // Fallback
+                    parsedData.push({ text: cleanedText, prompts: cleanPrompts, index: index + 1 });
                 }
             });
 
             if(parsedData.length === 0) {
-                alert("AI Format slightly missed. Using basic parsing.");
-                parsedData = parseManualPasteIntoSegments(aiText);
+                alert("AI format error, please try again or paste manually.");
+                throw new Error("Parsing Failed");
             }
             
             let totalWords = 0; parsedData.forEach(p => totalWords += p.text.split(/\s+/).length);
@@ -959,7 +978,7 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
             updateOverlay();
             const sourceName = aiProvider === 'groq' ? "Groq AI" : "Mistral AI";
             document.getElementById("metaBox").innerHTML += `<div class="meta-item"><span><span class="meta-source">${sourceName}</span></span></div>`;
-            document.getElementById("scriptBox").innerHTML = `<div class="word-count-badge">Total Words: ~${totalWords}</div><br><div style="white-space:pre-wrap;">${aiText.replace(/\*/g, '')}</div>`;
+            document.getElementById("scriptBox").innerHTML = `<div class="word-count-badge">Total Words: ~${totalWords}</div><br><div style="white-space:pre-wrap;">${aiText}</div>`;
 
             let imageTasks = [];
             for(let i=0; i<parsedData.length; i++) {
@@ -982,7 +1001,7 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
         finally { btn.disabled = false; loader.style.display = 'none'; }
     }
 
-    // MANUAL SINGLE IMAGE SEARCH (From the specific text input inside the box)
+    // MANUAL SINGLE IMAGE SEARCH
     async function manualSingleImageSearch(segId, promptIdx) {
         const query = document.getElementById(`img-query-${segId}-${promptIdx}`).value.trim();
         if(!query) return alert("Please enter a prompt!");
@@ -1032,15 +1051,20 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
             }, 1000);
 
             try {
-                let enhancedPrompt = `Islamic historical story, ${task.prompt}, perfect face, symmetrical eyes, high quality, cinematic lighting, realistic`;
+                // Ensure character consistency modifiers are attached if not present
+                let enhancedPrompt = task.prompt;
+                if(!enhancedPrompt.toLowerCase().includes("perfect face")) {
+                    enhancedPrompt += ", perfect face, symmetrical eyes, cinematic lighting, 8k resolution, highly detailed";
+                }
                 let res;
 
-                // SMART CHECK: If URL is Rajubhai, use GET method. Else, use POST JSON (Babu).
+                // SMART CHECK: If URL is Rajubhai (Cloudflare GET format)
                 if(apiUrl.includes("mdrajubhai")) {
-                    // Safe URL construction for GET
                     let safeUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+                    // Adding prompt parameter directly for GET requests
                     res = await fetch(safeUrl + "/?prompt=" + encodeURIComponent(enhancedPrompt));
                 } else {
+                    // POST JSON format (Babu)
                     res = await fetch(apiUrl, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -1051,7 +1075,7 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
                 let blob;
                 const contentType = res.headers.get("content-type");
                 
-                // Handle JSON Response (like from Babu) OR direct Blob (like from Rajubhai)
+                // Handle JSON Response OR direct Blob
                 if (contentType && contentType.includes("application/json")) {
                     const data = await res.json();
                     if (!data.success && !data.url) throw new Error(data.error || "API error");
@@ -1069,15 +1093,15 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
                 clearInterval(timerInterval);
                 statusBox.style.display = "none";
                 
-                // Cool down delay
+                // Cool down delay (5 seconds to prevent rate limit on servers)
                 if (i < tasks.length - 1) {
-                    await new Promise(r => setTimeout(r, 4000));
+                    await new Promise(r => setTimeout(r, 5000));
                 }
 
             } catch(e) {
                 clearInterval(timerInterval);
                 console.error("Image Fetch Error:", e);
-                statusBox.innerHTML = `❌ Failed for Image ${i+1}. Try manual button.`;
+                statusBox.innerHTML = `❌ Failed for Image ${i+1}. Try manual 'Gen' button.`;
                 statusBox.style.color = "#ef4444";
                 await new Promise(r => setTimeout(r, 2000)); 
             }
@@ -1264,7 +1288,7 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
 
     async function generateAudio(id) {
         let text = document.getElementById(`text-${id}`).value.trim(); 
-        text = text.replace(/\*/g, ''); // Clean stars from TTS input
+        text = text.replace(/[*_#]/g, ''); // Clean formatting from TTS input
         const voice = document.getElementById(`voice-${id}`).value; 
         const rate = document.getElementById(`rate-${id}`).value;
         const btn = document.getElementById(`btn-gen-${id}`); const status = document.getElementById(`status-${id}`);
