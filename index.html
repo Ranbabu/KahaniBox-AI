@@ -279,12 +279,17 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         <option value="https://cloudflare-sdxl-worker.mdrajubhai908.workers.dev">Model 1: SDXL Fast (Rajubhai)</option>
         <option value="https://sd-image-generator.babu902644.workers.dev">Model 2: SD Stable (Babu)</option>
     </select>
-    <label style="margin-top:10px;">Active URL:</label>
+    <label style="margin-top:10px;">Active Image URL:</label>
     <input type="text" id="activeModelUrlDisplay" disabled style="opacity: 0.7; font-size:0.75rem;">
     
+    <h3 style="margin-top:20px;"><span class="material-icons-round" style="vertical-align:middle;">record_voice_over</span> Audio TTS Settings</h3>
+    <label>Active TTS API URL</label>
+    <!-- REVERTED BACK TO THE STABLE TTS API -->
+    <input type="text" id="ttsApiUrl" value="https://hindi-tts-3gjy.onrender.com">
+
     <div class="sidebar-btns">
-        <button class="btn-save" onclick="saveSettings()">Save API Settings</button>
-        <button class="btn-clear" onclick="clearSettings()">Clear API Settings</button>
+        <button class="btn-save" onclick="saveSettings()">Save Settings</button>
+        <button class="btn-clear" onclick="clearSettings()">Clear Settings</button>
     </div>
 
     <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
@@ -418,7 +423,7 @@ audio { width: 100%; height: 35px; border-radius: 15px; margin-bottom: 5px;}
         <div class="panel-content">
             <label>अपनी कहानी यहाँ पेस्ट करें। (टेक्स्ट और प्रॉम्प्ट अलग करने के लिए नीचे दिया फॉर्मेट इस्तेमाल करें)</label>
             <textarea id="quickPasteScript" placeholder="TEXT: उमर अली जब जवान हुए...
-PROMPT: A young man with black beard...
+PROMPT: Islamic young man with black beard...
 PROMPT: The young man praying...
 ---
 TEXT: उनकी वालिदा ने पूछा...
@@ -491,9 +496,6 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
         </div>
     </div>
 
-    <!-- NEW TTS API LINK ADDED HERE -->
-    <input type="hidden" id="global-api-url" value="https://amina786-aatika-tts-api.hf.space">
-
     <!-- ALL AUDIO CONTROLS ROW -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; margin-top:20px; gap:5px; flex-wrap:wrap;">
         <h3 style="margin:0; color:#a78bfa; font-size:1rem;"><span class="material-icons-round" style="vertical-align:middle; font-size:1.2rem;">library_music</span> Story Audio & Image Segments</h3>
@@ -501,8 +503,9 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
             <button class="btn-action-orange" style="width:auto; padding:6px 12px; margin:0; font-size:0.8rem; border-radius:6px;" onclick="generateAllAudioSequence()">
                 <span class="material-icons-round" style="font-size:1rem;">graphic_eq</span> Gen All Audio
             </button>
-            <button class="btn-action-green" style="width:auto; padding:6px 12px; margin:0; font-size:0.8rem; border-radius:6px;" onclick="playAllAudioSequence()">
-                <span class="material-icons-round" style="font-size:1rem;">playlist_play</span> Play All Audio
+            <!-- REPLACED Play All Audio with Gen All Images -->
+            <button class="btn-action-green" style="width:auto; padding:6px 12px; margin:0; font-size:0.8rem; border-radius:6px;" onclick="generateAllImagesSequence()">
+                <span class="material-icons-round" style="font-size:1rem;">image</span> Gen All Images
             </button>
         </div>
     </div>
@@ -523,12 +526,12 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
 
 <script>
     // --- INDEXED DB SETUP FOR OFFLINE PERSISTENCE ---
-    const DB_NAME = "StoryStudioAppDB_V2";
+    const DB_NAME = "StoryStudioAppDB_V3";
     const STORE_NAME = "workspaceData";
 
     function openDB() {
         return new Promise((resolve, reject) => {
-            let req = indexedDB.open(DB_NAME, 2);
+            let req = indexedDB.open(DB_NAME, 3);
             req.onupgradeneeded = (e) => { 
                 let db = e.target.result;
                 if(!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME); 
@@ -554,7 +557,6 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
     let segmentCount = 0;
     const segmentsList = document.getElementById("segments-list");
     const emptyState = document.getElementById("empty-state");
-    const globalApiUrl = document.getElementById("global-api-url");
     let segmentsData = {};
     
     // Media Blobs
@@ -679,12 +681,21 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
         let dataToSave = {};
         for(let id in segmentsData) {
             let seg = segmentsData[id];
+            
+            // Gather all prompts for this segment from the dynamically created inputs
+            let arrHeadline = [];
+            let i = 0;
+            while(document.getElementById(`img-query-${id}-${i}`)) {
+                arrHeadline.push(document.getElementById(`img-query-${id}-${i}`).value);
+                i++;
+            }
+            
             dataToSave[id] = {
                 id: id,
                 text: document.getElementById(`text-${id}`) ? document.getElementById(`text-${id}`).value : seg.text,
                 voice: document.getElementById(`voice-${id}`) ? document.getElementById(`voice-${id}`).value : seg.voice,
                 rate: document.getElementById(`rate-${id}`) ? document.getElementById(`rate-${id}`).value : seg.rate,
-                headline: document.getElementById(`img-query-${id}`) ? document.getElementById(`img-query-${id}`).value : seg.headline,
+                headline: arrHeadline, // Save array of prompts
                 newsIndex: seg.newsIndex,
                 imagesBlobs: seg.imagesBlobs || [], 
                 segmentVideoBlob: seg.segmentVideoBlob || null,
@@ -723,9 +734,10 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
             segmentCount = savedCount || 0;
             for(let id in savedData) {
                 let s = savedData[id];
-                // Handle legacy saved headline string vs array
                 let arrHeadline = Array.isArray(s.headline) ? s.headline : [s.headline];
+                
                 addSegmentDOM(id, s.text, s.voice, s.rate, s.newsIndex, arrHeadline);
+                
                 segmentsData[id] = { 
                     images: [], imagesBlobs: s.imagesBlobs || [], segmentVideo: null, segmentVideoBlob: s.segmentVideoBlob || null,
                     audioUrl: null, manualAudioBlob: s.manualAudioBlob || null, duration: s.audioDuration || 0, videoDuration: s.videoDuration || 0,
@@ -768,6 +780,7 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
         localStorage.setItem('groqApiKey', document.getElementById('groqApiKey').value);
         localStorage.setItem('mistralApiKey', document.getElementById('mistralApiKey').value);
         localStorage.setItem('imgProvider', document.getElementById('imgProviderSelect').value);
+        localStorage.setItem('ttsApiUrl', document.getElementById('ttsApiUrl').value);
         alert('Settings Saved Successfully!'); closeAllSidebars(); 
     }
     
@@ -776,10 +789,13 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
         const groqKey = localStorage.getItem('groqApiKey');
         const mistralKey = localStorage.getItem('mistralApiKey');
         const imgProv = localStorage.getItem('imgProvider');
+        const ttsApi = localStorage.getItem('ttsApiUrl');
+        
         if(aiProvider) document.getElementById('aiProviderSelect').value = aiProvider;
         if(groqKey) document.getElementById('groqApiKey').value = groqKey;
         if(mistralKey) document.getElementById('mistralApiKey').value = mistralKey;
         if(imgProv) document.getElementById('imgProviderSelect').value = imgProv;
+        if(ttsApi) document.getElementById('ttsApiUrl').value = ttsApi;
     }
     
     function clearSettings() { 
@@ -787,6 +803,7 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
         document.getElementById('aiProviderSelect').value = 'groq'; document.getElementById('groqApiKey').value = '';
         document.getElementById('mistralApiKey').value = ''; 
         document.getElementById('imgProviderSelect').value = 'https://cloudflare-sdxl-worker.mdrajubhai908.workers.dev'; 
+        document.getElementById('ttsApiUrl').value = 'https://hindi-tts-3gjy.onrender.com';
         updateModelURLDisplay();
         alert('Settings Cleared!'); 
     }
@@ -805,7 +822,6 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
     function syncAllSpeeds(selectedValue) { const selects = document.querySelectorAll('select[id^="rate-"]'); selects.forEach(select => { select.value = selectedValue; }); saveWorkspace(); }
 
     function parseManualPasteIntoSegments(rawText) {
-        // Format expects TEXT: ... followed by multiple PROMPT: ... separated by ---
         let blocks = rawText.split('---').map(b => b.trim()).filter(b => b.length > 0);
         let parsedSegments = [];
         let counter = 1;
@@ -821,12 +837,12 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
                 } else if(line.toUpperCase().startsWith('PROMPT:')) {
                     promptsPart.push(line.substring(7).trim());
                 } else if (!line.toUpperCase().includes(':') && line.trim().length > 0) {
-                    textPart += line.trim() + " "; // Append if just normal line
+                    textPart += line.trim() + " "; 
                 }
             });
             
             if(textPart) {
-                textPart = textPart.replace(/\*/g, '').trim(); // Remove asterisks
+                textPart = textPart.replace(/\*/g, '').trim(); 
                 if(promptsPart.length === 0) promptsPart.push("Islamic historical scene, highly detailed, 8k resolution");
                 parsedSegments.push({ text: textPart, prompts: promptsPart, index: counter });
                 counter++;
@@ -840,19 +856,24 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
         if(!text) return alert("Please paste the script first.");
         const parsedData = parseManualPasteIntoSegments(text);
         
-        if(parsedData.length === 0) return alert("No valid format found. Use TEXT: and PROMPT: tags.");
+        if(parsedData.length === 0) return alert("No valid format found. Use TEXT: and PROMPT: tags as shown in the example.");
 
         segmentsList.innerHTML = ''; segmentsData = {}; segmentCount = 0; checkEmpty();
-        let segIds = [];
+        let imageTasks = [];
 
         for(let i=0; i<parsedData.length; i++) {
             let seg = parsedData[i];
             let segId = addSegment(seg.text, "ur-pk-male", seg.index, seg.prompts);
-            segIds.push(segId);
+            
+            // Build tasks array for sequential generation
+            seg.prompts.forEach((p, idx) => {
+                imageTasks.push({ segId: segId, prompt: p, promptIdx: idx });
+            });
         }
         document.getElementById('quickPasteScript').value = ""; saveWorkspace();
+        
         // Trigger sequential image fetch
-        fetchStoryImagesSequentially(parsedData, segIds);
+        processImageTasks(imageTasks);
     }
 
     // MAIN AI STORY GENERATION
@@ -879,7 +900,7 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
         STRICT FORMAT (Must follow exactly):
         कहानी को 5 से 10 हिस्सों (Segments) में बांटें। 
         हर हिस्से (Segment) में कहानी की कुछ लाइनें दें। फिर उन लाइनों के आधार पर कम से कम 2 से 3 English Image Prompts लिखें।
-        Important Rule for Prompts: **Maintain exact character descriptions (e.g. "young man with black beard wearing white kurta") in EVERY prompt so the character looks identical across the video. Add "perfect face, high quality, highly detailed" to all prompts.**
+        Important Rule for Prompts: **Maintain exact character descriptions (e.g. "young man with black beard wearing white kurta") in EVERY prompt so the character looks identical across the video. Add "perfect face, symmetrical eyes, highly detailed" to all prompts.**
 
         Use this exact format:
 
@@ -927,7 +948,6 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
                 }
             });
 
-            // Fallback if AI fails the strict format
             if(parsedData.length === 0) {
                 alert("AI Format slightly missed. Using basic parsing.");
                 parsedData = parseManualPasteIntoSegments(aiText);
@@ -941,95 +961,125 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
             document.getElementById("metaBox").innerHTML += `<div class="meta-item"><span><span class="meta-source">${sourceName}</span></span></div>`;
             document.getElementById("scriptBox").innerHTML = `<div class="word-count-badge">Total Words: ~${totalWords}</div><br><div style="white-space:pre-wrap;">${aiText.replace(/\*/g, '')}</div>`;
 
-            let segIds = [];
+            let imageTasks = [];
             for(let i=0; i<parsedData.length; i++) {
                 let seg = parsedData[i];
                 let segId = addSegment(seg.text, "ur-pk-male", seg.index, seg.prompts);
-                segIds.push(segId);
                 
                 let promptHTML = "";
-                seg.prompts.forEach((p, idx) => { promptHTML += `<div style="font-size:0.8rem; margin-bottom:4px;">- ${p}</div>`; });
+                seg.prompts.forEach((p, idx) => { 
+                    promptHTML += `<div style="font-size:0.8rem; margin-bottom:4px;">- ${p}</div>`; 
+                    imageTasks.push({ segId: segId, prompt: p, promptIdx: idx });
+                });
                 document.getElementById("headlineBox").innerHTML += `<div class="headline-item"><strong>Part ${seg.index}:</strong>${promptHTML}</div>`;
             }
             saveWorkspace();
             
             // Start Image Generation Sequentially
-            fetchStoryImagesSequentially(parsedData, segIds);
+            processImageTasks(imageTasks);
 
         } catch (err) { alert("Error: " + err.message); } 
         finally { btn.disabled = false; loader.style.display = 'none'; }
     }
 
-    // MANUAL IMAGE SEARCH (From the text input inside the box)
-    async function manualImageSearch(segId) {
-        const query = document.getElementById(`img-query-${segId}`).value.trim();
+    // MANUAL SINGLE IMAGE SEARCH (From the specific text input inside the box)
+    async function manualSingleImageSearch(segId, promptIdx) {
+        const query = document.getElementById(`img-query-${segId}-${promptIdx}`).value.trim();
         if(!query) return alert("Please enter a prompt!");
-        // We structure it like the parsed data so it works with the sequential function
-        fetchStoryImagesSequentially([{ prompts: [query] }], [segId]);
+        saveWorkspace();
+        processImageTasks([{ segId: segId, prompt: query, promptIdx: promptIdx }]);
     }
 
-    // SEQUENTIAL TIMER IMAGE GENERATION LOGIC (WITH POST & MULTIPLE PROMPTS)
-    async function fetchStoryImagesSequentially(parsedData, segIds) {
-        const apiUrl = document.getElementById('imgProviderSelect').value;
+    // GENERATE ALL IMAGES BUTTON
+    async function generateAllImagesSequence() {
+        saveWorkspace();
+        let tasks = [];
+        const keys = Object.keys(segmentsData);
+        if(keys.length === 0) return alert("No segments found!");
+        
+        for(let id of keys) {
+            let i = 0;
+            while(document.getElementById(`img-query-${id}-${i}`)) {
+                let p = document.getElementById(`img-query-${id}-${i}`).value.trim();
+                if(p) tasks.push({ segId: id, prompt: p, promptIdx: i });
+                i++;
+            }
+        }
+        
+        if(tasks.length === 0) return alert("No prompts found to generate images.");
+        
+        // Scroll to first box
+        document.getElementById(`seg-${tasks[0].segId}`).scrollIntoView({behavior: "smooth", block: "center"});
+        processImageTasks(tasks);
+    }
 
-        for(let i=0; i<parsedData.length; i++) {
-            let segId = segIds[i];
-            let promptsArr = parsedData[i].prompts || [];
+    // CENTRALIZED SEQUENTIAL IMAGE GENERATION (Handles both GET and POST based on URL)
+    async function processImageTasks(tasks) {
+        const apiUrl = document.getElementById('imgProviderSelect').value.trim();
+
+        for(let i=0; i<tasks.length; i++) {
+            let task = tasks[i];
+            const statusBox = document.getElementById(`img-status-${task.segId}`);
             
-            for(let j=0; j<promptsArr.length; j++) {
-                let prompt = promptsArr[j];
-                const statusBox = document.getElementById(`img-status-${segId}`);
-                
-                statusBox.style.display = "block"; statusBox.style.color = "#fbbf24";
-                
-                // Start Timer UI
-                let seconds = 0;
-                statusBox.innerHTML = `<span class="spin material-icons-round" style="font-size:1.1rem; vertical-align:middle;">sync</span> Generating Image ${j+1}/${promptsArr.length}... (Wait for API)`;
-                
-                let timerInterval = setInterval(() => {
-                    seconds++;
-                    statusBox.innerHTML = `<span class="spin material-icons-round" style="font-size:1.1rem; vertical-align:middle;">sync</span> Generating Image ${j+1}/${promptsArr.length}... (${seconds}s)`;
-                }, 1000);
+            statusBox.style.display = "block"; statusBox.style.color = "#fbbf24";
+            
+            let seconds = 0;
+            statusBox.innerHTML = `<span class="spin material-icons-round" style="font-size:1.1rem; vertical-align:middle;">sync</span> Generating Image ${i+1}/${tasks.length}...`;
+            
+            let timerInterval = setInterval(() => {
+                seconds++;
+                statusBox.innerHTML = `<span class="spin material-icons-round" style="font-size:1.1rem; vertical-align:middle;">sync</span> Generating Image ${i+1}/${tasks.length}... (${seconds}s)`;
+            }, 1000);
 
-                try {
-                    // Force the POST request format required by both Cloudflare workers
-                    const res = await fetch(apiUrl, {
+            try {
+                let enhancedPrompt = `Islamic historical story, ${task.prompt}, perfect face, symmetrical eyes, high quality, cinematic lighting, realistic`;
+                let res;
+
+                // SMART CHECK: If URL is Rajubhai, use GET method. Else, use POST JSON (Babu).
+                if(apiUrl.includes("mdrajubhai")) {
+                    // Safe URL construction for GET
+                    let safeUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+                    res = await fetch(safeUrl + "/?prompt=" + encodeURIComponent(enhancedPrompt));
+                } else {
+                    res = await fetch(apiUrl, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ prompt: prompt, width: 1280, height: 720 })
+                        body: JSON.stringify({ prompt: enhancedPrompt, width: 1280, height: 720 })
                     });
-                    
-                    let blob;
-                    const contentType = res.headers.get("content-type");
-                    
-                    if (contentType && contentType.includes("application/json")) {
-                        const data = await res.json();
-                        if (!data.success && !data.url) throw new Error(data.error || "API error");
-                        const imgResponse = await fetch(data.url);
-                        blob = await imgResponse.blob();
-                    } else {
-                        // Some endpoints might return the image blob directly instead of JSON
-                        blob = await res.blob();
-                    }
-                    
-                    if(!blob.type.startsWith('image/')) throw new Error("Not an image response");
-                    
-                    segmentsData[segId].imagesBlobs.push(blob);
-                    restoreImageToGallery(blob, segId);
-                    
-                    clearInterval(timerInterval);
-                    statusBox.style.display = "none";
-                    
-                    // Cool down delay (5 seconds to prevent rate limit on Rajubhai/Babu models)
-                    await new Promise(r => setTimeout(r, 5000));
-
-                } catch(e) {
-                    clearInterval(timerInterval);
-                    console.error("Image Fetch Error:", e);
-                    statusBox.innerHTML = `❌ Failed for Image ${j+1}. Try manual search box above.`;
-                    statusBox.style.color = "#ef4444";
-                    await new Promise(r => setTimeout(r, 2000)); // Short pause before next attempt
                 }
+                
+                let blob;
+                const contentType = res.headers.get("content-type");
+                
+                // Handle JSON Response (like from Babu) OR direct Blob (like from Rajubhai)
+                if (contentType && contentType.includes("application/json")) {
+                    const data = await res.json();
+                    if (!data.success && !data.url) throw new Error(data.error || "API error");
+                    const imgResponse = await fetch(data.url);
+                    blob = await imgResponse.blob();
+                } else {
+                    blob = await res.blob();
+                }
+                
+                if(!blob.type.startsWith('image/')) throw new Error("Not an image response");
+                
+                segmentsData[task.segId].imagesBlobs.push(blob);
+                restoreImageToGallery(blob, task.segId);
+                
+                clearInterval(timerInterval);
+                statusBox.style.display = "none";
+                
+                // Cool down delay
+                if (i < tasks.length - 1) {
+                    await new Promise(r => setTimeout(r, 4000));
+                }
+
+            } catch(e) {
+                clearInterval(timerInterval);
+                console.error("Image Fetch Error:", e);
+                statusBox.innerHTML = `❌ Failed for Image ${i+1}. Try manual button.`;
+                statusBox.style.color = "#ef4444";
+                await new Promise(r => setTimeout(r, 2000)); 
             }
         }
         saveWorkspace();
@@ -1037,8 +1087,17 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
 
     function addSegmentDOM(id, text, voice, rate, newsIndex, headlinesArr) {
         let displayTitle = `Part ${newsIndex || id}`;
-        // Join the prompts with a separator so user can edit them manually if needed
-        let safeHeadlineStr = (headlinesArr && headlinesArr.length > 0) ? headlinesArr.join(" | ") : "";
+        
+        // Generate separate input boxes for each prompt
+        let promptsHtml = '';
+        let promptsArray = (headlinesArr && headlinesArr.length > 0) ? headlinesArr : [""];
+        promptsArray.forEach((p, idx) => {
+            promptsHtml += `
+            <div style="display:flex; gap:10px; margin-bottom:10px;" id="prompt-row-${id}-${idx}">
+                <input type="text" id="img-query-${id}-${idx}" value="${p}" style="margin:0; flex:1;" placeholder="Image Prompt..." oninput="saveWorkspace()">
+                <button class="btn-action-green" style="margin:0; width:auto; padding:8px 12px; border-radius:8px;" onclick="manualSingleImageSearch(${id}, ${idx})"><span class="material-icons-round">search</span> Gen</button>
+            </div>`;
+        });
         
         const div = document.createElement('div'); div.className = 'segment-card'; div.id = `seg-${id}`;
         div.innerHTML = `
@@ -1049,11 +1108,8 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
                 </div>
             </div>
             
-            <!-- SEARCH PROMPT BOX -->
-            <div style="display:flex; gap:10px; margin-bottom:10px;">
-                <input type="text" id="img-query-${id}" value="${safeHeadlineStr}" style="margin:0; flex:1;" placeholder="Image Prompt / Search..." oninput="saveWorkspace()">
-                <button class="btn-action-green" style="margin:0; width:auto; padding:8px 12px; border-radius:8px;" onclick="manualImageSearch(${id})"><span class="material-icons-round">search</span> Add 1 Image</button>
-            </div>
+            <!-- MULTIPLE PROMPT BOXES GENERATED HERE -->
+            ${promptsHtml}
 
             <div class="manual-upload-row">
                 <div class="manual-upload-item">
@@ -1111,7 +1167,7 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
         if(rate) document.getElementById(`rate-${id}`).value = rate;
     }
 
-    function addSegment(text = "", preSelectedVoice = "ur-pk-male", newsIndex = null, headlinesArr = []) {
+    function addSegment(text = "", preSelectedVoice = "ur-pk-male", newsIndex = null, headlinesArr = [""]) {
         segmentCount++; const id = segmentCount;
         let currentSyncedSpeed = "0"; const extSpd = document.querySelector('select[id^="rate-"]'); if (extSpd) currentSyncedSpeed = extSpd.value;
         addSegmentDOM(id, text, preSelectedVoice, currentSyncedSpeed, newsIndex, headlinesArr);
@@ -1213,14 +1269,16 @@ PROMPT: An old woman asking..." style="min-height: 120px;"></textarea>
         const rate = document.getElementById(`rate-${id}`).value;
         const btn = document.getElementById(`btn-gen-${id}`); const status = document.getElementById(`status-${id}`);
         const audioBox = document.getElementById(`audio-box-${id}`); const player = document.getElementById(`player-${id}`); const durLabel = document.getElementById(`duration-${id}`);
+        
+        const activeTtsUrl = document.getElementById('ttsApiUrl').value.replace(/\/$/, "");
 
         if(!text) return alert("Script is empty!");
         btn.disabled = true; btn.innerHTML = '<span class="spin material-icons-round">sync</span> Wait...';
-        status.style.display = "block"; status.innerText = "Generating Audio via Fast API..."; status.style.color = "#fbbf24"; audioBox.style.display = "none";
+        status.style.display = "block"; status.innerText = "Generating Audio..."; status.style.color = "#fbbf24"; audioBox.style.display = "none";
         
         try {
-            // Using the new Amina786 Fast TTS API
-            const res = await fetch(globalApiUrl.value.replace(/\/$/, "") + "/tts", { 
+            // Reverted back to stable TTS API
+            const res = await fetch(activeTtsUrl + "/tts", { 
                 method: "POST", 
                 headers: {"Content-Type": "application/json"}, 
                 body: JSON.stringify({ text: text, voice: voice, rate: rate, pitch: 0 }) 
